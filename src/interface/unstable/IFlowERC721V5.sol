@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IERC5313Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC5313Upgradeable.sol";
 import {
+    RAIN_FLOW_SENTINEL,
     FLOW_ERC721_MIN_FLOW_SENTINELS,
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS,
