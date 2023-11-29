@@ -5,7 +5,7 @@ import {Script, console2} from "forge-std/Script.sol";
 import {FlowERC1155, DeployerDiscoverableMetaV3ConstructionConfig} from "src/concrete/FlowERC1155.sol";
 import {I9R_DEPLOYER} from "./DeployConstants.sol";
 
-contract DeployFlow is Script {
+contract DeployFlowERC1155 is Script {
     function run(bytes memory meta) external {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYMENT_KEY");
 
