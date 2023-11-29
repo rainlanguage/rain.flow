@@ -17,7 +17,7 @@ import {
     FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS,
     RAIN_FLOW_SENTINEL,
     FLOW_ERC20_MIN_FLOW_SENTINELS
-} from "../../interface/unstable/IFlowERC20V4.sol";
+} from "../../interface/IFlowERC20V4.sol";
 import {LibBytecode} from "lib/rain.interpreter/src/lib/bytecode/LibBytecode.sol";
 import {EncodedDispatch, LibEncodedDispatch} from "rain.interpreter/src/lib/caller/LibEncodedDispatch.sol";
 import {Sentinel, LibStackSentinel} from "rain.solmem/lib/LibStackSentinel.sol";

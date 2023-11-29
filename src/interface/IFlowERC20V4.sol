@@ -11,7 +11,7 @@ import {
     FLOW_ERC20_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC20_MIN_FLOW_SENTINELS
-} from "../IFlowERC20V3.sol";
+} from "./deprecated/v3/IFlowERC20V3.sol";
 import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
 
 /// Initialization config.

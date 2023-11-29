@@ -6,7 +6,7 @@ import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {IInterpreterCallerV2, SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
 import {LibEncodedDispatch} from "rain.interpreter/src/lib/caller/LibEncodedDispatch.sol";
 import {LibContext} from "rain.interpreter/src/lib/caller/LibContext.sol";
-import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/unstable/IFlowV4.sol";
+import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/IFlowV4.sol";
 import {
     DeployerDiscoverableMetaV2,
     DeployerDiscoverableMetaV2ConstructionConfig

@@ -3,6 +3,7 @@ pragma solidity =0.8.19;
 
 import {ERC721Upgradeable as ERC721} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
@@ -10,10 +11,10 @@ import {Sentinel, LibStackSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {EncodedDispatch, LibEncodedDispatch} from "rain.interpreter/src/lib/caller/LibEncodedDispatch.sol";
 import {ICloneableV2, ICLONEABLE_V2_SUCCESS} from "rain.factory/src/interface/ICloneableV2.sol";
 import {
-    IFlowERC721V4,
+    IFlowERC721V5,
     FlowERC721IOV1,
     SignedContextV1,
-    FlowERC721ConfigV2,
+    FlowERC721ConfigV3,
     ERC721SupplyChange,
     FLOW_ERC721_TOKEN_URI_MIN_OUTPUTS,
     FLOW_ERC721_TOKEN_URI_MAX_OUTPUTS,
@@ -21,8 +22,9 @@ import {
     FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC721_TOKEN_URI_ENTRYPOINT,
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
-    FLOW_ERC721_MIN_FLOW_SENTINELS
-} from "../../interface/unstable/IFlowERC721V4.sol";
+    FLOW_ERC721_MIN_FLOW_SENTINELS,
+    IERC5313Upgradeable
+} from "../../interface/unstable/IFlowERC721V5.sol";
 import {LibBytecode} from "lib/rain.interpreter/src/lib/bytecode/LibBytecode.sol";
 import {SourceIndex} from "rain.interpreter/src/interface/IInterpreterV1.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
@@ -36,7 +38,7 @@ import {Evaluable, DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/lib/calle
 import {IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
 import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
-import {RAIN_FLOW_SENTINEL, BurnerNotOwner} from "../../interface/unstable/IFlowERC721V4.sol";
+import {RAIN_FLOW_SENTINEL, BurnerNotOwner} from "../../interface/IFlowERC721V4.sol";
 
 /// @dev The hash of the meta data expected to be passed to `FlowCommon`'s
 /// constructor.
@@ -44,7 +46,7 @@ bytes32 constant CALLER_META_HASH = bytes32(0xf0003e81ff90467c9933f3ac68db3ca49d
 
 /// @title FlowERC721
 /// See `IFlowERC721V4` for documentation.
-contract FlowERC721 is ICloneableV2, IFlowERC721V4, FlowCommon, ERC721 {
+contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowCommon, ERC721 {
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
     using LibStackSentinel for Pointer;
@@ -52,21 +54,25 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V4, FlowCommon, ERC721 {
     /// @dev True if we need to eval `handleTransfer` on every transfer. For many
     /// tokens this will be false, so we don't want to invoke the external
     /// interpreter call just to cause a noop.
+    //solhint-disable-next-line private-vars-leading-underscore
     bool private sEvalHandleTransfer;
 
     /// @dev True if we need to eval `tokenURI` to build the token URI. For many
     /// tokens this will be false, so we don't want to invoke the external
     /// interpreter call just to cause a noop.
+    //solhint-disable-next-line private-vars-leading-underscore
     bool private sEvalTokenURI;
 
     /// @dev The evaluable that contains the entrypoints for `handleTransfer` and
     /// `tokenURI`. This is only set if `sEvalHandleTransfer` or `sEvalTokenURI`
     /// is true.
+    //solhint-disable-next-line private-vars-leading-underscore
     Evaluable internal sEvaluable;
 
     /// @dev The base URI for all token URIs. This is set during initialization
     /// and cannot be changed. The token URI evaluable can be used for dynamic
     /// token URIs from the base URI.
+    //solhint-disable-next-line private-vars-leading-underscore
     string private sBaseURI;
 
     /// Forwards the `FlowCommon` constructor arguments to the `FlowCommon`.
@@ -84,16 +90,23 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V4, FlowCommon, ERC721 {
         return super.supportsInterface(interfaceId);
     }
 
+    /// @inheritdoc IERC5313Upgradeable
+    function owner() public view virtual override(OwnableUpgradeable, IERC5313Upgradeable) returns (address) {
+        return super.owner();
+    }
+
     /// Overloaded typed initialize function MUST revert with this error.
     /// As per `ICloneableV2` interface.
-    function initialize(FlowERC721ConfigV2 memory) external pure {
+    function initialize(FlowERC721ConfigV3 memory) external pure virtual {
         revert InitializeSignatureFn();
     }
 
     /// @inheritdoc ICloneableV2
-    function initialize(bytes calldata data) external initializer returns (bytes32) {
-        FlowERC721ConfigV2 memory flowERC721Config = abi.decode(data, (FlowERC721ConfigV2));
+    function initialize(bytes calldata data) external virtual initializer returns (bytes32) {
+        FlowERC721ConfigV3 memory flowERC721Config = abi.decode(data, (FlowERC721ConfigV3));
         emit Initialize(msg.sender, flowERC721Config);
+        __Ownable_init();
+        _transferOwnership(flowERC721Config.initialOwner);
         __ERC721_init(flowERC721Config.name, flowERC721Config.symbol);
         sBaseURI = flowERC721Config.baseURI;
 
@@ -172,12 +185,12 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V4, FlowCommon, ERC721 {
         return super.tokenURI(tokenId);
     }
 
-    /// @inheritdoc IFlowERC721V4
+    /// @inheritdoc IFlowERC721V5
     function stackToFlow(uint256[] memory stack) external pure virtual override returns (FlowERC721IOV1 memory) {
         return _stackToFlow(stack.dataPointer(), stack.endPointer());
     }
 
-    /// @inheritdoc IFlowERC721V4
+    /// @inheritdoc IFlowERC721V5
     function flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         external
         virtual

@@ -17,7 +17,7 @@ import {
     UnsupportedERC721Flow,
     UnsupportedERC1155Flow,
     MIN_FLOW_SENTINELS
-} from "../IFlowV3.sol";
+} from "./deprecated/v3/IFlowV3.sol";
 
 /// @title IFlowV4
 /// @notice Interface for a flow contract that does NOT require native minting
