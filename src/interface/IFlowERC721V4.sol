@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import "rain.interpreter/src/lib/caller/LibEvaluable.sol";
-
 import {
     FlowERC721IOV1,
     ERC721SupplyChange,
@@ -14,9 +11,9 @@ import {
     FLOW_ERC721_TOKEN_URI_ENTRYPOINT,
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_MIN_FLOW_SENTINELS
-} from "../IFlowERC721V3.sol";
+} from "./deprecated/v3/IFlowERC721V3.sol";
 
-import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
+import {RAIN_FLOW_SENTINEL, Evaluable, SignedContextV1, EvaluableConfigV2} from "./IFlowV4.sol";
 
 /// Thrown when burner of tokens is not the owner of tokens.
 error BurnerNotOwner();

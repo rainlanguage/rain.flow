@@ -2,9 +2,9 @@
 pragma solidity ^0.8.18;
 
 import {SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import {EvaluableConfigV2} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
+import {EvaluableConfig, Evaluable} from "rain.interpreter/src/interface/deprecated/IInterpreterCallerV1.sol";
 
-import "./IFlowV3.sol";
+import {SourceIndex, MIN_FLOW_SENTINELS, Sentinel, SENTINEL_HIGH_BITS, FlowTransferV1} from "./IFlowV3.sol";
 
 /// @dev Entrypont of the `handleTransfer` evaluation.
 SourceIndex constant FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT = SourceIndex.wrap(0);

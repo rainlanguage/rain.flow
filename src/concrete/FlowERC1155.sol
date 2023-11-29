@@ -10,77 +10,80 @@ import {ICloneableV2, ICLONEABLE_V2_SUCCESS} from "rain.factory/src/interface/IC
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {
-    IFlowERC1155V4,
+    IFlowERC1155V5,
     FlowERC1155IOV1,
     SignedContextV1,
-    FlowERC1155ConfigV2,
+    FlowERC1155ConfigV3,
     ERC1155SupplyChange,
     RAIN_FLOW_SENTINEL,
     FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC1155_MIN_FLOW_SENTINELS
-} from "../../interface/unstable/IFlowERC1155V4.sol";
+} from "../interface/unstable/IFlowERC1155V5.sol";
 import {LibBytecode} from "lib/rain.interpreter/src/lib/bytecode/LibBytecode.sol";
-import {IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
 import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
-import {Evaluable, DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
-import {LibFlow} from "../../lib/LibFlow.sol";
-import {SourceIndex} from "rain.interpreter/src/interface/IInterpreterV1.sol";
+import {LibFlow} from "../lib/LibFlow.sol";
 import {
-    FlowCommon, DeployerDiscoverableMetaV2ConstructionConfig, ERC1155Receiver
-} from "../../abstract/FlowCommon.sol";
+    FlowCommon,
+    DeployerDiscoverableMetaV3ConstructionConfig,
+    ERC1155Receiver,
+    IInterpreterV2,
+    EvaluableConfigV3,
+    EvaluableV2,
+    LibNamespace,
+    SourceIndexV2,
+    DEFAULT_STATE_NAMESPACE
+} from "../abstract/FlowCommon.sol";
 import {LibContext} from "rain.interpreter/src/lib/caller/LibContext.sol";
 
 /// @dev The hash of the meta data expected by the `FlowCommon` constructor.
-bytes32 constant CALLER_META_HASH = bytes32(0x7ea70f837234357ec1bb5b777e04453ebaf3ca778a98805c4bb20a738d559a21);
+bytes32 constant CALLER_META_HASH = bytes32(0xb69058fd37042da816bb4afc024e65ef5b83c3dca5997f13acf94df6ce758dca);
 
 /// @title FlowERC1155
 /// See `IFlowERC1155V4` for documentation.
-contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
+contract FlowERC1155 is ICloneableV2, IFlowERC1155V5, FlowCommon, ERC1155 {
     using LibStackSentinel for Pointer;
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
 
     /// True if the evaluable needs to be called on every transfer.
+    //solhint-disable-next-line private-vars-leading-underscore
     bool private sEvalHandleTransfer;
 
     /// The `Evaluable` that handles transfers.
-    Evaluable internal sEvaluable;
+    //solhint-disable-next-line private-vars-leading-underscore
+    EvaluableV2 internal sEvaluable;
 
     /// Forwards the `FlowCommon` constructor.
-    constructor(DeployerDiscoverableMetaV2ConstructionConfig memory config) FlowCommon(CALLER_META_HASH, config) {}
+    constructor(DeployerDiscoverableMetaV3ConstructionConfig memory config) FlowCommon(CALLER_META_HASH, config) {}
 
     /// Overloaded typed initialize function MUST revert with this error.
     /// As per `ICloneableV2` interface.
-    function initialize(FlowERC1155ConfigV2 memory) external pure {
+    function initialize(FlowERC1155ConfigV3 memory) external pure {
         revert InitializeSignatureFn();
     }
 
     /// @inheritdoc ICloneableV2
     function initialize(bytes calldata data) external initializer returns (bytes32) {
-        FlowERC1155ConfigV2 memory flowERC1155Config = abi.decode(data, (FlowERC1155ConfigV2));
+        FlowERC1155ConfigV3 memory flowERC1155Config = abi.decode(data, (FlowERC1155ConfigV3));
         emit Initialize(msg.sender, flowERC1155Config);
         __ERC1155_init(flowERC1155Config.uri);
 
         // Set state before external calls here.
         bool evalHandleTransfer = LibBytecode.sourceCount(flowERC1155Config.evaluableConfig.bytecode) > 0
             && LibBytecode.sourceOpsCount(
-                flowERC1155Config.evaluableConfig.bytecode, SourceIndex.unwrap(FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT)
+                flowERC1155Config.evaluableConfig.bytecode, SourceIndexV2.unwrap(FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT)
             ) > 0;
         sEvalHandleTransfer = evalHandleTransfer;
 
         flowCommonInit(flowERC1155Config.flowConfig, FLOW_ERC1155_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            (IInterpreterV1 interpreter, IInterpreterStoreV1 store, address expression) = flowERC1155Config
-                .evaluableConfig
-                .deployer
-                .deployExpression(
-                flowERC1155Config.evaluableConfig.bytecode,
-                flowERC1155Config.evaluableConfig.constants,
-                LibUint256Array.arrayFrom(FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS)
+            (IInterpreterV2 interpreter, IInterpreterStoreV1 store, address expression, bytes memory io) =
+            flowERC1155Config.evaluableConfig.deployer.deployExpression2(
+                flowERC1155Config.evaluableConfig.bytecode, flowERC1155Config.evaluableConfig.constants
             );
             // There's no way to set this before the external call because the
             // output of the `deployExpression` call is the input to `Evaluable`.
@@ -89,7 +92,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
             // integrity checks are complete.
             // The deployer MUST be a trusted contract anyway.
             // slither-disable-next-line reentrancy-benign
-            sEvaluable = Evaluable(interpreter, store, expression);
+            sEvaluable = EvaluableV2(interpreter, store, expression);
         }
 
         return ICLONEABLE_V2_SUCCESS;
@@ -121,7 +124,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
             // Mint and burn access MUST be handled by flow.
             // HANDLE_TRANSFER will only restrict subsequent transfers.
             if (sEvalHandleTransfer && !(from == address(0) || to == address(0))) {
-                Evaluable memory evaluable = sEvaluable;
+                EvaluableV2 memory evaluable = sEvaluable;
                 uint256[][] memory context;
                 {
                     context = LibContext.build(
@@ -138,15 +141,16 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
                     );
                 }
 
-                (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval(
+                (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                     evaluable.store,
-                    DEFAULT_STATE_NAMESPACE,
-                    LibEncodedDispatch.encode(
+                    LibNamespace.qualifyNamespace(DEFAULT_STATE_NAMESPACE, address(this)),
+                    LibEncodedDispatch.encode2(
                         evaluable.expression,
                         FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
                         FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
                     ),
-                    context
+                    context,
+                    new uint256[](0)
                 );
                 (stack);
                 if (kvs.length > 0) {
@@ -156,7 +160,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
         }
     }
 
-    /// @inheritdoc IFlowERC1155V4
+    /// @inheritdoc IFlowERC1155V5
     function stackToFlow(uint256[] memory stack)
         external
         pure
@@ -166,8 +170,8 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
         return _stackToFlow(stack.dataPointer(), stack.endPointer());
     }
 
-    /// @inheritdoc IFlowERC1155V4
-    function flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
+    /// @inheritdoc IFlowERC1155V5
+    function flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         external
         virtual
         returns (FlowERC1155IOV1 memory)
@@ -207,12 +211,11 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
     /// of the flow contract itself. This involves consuming the mint/burn
     /// sentinels from the stack and minting/burning the tokens accordingly, then
     /// calling `LibFlow.flow` to handle the rest of the flow.
-    function _flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
-        internal
-        virtual
-        nonReentrant
-        returns (FlowERC1155IOV1 memory)
-    {
+    function _flow(
+        EvaluableV2 memory evaluable,
+        uint256[] memory callerContext,
+        SignedContextV1[] memory signedContexts
+    ) internal virtual nonReentrant returns (FlowERC1155IOV1 memory) {
         unchecked {
             (Pointer stackBottom, Pointer stackTop, uint256[] memory kvs) =
                 _flowStack(evaluable, callerContext, signedContexts);

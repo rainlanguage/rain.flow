@@ -4,16 +4,6 @@ Docs at https://rainprotocol.github.io/rain.flow
 
 # Current version
 
-## V3
-
-V3 compatible contracts are still found in the monorepo at
-
-https://github.com/rainprotocol/rain-protocol
-
-The contracts in this repo are targetting V4 (see below).
-
-# Unstable versions
-
 ## V4
 
 The main changes in V4 replace `previewFlow` with `stackToFlow` which is a more
@@ -24,6 +14,13 @@ state, time, etc.
 V4 also targets a newer interpreter interface than V3, notably the native parsing
 functionality that works off a single `bytes` for the Rain bytecode rather than
 the `bytes[]` that older interpreters expected.
+
+# Unstable versions
+
+## V5
+
+V5 introduces ERC5313 ownership for ERC721 for compatibility with offchain NFT
+marketplaces.
 
 # Deprecated versions
 
@@ -45,3 +42,11 @@ https://samczsun.com/two-rights-might-make-a-wrong/
 V1 was deprecated because the `SignedContext` struct that it relies on was
 deprecated upstream. `SignedContext` was replaced with `SignedContextV1` which
 was a minor change, reordering fields only for more efficient processing.
+
+## V3
+
+V3 compatible contracts are still found in the monorepo at
+
+https://github.com/rainprotocol/rain-protocol
+
+The contracts in this repo are targetting V4 (see below).

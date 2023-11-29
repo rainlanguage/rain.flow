@@ -6,18 +6,18 @@ import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {IInterpreterCallerV2, SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
 import {LibEncodedDispatch} from "rain.interpreter/src/lib/caller/LibEncodedDispatch.sol";
 import {LibContext} from "rain.interpreter/src/lib/caller/LibContext.sol";
-import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/unstable/IFlowV4.sol";
+import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/IFlowV4.sol";
 import {
-    DeployerDiscoverableMetaV2,
-    DeployerDiscoverableMetaV2ConstructionConfig
-} from "rain.interpreter/src/abstract/DeployerDiscoverableMetaV2.sol";
+    DeployerDiscoverableMetaV3,
+    DeployerDiscoverableMetaV3ConstructionConfig
+} from "rain.interpreter/src/abstract/DeployerDiscoverableMetaV3.sol";
+import {EvaluableV2, EvaluableConfigV3} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
+import {LibEvaluable} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
 import {
-    LibEvaluable,
-    Evaluable,
-    EvaluableConfigV2,
+    SourceIndexV2,
+    IInterpreterV2,
     DEFAULT_STATE_NAMESPACE
-} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
-import {SourceIndex, IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
+} from "rain.interpreter/src/interface/unstable/IInterpreterV2.sol";
 import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
 
 import {MulticallUpgradeable as Multicall} from
@@ -31,6 +31,7 @@ import {
 import {ReentrancyGuardUpgradeable as ReentrancyGuard} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {LibNamespace} from "rain.interpreter/src/lib/ns/LibNamespace.sol";
 
 /// Thrown when the min outputs for a flow is fewer than the sentinels.
 /// This is always an implementation bug as the min outputs and sentinel count
@@ -41,7 +42,7 @@ error BadMinStackLength(uint256 flowMinOutputs);
 /// @dev The entrypoint for a flow is always `0` because each flow has its own
 /// evaluable with its own entrypoint. Running multiple flows involves evaluating
 /// several expressions in sequence.
-SourceIndex constant FLOW_ENTRYPOINT = SourceIndex.wrap(0);
+SourceIndexV2 constant FLOW_ENTRYPOINT = SourceIndexV2.wrap(0);
 /// @dev There is no maximum number of outputs for a flow. Pragmatically gas will
 /// limit the number of outputs well before this limit is reached.
 uint16 constant FLOW_MAX_OUTPUTS = type(uint16).max;
@@ -88,11 +89,11 @@ abstract contract FlowCommon is
     Multicall,
     ReentrancyGuard,
     IInterpreterCallerV2,
-    DeployerDiscoverableMetaV2
+    DeployerDiscoverableMetaV3
 {
     using LibUint256Array for uint256[];
     using LibUint256Matrix for uint256[];
-    using LibEvaluable for Evaluable;
+    using LibEvaluable for EvaluableV2;
 
     /// @dev This mapping tracks all flows that are registered at initialization.
     /// This is used to ensure that only registered flows are evaluated.
@@ -100,14 +101,15 @@ abstract contract FlowCommon is
     /// else anons can deploy their own evaluable and drain the contract.
     /// `isRegistered` will be set to `FLOW_IS_REGISTERED` for each registered
     /// flow.
-    mapping(bytes32 evaluableHash => uint256 isRegistered) internal registeredFlows;
+    //solhint-disable-next-line private-vars-leading-underscore
+    mapping(bytes32 evaluableHash => uint256 isRegistered) internal sRegisteredFlows;
 
     /// This event is emitted when a flow is registered at initialization.
     /// @param sender The address that registered the flow.
     /// @param evaluable The evaluable of the flow that was registered. The hash
     /// of this evaluable is used as the key in `registeredFlows` so users MUST
     /// provide the same evaluable when they evaluate the flow.
-    event FlowInitialized(address sender, Evaluable evaluable);
+    event FlowInitialized(address sender, EvaluableV2 evaluable);
 
     /// Forwards config to `DeployerDiscoverableMetaV2` and disables
     /// initializers. The initializers are disabled because inheriting contracts
@@ -118,8 +120,8 @@ abstract contract FlowCommon is
     /// patterns that _atomically_ clone and initialize via. some factory.
     /// @param metaHash As per `DeployerDiscoverableMetaV2`.
     /// @param config As per `DeployerDiscoverableMetaV2`.
-    constructor(bytes32 metaHash, DeployerDiscoverableMetaV2ConstructionConfig memory config)
-        DeployerDiscoverableMetaV2(metaHash, config)
+    constructor(bytes32 metaHash, DeployerDiscoverableMetaV3ConstructionConfig memory config)
+        DeployerDiscoverableMetaV3(metaHash, config)
     {
         _disableInitializers();
     }
@@ -131,7 +133,7 @@ abstract contract FlowCommon is
     /// movements at runtime for the inheriting contract.
     /// @param flowMinOutputs The minimum number of outputs for each flow. All
     /// flows share the same minimum number of outputs for simplicity.
-    function flowCommonInit(EvaluableConfigV2[] memory evaluableConfigs, uint256 flowMinOutputs)
+    function flowCommonInit(EvaluableConfigV3[] memory evaluableConfigs, uint256 flowMinOutputs)
         internal
         onlyInitializing
     {
@@ -149,8 +151,8 @@ abstract contract FlowCommon is
                 revert BadMinStackLength(flowMinOutputs);
             }
 
-            EvaluableConfigV2 memory config;
-            Evaluable memory evaluable;
+            EvaluableConfigV3 memory config;
+            EvaluableV2 memory evaluable;
             // Every evaluable MUST deploy cleanly (e.g. pass integrity checks)
             // otherwise the entire initialization will fail.
             for (uint256 i = 0; i < evaluableConfigs.length; ++i) {
@@ -161,10 +163,9 @@ abstract contract FlowCommon is
                 // Reentrancy is just one of many ways that a malicious deployer
                 // can cause problems, and it's probably the least of your
                 // worries if you're using a malicious deployer.
-                (IInterpreterV1 interpreter, IInterpreterStoreV1 store, address expression) = config
-                    .deployer
-                    .deployExpression(config.bytecode, config.constants, LibUint256Array.arrayFrom(flowMinOutputs));
-                evaluable = Evaluable(interpreter, store, expression);
+                (IInterpreterV2 interpreter, IInterpreterStoreV1 store, address expression, bytes memory io) =
+                    config.deployer.deployExpression2(config.bytecode, config.constants);
+                evaluable = EvaluableV2(interpreter, store, expression);
                 // There's no way to set this mapping before the external
                 // contract call because the output of the external contract
                 // call is used to build the evaluable that we're registering.
@@ -173,7 +174,7 @@ abstract contract FlowCommon is
                 // registration of a flow before we know that the flow is
                 // deployable according to the deployer's own integrity checks.
                 //slither-disable-next-line reentrancy-benign
-                registeredFlows[evaluable.hash()] = FLOW_IS_REGISTERED;
+                sRegisteredFlows[evaluable.hash()] = FLOW_IS_REGISTERED;
                 // There's no way to emit this event before the external contract
                 // call because the output of the external contract call is
                 // the input to the event.
@@ -196,7 +197,7 @@ abstract contract FlowCommon is
     /// @return The top of the stack after evaluation.
     /// @return The key-value pairs that were emitted during evaluation.
     function _flowStack(
-        Evaluable memory evaluable,
+        EvaluableV2 memory evaluable,
         uint256[] memory callerContext,
         SignedContextV1[] memory signedContexts
     ) internal returns (Pointer, Pointer, uint256[] memory) {
@@ -206,16 +207,17 @@ abstract contract FlowCommon is
         // Refuse to evaluate unregistered flows.
         {
             bytes32 evaluableHash = evaluable.hash();
-            if (registeredFlows[evaluableHash] == FLOW_IS_NOT_REGISTERED) {
+            if (sRegisteredFlows[evaluableHash] == FLOW_IS_NOT_REGISTERED) {
                 revert UnregisteredFlow(evaluableHash);
             }
         }
 
-        (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval(
+        (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
             evaluable.store,
-            DEFAULT_STATE_NAMESPACE,
-            LibEncodedDispatch.encode(evaluable.expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
-            context
+            LibNamespace.qualifyNamespace(DEFAULT_STATE_NAMESPACE, address(this)),
+            LibEncodedDispatch.encode2(evaluable.expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
+            context,
+            new uint256[](0)
         );
         return (stack.dataPointer(), stack.endPointer(), kvs);
     }

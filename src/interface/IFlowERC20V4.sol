@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import {SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import {Evaluable, EvaluableConfigV2} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
+import {Evaluable, EvaluableConfigV2} from "rain.interpreter/src/interface/deprecated/IInterpreterCallerV1.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {
     FlowERC20IOV1,
@@ -11,7 +11,7 @@ import {
     FLOW_ERC20_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC20_MIN_FLOW_SENTINELS
-} from "../IFlowERC20V3.sol";
+} from "./deprecated/v3/IFlowERC20V3.sol";
 import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
 
 /// Initialization config.
