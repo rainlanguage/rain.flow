@@ -39,7 +39,7 @@ import {
 import {LibContext} from "rain.interpreter/src/lib/caller/LibContext.sol";
 
 /// @dev The hash of the meta data expected by the `FlowCommon` constructor.
-bytes32 constant CALLER_META_HASH = bytes32(0x7ea70f837234357ec1bb5b777e04453ebaf3ca778a98805c4bb20a738d559a21);
+bytes32 constant CALLER_META_HASH = bytes32(0xb69058fd37042da816bb4afc024e65ef5b83c3dca5997f13acf94df6ce758dca);
 
 /// @title FlowERC1155
 /// See `IFlowERC1155V4` for documentation.
