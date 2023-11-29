@@ -5,17 +5,19 @@ import {IERC5313Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/
 import {
     RAIN_FLOW_SENTINEL,
     FLOW_ERC721_MIN_FLOW_SENTINELS,
-    FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC721_HANDLE_TRANSFER_MIN_OUTPUTS,
-    FLOW_ERC721_TOKEN_URI_ENTRYPOINT,
     FLOW_ERC721_TOKEN_URI_MAX_OUTPUTS,
     FLOW_ERC721_TOKEN_URI_MIN_OUTPUTS,
     ERC721SupplyChange,
     FlowERC721IOV1
 } from "../IFlowERC721V4.sol";
-import {SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import {Evaluable, EvaluableConfigV2} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
+import {EvaluableV2, EvaluableConfigV3, SignedContextV1, SourceIndexV2} from "./IFlowV5.sol";
+
+/// @dev Entrypont of the `handleTransfer` evaluation.
+SourceIndexV2 constant FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT = SourceIndexV2.wrap(0);
+/// @dev Entrypont of the `tokenURI` evaluation.
+SourceIndexV2 constant FLOW_ERC721_TOKEN_URI_ENTRYPOINT = SourceIndexV2.wrap(1);
 
 /// Initialization config.
 /// @param name As per Open Zeppelin `ERC721Upgradeable`.
@@ -33,8 +35,8 @@ struct FlowERC721ConfigV3 {
     string symbol;
     string baseURI;
     address initialOwner;
-    EvaluableConfigV2 evaluableConfig;
-    EvaluableConfigV2[] flowConfig;
+    EvaluableConfigV3 evaluableConfig;
+    EvaluableConfigV3[] flowConfig;
 }
 
 /// @title IFlowERC721V5
@@ -81,7 +83,7 @@ interface IFlowERC721V5 is IERC5313Upgradeable {
     /// @return flowERC721IO The `FlowERC721IOV1` representing all token
     /// mint/burns and transfers that occurred during the flow.
     function flow(
-        Evaluable calldata evaluable,
+        EvaluableV2 calldata evaluable,
         uint256[] calldata callerContext,
         SignedContextV1[] calldata signedContexts
     ) external returns (FlowERC721IOV1 calldata flowERC721IO);

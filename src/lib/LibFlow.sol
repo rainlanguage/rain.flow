@@ -13,8 +13,9 @@ import {
     UnsupportedERC721Flow,
     UnsupportedERC1155Flow
 } from "../interface/IFlowV4.sol";
-import {IInterpreterStoreV1, DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
+import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
 import {LibStackSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
+import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/interface/unstable/IInterpreterV2.sol";
 
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";

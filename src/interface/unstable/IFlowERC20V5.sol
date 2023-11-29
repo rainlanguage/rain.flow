@@ -1,35 +1,34 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import {Evaluable, EvaluableConfigV2} from "rain.interpreter/src/interface/deprecated/IInterpreterCallerV1.sol";
-import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {
     FlowERC20IOV1,
     ERC20SupplyChange,
-    FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC20_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC20_MIN_FLOW_SENTINELS
-} from "./deprecated/v3/IFlowERC20V3.sol";
-import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
+} from "../IFlowERC20V4.sol";
+import {RAIN_FLOW_SENTINEL, EvaluableConfigV3, EvaluableV2, SignedContextV1, SourceIndexV2} from "./IFlowV5.sol";
+
+/// @dev Entrypont of the `handleTransfer` evaluation.
+SourceIndexV2 constant FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT = SourceIndexV2.wrap(0);
 
 /// Initialization config.
 /// @param name As per Open Zeppelin `ERC20Upgradeable`.
 /// @param symbol As per Open Zeppelin `ERC20Upgradeable`.
-/// @param evaluableConfig The `EvaluableConfigV2` to use to build the
+/// @param evaluableConfig The `EvaluableConfigV3` to use to build the
 /// `evaluable` that can be used to evaluate `handleTransfer`.
-/// @param flowConfig The `EvaluableConfigV2[]` to use to build the
+/// @param flowConfig The `EvaluableConfigV3[]` to use to build the
 /// `evaluable`s for all the flows, including self minting and burning.
-struct FlowERC20ConfigV2 {
+struct FlowERC20ConfigV3 {
     string name;
     string symbol;
-    EvaluableConfigV2 evaluableConfig;
-    EvaluableConfigV2[] flowConfig;
+    EvaluableConfigV3 evaluableConfig;
+    EvaluableConfigV3[] flowConfig;
 }
 
-/// @title IFlowERC20V4
-/// Conceptually identical to `IFlowV4`, but the flow contract itself is an
+/// @title IFlowERC20V5
+/// Conceptually identical to `IFlowV5`, but the flow contract itself is an
 /// ERC20 token. This means that ERC20 self mints and burns are included in the
 /// stack that the flows must evaluate to. As stacks are processed by flow from
 /// bottom to top, this means that the self mint/burn will be the last thing
@@ -41,12 +40,12 @@ struct FlowERC20ConfigV2 {
 /// allows expression authors to prevent transfers from occurring if they don't
 /// want them to, by reverting within the expression.
 ///
-/// Otherwise the flow contract is identical to `IFlowV4`.
-interface IFlowERC20V4 {
+/// Otherwise the flow contract is identical to `IFlowV5`.
+interface IFlowERC20V5 {
     /// Contract has initialized.
     /// @param sender `msg.sender` initializing the contract (factory).
     /// @param config All initialized config.
-    event Initialize(address sender, FlowERC20ConfigV2 config);
+    event Initialize(address sender, FlowERC20ConfigV3 config);
 
     /// As per `IFlowV4` but returns a `FlowERC20IOV1` instead of a
     /// `FlowTransferV1`.
@@ -62,7 +61,7 @@ interface IFlowERC20V4 {
     /// @return flowERC20IO The `FlowERC20IOV1` representing all token mint/burns
     /// and transfers that occurred during the flow.
     function flow(
-        Evaluable calldata evaluable,
+        EvaluableV2 calldata evaluable,
         uint256[] calldata callerContext,
         SignedContextV1[] calldata signedContexts
     ) external returns (FlowERC20IOV1 calldata flowERC20IO);

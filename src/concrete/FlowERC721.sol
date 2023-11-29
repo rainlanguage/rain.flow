@@ -24,21 +24,23 @@ import {
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_MIN_FLOW_SENTINELS,
     IERC5313Upgradeable
-} from "../../interface/unstable/IFlowERC721V5.sol";
+} from "../interface/unstable/IFlowERC721V5.sol";
 import {LibBytecode} from "lib/rain.interpreter/src/lib/bytecode/LibBytecode.sol";
-import {SourceIndex} from "rain.interpreter/src/interface/IInterpreterV1.sol";
-import {LibFlow} from "../../lib/LibFlow.sol";
+import {LibFlow} from "../lib/LibFlow.sol";
 import {
     FlowCommon,
-    DeployerDiscoverableMetaV2ConstructionConfig,
+    DeployerDiscoverableMetaV3ConstructionConfig,
     LibContext,
-    ERC1155Receiver
-} from "../../abstract/FlowCommon.sol";
-import {Evaluable, DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
-import {IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
+    ERC1155Receiver,
+    IInterpreterV2,
+    SourceIndexV2,
+    DEFAULT_STATE_NAMESPACE,
+    EvaluableV2,
+    LibNamespace
+} from "../abstract/FlowCommon.sol";
 import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
-import {RAIN_FLOW_SENTINEL, BurnerNotOwner} from "../../interface/IFlowERC721V4.sol";
+import {RAIN_FLOW_SENTINEL, BurnerNotOwner} from "../interface/IFlowERC721V4.sol";
 
 /// @dev The hash of the meta data expected to be passed to `FlowCommon`'s
 /// constructor.
@@ -67,7 +69,7 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
     /// `tokenURI`. This is only set if `sEvalHandleTransfer` or `sEvalTokenURI`
     /// is true.
     //solhint-disable-next-line private-vars-leading-underscore
-    Evaluable internal sEvaluable;
+    EvaluableV2 internal sEvaluable;
 
     /// @dev The base URI for all token URIs. This is set during initialization
     /// and cannot be changed. The token URI evaluable can be used for dynamic
@@ -76,7 +78,7 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
     string private sBaseURI;
 
     /// Forwards the `FlowCommon` constructor arguments to the `FlowCommon`.
-    constructor(DeployerDiscoverableMetaV2ConstructionConfig memory config) FlowCommon(CALLER_META_HASH, config) {}
+    constructor(DeployerDiscoverableMetaV3ConstructionConfig memory config) FlowCommon(CALLER_META_HASH, config) {}
 
     /// Needed here to fix Open Zeppelin implementing `supportsInterface` on
     /// multiple base contracts.
@@ -114,11 +116,11 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
         uint256 sourceCount = LibBytecode.sourceCount(flowERC721Config.evaluableConfig.bytecode);
         bool evalHandleTransfer = sourceCount > 0
             && LibBytecode.sourceOpsCount(
-                flowERC721Config.evaluableConfig.bytecode, SourceIndex.unwrap(FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT)
+                flowERC721Config.evaluableConfig.bytecode, SourceIndexV2.unwrap(FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT)
             ) > 0;
         bool evalTokenURI = sourceCount > 1
             && LibBytecode.sourceOpsCount(
-                flowERC721Config.evaluableConfig.bytecode, SourceIndex.unwrap(FLOW_ERC721_TOKEN_URI_ENTRYPOINT)
+                flowERC721Config.evaluableConfig.bytecode, SourceIndexV2.unwrap(FLOW_ERC721_TOKEN_URI_ENTRYPOINT)
             ) > 0;
         sEvalHandleTransfer = evalHandleTransfer;
         sEvalTokenURI = evalTokenURI;
@@ -126,17 +128,9 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
         flowCommonInit(flowERC721Config.flowConfig, FLOW_ERC721_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            // Include the token URI min outputs if we expect to eval it,
-            // otherwise only include the handle transfer min outputs.
-            uint256[] memory minOutputs = evalTokenURI
-                ? LibUint256Array.arrayFrom(FLOW_ERC721_HANDLE_TRANSFER_MIN_OUTPUTS, FLOW_ERC721_TOKEN_URI_MIN_OUTPUTS)
-                : LibUint256Array.arrayFrom(FLOW_ERC721_HANDLE_TRANSFER_MIN_OUTPUTS);
-
-            (IInterpreterV1 interpreter, IInterpreterStoreV1 store, address expression) = flowERC721Config
-                .evaluableConfig
-                .deployer
-                .deployExpression(
-                flowERC721Config.evaluableConfig.bytecode, flowERC721Config.evaluableConfig.constants, minOutputs
+            (IInterpreterV2 interpreter, IInterpreterStoreV1 store, address expression, bytes memory io) =
+            flowERC721Config.evaluableConfig.deployer.deployExpression2(
+                flowERC721Config.evaluableConfig.bytecode, flowERC721Config.evaluableConfig.constants
             );
             // There's no way to set this before the external call because the
             // output of the `deployExpression` call is the input to `Evaluable`.
@@ -145,7 +139,7 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
             // integrity checks are complete.
             // The deployer MUST be a trusted contract anyway.
             // slither-disable-next-line reentrancy-benign
-            sEvaluable = Evaluable(interpreter, store, expression);
+            sEvaluable = EvaluableV2(interpreter, store, expression);
         }
 
         return ICLONEABLE_V2_SUCCESS;
@@ -167,14 +161,15 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
     /// @inheritdoc ERC721
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         if (sEvalTokenURI) {
-            Evaluable memory evaluable = sEvaluable;
-            (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval(
+            EvaluableV2 memory evaluable = sEvaluable;
+            (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                 evaluable.store,
-                DEFAULT_STATE_NAMESPACE,
-                LibEncodedDispatch.encode(
+                LibNamespace.qualifyNamespace(DEFAULT_STATE_NAMESPACE, address(this)),
+                LibEncodedDispatch.encode2(
                     evaluable.expression, FLOW_ERC721_TOKEN_URI_ENTRYPOINT, FLOW_ERC721_TOKEN_URI_MAX_OUTPUTS
                 ),
-                LibContext.build(LibUint256Array.arrayFrom(tokenId).matrixFrom(), new SignedContextV1[](0))
+                LibContext.build(LibUint256Array.arrayFrom(tokenId).matrixFrom(), new SignedContextV1[](0)),
+                new uint256[](0)
             );
             // @todo it would be nice if we could do something with the kvs here,
             // but the interface is view.
@@ -191,7 +186,7 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
     }
 
     /// @inheritdoc IFlowERC721V5
-    function flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
+    function flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         external
         virtual
         returns (FlowERC721IOV1 memory)
@@ -216,11 +211,11 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
             // Mint and burn access MUST be handled by flow.
             // HANDLE_TRANSFER will only restrict subsequent transfers.
             if (sEvalHandleTransfer && !(from == address(0) || to == address(0))) {
-                Evaluable memory evaluable = sEvaluable;
-                (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval(
+                EvaluableV2 memory evaluable = sEvaluable;
+                (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                     evaluable.store,
-                    DEFAULT_STATE_NAMESPACE,
-                    LibEncodedDispatch.encode(
+                    LibNamespace.qualifyNamespace(DEFAULT_STATE_NAMESPACE, address(this)),
+                    LibEncodedDispatch.encode2(
                         evaluable.expression,
                         FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
                         FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
@@ -231,7 +226,8 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
                         // transfer is NOT called for mints.
                         LibUint256Array.arrayFrom(uint256(uint160(from)), uint256(uint160(to)), tokenId).matrixFrom(),
                         new SignedContextV1[](0)
-                    )
+                    ),
+                    new uint256[](0)
                 );
                 (stack);
                 if (kvs.length > 0) {
@@ -277,12 +273,11 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, OwnableUpgradeable, FlowComm
     /// from the stack as additional sentinel separated tuples. The mints are
     /// consumed first, then the burns, then the remaining stack is converted to
     /// a flow as normal.
-    function _flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
-        internal
-        virtual
-        nonReentrant
-        returns (FlowERC721IOV1 memory)
-    {
+    function _flow(
+        EvaluableV2 memory evaluable,
+        uint256[] memory callerContext,
+        SignedContextV1[] memory signedContexts
+    ) internal virtual nonReentrant returns (FlowERC721IOV1 memory) {
         unchecked {
             (Pointer stackBottom, Pointer stackTop, uint256[] memory kvs) =
                 _flowStack(evaluable, callerContext, signedContexts);
