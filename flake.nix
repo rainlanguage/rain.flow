@@ -17,16 +17,22 @@
         packages = rec {
           concrete-contracts = ["Flow" "FlowERC20" "FlowERC721" "FlowERC1155"];
           build-meta-cmd = contract: ''
-            ${rain-cli} meta build \
-              -i <(${rain-cli} meta solc artifact -c abi -i out/${contract}.sol/${contract}.json) -m solidity-abi-v2 -t json -e deflate -l en \
-              -i src/concrete/${contract}.meta.json -m interpreter-caller-meta-v1 -t json -e deflate -l en \
+
+            if [[ ${contract} == "Flow" ]]; then
+                echo ${contract}
+            fi
+
+            # ${rain-cli} meta build \
+            #   -i <(${rain-cli} meta solc artifact -c abi -i out/${contract}.sol/${contract}.json) -m solidity-abi-v2 -t json -e deflate -l en \
+            #   -i src/concrete/${contract}.meta.json -m interpreter-caller-meta-v1 -t json -e deflate -l en \
           '';
           build-single-meta = contract: ''
             ${(build-meta-cmd contract)} -o meta/${contract}.rain.meta;
           '';
           build-meta = pkgs.writeShellScriptBin "build-meta" (''
           set -x;
-          forge build --force;
+          # forge build --force;
+          forge build;
           '' + pkgs.lib.concatStrings (map build-single-meta concrete-contracts));
 
           deploy-single-contract = contract: ''
