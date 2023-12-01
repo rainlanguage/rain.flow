@@ -17,22 +17,16 @@
         packages = rec {
           concrete-contracts = ["Flow" "FlowERC20" "FlowERC721" "FlowERC1155"];
           build-meta-cmd = contract: ''
-
-            if [[ ${contract} == "Flow" ]]; then
-                echo ${contract}
-            fi
-
-            # ${rain-cli} meta build \
-            #   -i <(${rain-cli} meta solc artifact -c abi -i out/${contract}.sol/${contract}.json) -m solidity-abi-v2 -t json -e deflate -l en \
-            #   -i src/concrete/${contract}.meta.json -m interpreter-caller-meta-v1 -t json -e deflate -l en \
+            ${rain-cli} meta build \
+              -i <(${rain-cli} meta solc artifact -c abi -i out/${contract}.sol/${contract}.json) -m solidity-abi-v2 -t json -e deflate -l en \
+              -i src/concrete/${contract}.meta.json -m interpreter-caller-meta-v1 -t json -e deflate -l en \
           '';
           build-single-meta = contract: ''
             ${(build-meta-cmd contract)} -o meta/${contract}.rain.meta;
           '';
           build-meta = pkgs.writeShellScriptBin "build-meta" (''
           set -x;
-          # forge build --force;
-          forge build;
+          forge build --force;
           '' + pkgs.lib.concatStrings (map build-single-meta concrete-contracts));
 
           deploy-single-contract = contract: ''
@@ -46,7 +40,17 @@
             forge build --force;
           '' + pkgs.lib.concatStrings (map deploy-single-contract concrete-contracts));
 
-          default = build-meta;
+          build-flow-basic-meta = pkgs.writeShellScriptBin "build-flow-basic-meta" (''
+            set -x;
+            forge build --force;
+
+            ${rain-cli} meta build \
+              -i <(${rain-cli} meta solc artifact -c abi -i out/Flow.sol/Flow.json) -m solidity-abi-v2 -t json -e deflate -l en \
+              -i src/concrete/basic/Flow.meta.json -m interpreter-caller-meta-v1 -t json -e deflate -l en \
+              -o meta/Flow.rain.meta;
+          '');
+
+          default = build-flow-basic-meta;
         };
       }
     );
