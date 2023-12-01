@@ -14,7 +14,7 @@ import {SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCaller
 
 /// @dev The hash of the meta data expected to be passed to `FlowCommon`'s
 /// constructor.
-bytes32 constant CALLER_META_HASH = bytes32(0x95de68a447a477b8fab10701f1265b3e85a98b24710b3e40e6a96aa6d76263bc);
+bytes32 constant CALLER_META_HASH = bytes32(0x3dddc3a0908473ad14f7aa1c9b37860b01a76e2a83f9ac81f50e07680ba83362);
 
 /// @title Flow
 /// See `IFlowV4` docs.
