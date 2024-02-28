@@ -19,19 +19,19 @@ import {
     FLOW_ERC20_MIN_FLOW_SENTINELS
 } from "../../interface/unstable/IFlowERC20V4.sol";
 import {LibBytecode} from "rain.interpreter.interface/lib/bytecode/LibBytecode.sol";
-import {EncodedDispatch, LibEncodedDispatch} from "rain.interpreter/src/lib/caller/LibEncodedDispatch.sol";
+import {EncodedDispatch, LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
 import {Sentinel, LibStackSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
+import {FlowCommon} from "../../abstract/FlowCommon.sol";
 import {
-    FlowCommon,
-    DeployerDiscoverableMetaV2,
-    DeployerDiscoverableMetaV2ConstructionConfig
-} from "../../abstract/FlowCommon.sol";
-import {SourceIndex, IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
-import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
+    SourceIndexV2,
+    IInterpreterV2,
+    DEFAULT_STATE_NAMESPACE
+} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
+import {IInterpreterStoreV1} from "rain.interpreter.interface/interface/IInterpreterStoreV1.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
-import {Evaluable, DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
-import {LibContext} from "rain.interpreter/src/lib/caller/LibContext.sol";
+import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
+import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 
 /// @dev The hash of the meta data expected to be passed to `FlowCommon`'s
 /// constructor.
