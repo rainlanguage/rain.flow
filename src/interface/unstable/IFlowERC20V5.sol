@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
+import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
 import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {
     FlowERC20IOV1,
     ERC20SupplyChange,
-    FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC20_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC20_MIN_FLOW_SENTINELS
 } from "../deprecated/v4/IFlowERC20V4.sol";
 import {RAIN_FLOW_SENTINEL} from "./IFlowV5.sol";
+
+SourceIndexV2 constant FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT = SourceIndexV2.wrap(0);
 
 /// Initialization config.
 /// @param name As per Open Zeppelin `ERC20Upgradeable`.

@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
-
+import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
 import {
     FlowERC721IOV1,
     ERC721SupplyChange,
@@ -11,10 +11,11 @@ import {
     FLOW_ERC721_TOKEN_URI_MAX_OUTPUTS,
     FLOW_ERC721_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS,
-    FLOW_ERC721_TOKEN_URI_ENTRYPOINT,
-    FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_MIN_FLOW_SENTINELS
 } from "../deprecated/v4/IFlowERC721V4.sol";
+
+SourceIndexV2 constant FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT = SourceIndexV2.wrap(0);
+SourceIndexV2 constant FLOW_ERC721_TOKEN_URI_ENTRYPOINT = SourceIndexV2.wrap(1);
 
 import {RAIN_FLOW_SENTINEL} from "../deprecated/v4/IFlowV4.sol";
 

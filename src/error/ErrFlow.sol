@@ -21,3 +21,10 @@ contract ErrFLow {}
 
 /// Thrown when burner of tokens is not the owner of tokens.
 error BurnerNotOwner();
+
+error UnsupportedHandleTransferInputs();
+error InsufficientHandleTransferOutputs();
+error UnsupportedTokenURIInputs();
+error InsufficientTokenURIOutputs();
+error UnsupportedFlowInputs();
+error InsufficientFlowOutputs();

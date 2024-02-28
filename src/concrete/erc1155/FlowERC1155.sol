@@ -32,6 +32,11 @@ import {LibFlow} from "../../lib/LibFlow.sol";
 import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
 import {FlowCommon, ERC1155Receiver} from "../../abstract/FlowCommon.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
+import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/LibNamespace.sol";
+import {
+    InsufficientHandleTransferOutputs,
+    UnsupportedHandleTransferInputs
+} from "../../error/ErrFlow.sol";
 
 /// @title FlowERC1155
 /// See `IFlowERC1155V4` for documentation.
@@ -39,6 +44,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
     using LibStackSentinel for Pointer;
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
+    using LibNamespace for StateNamespace;
 
     /// True if the evaluable needs to be called on every transfer.
     bool private sEvalHandleTransfer;
@@ -68,14 +74,32 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
         flowCommonInit(flowERC1155Config.flowConfig, FLOW_ERC1155_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression) = flowERC1155Config
+            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) = flowERC1155Config
                 .evaluableConfig
                 .deployer
                 .deployExpression2(
                 flowERC1155Config.evaluableConfig.bytecode,
-                flowERC1155Config.evaluableConfig.constants,
-                LibUint256Array.arrayFrom(FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS)
+                flowERC1155Config.evaluableConfig.constants
             );
+
+            {
+                uint256 handleTransferInputs;
+                uint256 handleTransferOutputs;
+                assembly ("memory-safe") {
+                    let ioWord := mload(add(io, 0x20))
+                    handleTransferInputs := byte(0, ioWord)
+                    handleTransferOutputs := byte(1, ioWord)
+                }
+
+                if (handleTransferInputs != 0) {
+                    revert UnsupportedHandleTransferInputs();
+                }
+
+                if (handleTransferOutputs < FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS) {
+                    revert InsufficientHandleTransferOutputs();
+                }
+            }
+
             // There's no way to set this before the external call because the
             // output of the `deployExpression` call is the input to `Evaluable`.
             // Even if we could set it before the external call, we wouldn't want
@@ -134,13 +158,14 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
 
                 (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                     evaluable.store,
-                    DEFAULT_STATE_NAMESPACE,
+                    DEFAULT_STATE_NAMESPACE.qualifyNamespace(address(this)),
                     LibEncodedDispatch.encode2(
                         evaluable.expression,
                         FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
                         FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
                     ),
-                    context
+                    context,
+                    new uint256[](0)
                 );
                 (stack);
                 if (kvs.length > 0) {

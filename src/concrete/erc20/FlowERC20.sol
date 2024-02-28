@@ -32,6 +32,8 @@ import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
+import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/LibNamespace.sol";
+import {UnsupportedHandleTransferInputs, InsufficientHandleTransferOutputs} from "../../error/ErrFlow.sol";
 
 /// @dev The hash of the meta data expected to be passed to `FlowCommon`'s
 /// constructor.
@@ -43,6 +45,7 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {
     using LibStackSentinel for Pointer;
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
+    using LibNamespace for StateNamespace;
 
     /// @dev True if we need to eval `handleTransfer` on every transfer. For many
     /// tokens this will be false, so we don't want to invoke the external
@@ -75,14 +78,31 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {
         flowCommonInit(flowERC20Config.flowConfig, FLOW_ERC20_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression) = flowERC20Config
+            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) = flowERC20Config
                 .evaluableConfig
                 .deployer
                 .deployExpression2(
                 flowERC20Config.evaluableConfig.bytecode,
-                flowERC20Config.evaluableConfig.constants,
-                LibUint256Array.arrayFrom(FLOW_ERC20_HANDLE_TRANSFER_MIN_OUTPUTS)
-            );
+                flowERC20Config.evaluableConfig.constants);
+
+            {
+                uint256 handleTransferInputs;
+                uint256 handleTransferOutputs;
+                assembly ("memory-safe") {
+                    let ioWord := mload(add(io, 0x20))
+                    handleTransferInputs := byte(0, ioWord)
+                    handleTransferOutputs := byte(1, ioWord)
+                }
+
+                if (handleTransferInputs != 0) {
+                    revert UnsupportedHandleTransferInputs();
+                }
+
+                if (handleTransferOutputs < FLOW_ERC20_HANDLE_TRANSFER_MIN_OUTPUTS) {
+                    revert InsufficientHandleTransferOutputs();
+                }
+            }
+
             // There's no way to set this before the external call because the
             // output of the `deployExpression` call is the input to `Evaluable`.
             // Even if we could set it before the external call, we wouldn't want
@@ -126,7 +146,7 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {
                 EvaluableV2 memory evaluable = sEvaluable;
                 (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                     evaluable.store,
-                    DEFAULT_STATE_NAMESPACE,
+                    DEFAULT_STATE_NAMESPACE.qualifyNamespace(address(this)),
                     LibEncodedDispatch.encode2(
                         evaluable.expression,
                         FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT,
@@ -137,7 +157,8 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {
                         // is triggering the transfer.
                         LibUint256Array.arrayFrom(uint256(uint160(from)), uint256(uint160(to)), amount).matrixFrom(),
                         new SignedContextV1[](0)
-                    )
+                    ),
+                    new uint256[](0)
                 );
                 (stack);
                 if (kvs.length > 0) {
