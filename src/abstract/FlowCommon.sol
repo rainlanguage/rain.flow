@@ -3,8 +3,8 @@ pragma solidity =0.8.19;
 
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
-import {IInterpreterCallerV2, SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import {LibEncodedDispatch} from "rain.interpreter/src/lib/caller/LibEncodedDispatch.sol";
+import {IInterpreterCallerV2, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
 import {LibContext} from "rain.interpreter/src/lib/caller/LibContext.sol";
 import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/unstable/IFlowV4.sol";
 import {
@@ -14,11 +14,10 @@ import {
 import {
     LibEvaluable,
     Evaluable,
-    EvaluableConfigV2,
+    EvaluableConfigV3,
     DEFAULT_STATE_NAMESPACE
 } from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
-import {SourceIndex, IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
-import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
+import {SourceIndexV2, IInterpreterV2, IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
 
 import {MulticallUpgradeable as Multicall} from
     "openzeppelin-contracts-upgradeable/contracts/utils/MulticallUpgradeable.sol";
@@ -41,7 +40,7 @@ error BadMinStackLength(uint256 flowMinOutputs);
 /// @dev The entrypoint for a flow is always `0` because each flow has its own
 /// evaluable with its own entrypoint. Running multiple flows involves evaluating
 /// several expressions in sequence.
-SourceIndex constant FLOW_ENTRYPOINT = SourceIndex.wrap(0);
+SourceIndexV2 constant FLOW_ENTRYPOINT = SourceIndexV2.wrap(0);
 /// @dev There is no maximum number of outputs for a flow. Pragmatically gas will
 /// limit the number of outputs well before this limit is reached.
 uint16 constant FLOW_MAX_OUTPUTS = type(uint16).max;
@@ -149,7 +148,7 @@ abstract contract FlowCommon is
                 revert BadMinStackLength(flowMinOutputs);
             }
 
-            EvaluableConfigV2 memory config;
+            EvaluableConfigV3 memory config;
             Evaluable memory evaluable;
             // Every evaluable MUST deploy cleanly (e.g. pass integrity checks)
             // otherwise the entire initialization will fail.
@@ -161,9 +160,9 @@ abstract contract FlowCommon is
                 // Reentrancy is just one of many ways that a malicious deployer
                 // can cause problems, and it's probably the least of your
                 // worries if you're using a malicious deployer.
-                (IInterpreterV1 interpreter, IInterpreterStoreV1 store, address expression) = config
+                (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression) = config
                     .deployer
-                    .deployExpression(config.bytecode, config.constants, LibUint256Array.arrayFrom(flowMinOutputs));
+                    .deployExpression2(config.bytecode, config.constants, LibUint256Array.arrayFrom(flowMinOutputs));
                 evaluable = Evaluable(interpreter, store, expression);
                 // There's no way to set this mapping before the external
                 // contract call because the output of the external contract
