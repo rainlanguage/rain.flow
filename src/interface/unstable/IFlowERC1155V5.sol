@@ -19,18 +19,18 @@ SourceIndexV2 constant FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT = SourceIndexV2.w
 
 /// Initialization config.
 /// @param uri As per Open Zeppelin `ERC1155Upgradeable`.
-/// @param evaluableConfig The `EvaluableConfigV2` to use to build the
-/// `evaluable` that can be used to handle transfers.
+/// @param evaluableConfig Config to use to build the `evaluable` that can be
+/// used to handle transfers.
 /// @param flowConfig Initialization config for the `Evaluable`s that define the
 /// flow behaviours outside self mints/burns.
-struct FlowERC1155ConfigV2 {
+struct FlowERC1155ConfigV3 {
     string uri;
     EvaluableConfigV3 evaluableConfig;
     EvaluableConfigV3[] flowConfig;
 }
 
-/// @title IFlowERC1155V4
-/// Conceptually identical to `IFlowV4`, but the flow contract itself is an
+/// @title IFlowERC1155V5
+/// Conceptually identical to `IFlowV5`, but the flow contract itself is an
 /// ERC1155 token. This means that ERC1155 self mints and burns are included in
 /// the stack that the flows must evaluate to. As stacks are processed by flow
 /// from bottom to top, this means that the self mint/burn will be the last thing
@@ -42,12 +42,12 @@ struct FlowERC1155ConfigV2 {
 /// allows expression authors to prevent transfers from occurring if they don't
 /// want them to, by reverting within the expression.
 ///
-/// Otherwise the flow contract is identical to `IFlowV4`.
-interface IFlowERC1155V4 {
+/// Otherwise the flow contract is identical to `IFlowV5`.
+interface IFlowERC1155V5 {
     /// Contract has initialized.
     /// @param sender `msg.sender` initializing the contract (factory).
     /// @param config All initialized config.
-    event Initialize(address sender, FlowERC1155ConfigV2 config);
+    event Initialize(address sender, FlowERC1155ConfigV3 config);
 
     /// As per `IFlowV4` but returns a `FlowERC1155IOV1` instead of a
     /// `FlowTransferV1`.

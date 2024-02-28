@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {EvaluableConfigV2, Evaluable} from "rain.interpreter.interface/interface/deprecated/IInterpreterCallerV1.sol";
+import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
@@ -23,8 +24,8 @@ import {
 /// flow behaviours outside self mints/burns.
 struct FlowERC1155ConfigV2 {
     string uri;
-    EvaluableConfigV3 evaluableConfig;
-    EvaluableConfigV3[] flowConfig;
+    EvaluableConfigV2 evaluableConfig;
+    EvaluableConfigV2[] flowConfig;
 }
 
 /// @title IFlowERC1155V4
@@ -61,7 +62,7 @@ interface IFlowERC1155V4 {
     /// @return flowERC1155IO The `FlowERC1155IOV1` representing all token
     /// mint/burns and transfers that occurred during the flow.
     function flow(
-        EvaluableV2 calldata evaluable,
+        Evaluable calldata evaluable,
         uint256[] calldata callerContext,
         SignedContextV1[] calldata signedContexts
     ) external returns (FlowERC1155IOV1 calldata);

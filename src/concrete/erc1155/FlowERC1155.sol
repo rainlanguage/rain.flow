@@ -10,23 +10,23 @@ import {ICloneableV2, ICLONEABLE_V2_SUCCESS} from "rain.factory/src/interface/IC
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {
-    IFlowERC1155V4,
+    IFlowERC1155V5,
     FlowERC1155IOV1,
     SignedContextV1,
-    FlowERC1155ConfigV2,
+    FlowERC1155ConfigV3,
     ERC1155SupplyChange,
     RAIN_FLOW_SENTINEL,
     FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS,
-    FLOW_ERC1155_MIN_FLOW_SENTINELS
+    FLOW_ERC1155_MIN_FLOW_SENTINELS,
+    EvaluableV2
 } from "../../interface/unstable/IFlowERC1155V5.sol";
 import {LibBytecode} from "rain.interpreter.interface/lib/bytecode/LibBytecode.sol";
 import {
     IInterpreterV2, DEFAULT_STATE_NAMESPACE
 } from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterStoreV2.sol";
-import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
 import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
@@ -36,8 +36,8 @@ import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/Li
 import {InsufficientHandleTransferOutputs, UnsupportedHandleTransferInputs} from "../../error/ErrFlow.sol";
 
 /// @title FlowERC1155
-/// See `IFlowERC1155V4` for documentation.
-contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
+/// See `IFlowERC1155V5` for documentation.
+contract FlowERC1155 is ICloneableV2, IFlowERC1155V5, FlowCommon, ERC1155 {
     using LibStackSentinel for Pointer;
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
@@ -51,13 +51,13 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
 
     /// Overloaded typed initialize function MUST revert with this error.
     /// As per `ICloneableV2` interface.
-    function initialize(FlowERC1155ConfigV2 memory) external pure {
+    function initialize(FlowERC1155ConfigV3 memory) external pure {
         revert InitializeSignatureFn();
     }
 
     /// @inheritdoc ICloneableV2
     function initialize(bytes calldata data) external initializer returns (bytes32) {
-        FlowERC1155ConfigV2 memory flowERC1155Config = abi.decode(data, (FlowERC1155ConfigV2));
+        FlowERC1155ConfigV3 memory flowERC1155Config = abi.decode(data, (FlowERC1155ConfigV3));
         emit Initialize(msg.sender, flowERC1155Config);
         __ERC1155_init(flowERC1155Config.uri);
 
@@ -169,7 +169,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
         }
     }
 
-    /// @inheritdoc IFlowERC1155V4
+    /// @inheritdoc IFlowERC1155V5
     function stackToFlow(uint256[] memory stack)
         external
         pure
@@ -179,7 +179,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
         return _stackToFlow(stack.dataPointer(), stack.endPointer());
     }
 
-    /// @inheritdoc IFlowERC1155V4
+    /// @inheritdoc IFlowERC1155V5
     function flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         external
         virtual
