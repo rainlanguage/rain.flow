@@ -50,7 +50,8 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {
 
     /// @dev The evaluable that will be used to evaluate `handleTransfer` on
     /// every transfer. This is only set if `sEvalHandleTransfer` is true.
-    EvaluableV2 internal sEvaluable;
+    EvaluableV2 internal sEvaluable =
+        EvaluableV2(IInterpreterV2(address(0)), IInterpreterStoreV2(address(0)), address(0));
 
     /// Overloaded typed initialize function MUST revert with this error.
     /// As per `ICloneableV2` interface.
