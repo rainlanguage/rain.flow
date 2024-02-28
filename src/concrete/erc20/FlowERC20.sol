@@ -35,10 +35,6 @@ import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/LibNamespace.sol";
 import {UnsupportedHandleTransferInputs, InsufficientHandleTransferOutputs} from "../../error/ErrFlow.sol";
 
-/// @dev The hash of the meta data expected to be passed to `FlowCommon`'s
-/// constructor.
-bytes32 constant CALLER_META_HASH = bytes32(0xff0499e4ee7171a54d176cfe13165a7ea512d146dbd99d42b3d3ec9963025acf);
-
 /// @title FlowERC20
 /// See `IFlowERC20V5` for documentation.
 contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {

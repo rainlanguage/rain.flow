@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {EvaluableConfigV2, Evaluable} from "rain.interpreter.interface/interface/deprecated/IInterpreterCallerV1.sol";
+import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
@@ -122,7 +123,7 @@ interface IFlowV4 {
     /// MUST be emitted when the flow contract is initialized.
     /// @param sender The EOA that deployed the flow contract.
     /// @param config The list of evaluable configs that define the flows.
-    event Initialize(address sender, EvaluableConfigV3[] config);
+    event Initialize(address sender, EvaluableConfigV2[] config);
 
     /// Given a stack of values, convert it to a flow transfer. MUST NOT modify
     /// state but MAY revert if the stack is malformed. The intended workflow is
@@ -151,7 +152,7 @@ interface IFlowV4 {
     /// @param signedContexts The signed contexts to pass to the evaluable.
     /// @return flowTransfer The resulting flow transfer.
     function flow(
-        EvaluableV2 calldata evaluable,
+        Evaluable calldata evaluable,
         uint256[] calldata callerContext,
         SignedContextV1[] calldata signedContexts
     ) external returns (FlowTransferV1 calldata flowTransfer);
