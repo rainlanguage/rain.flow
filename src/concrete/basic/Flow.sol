@@ -3,7 +3,7 @@ pragma solidity =0.8.19;
 
 import {ICloneableV2, ICLONEABLE_V2_SUCCESS} from "rain.factory/src/interface/ICloneableV2.sol";
 import {FlowCommon, LibContext} from "../../abstract/FlowCommon.sol";
-import {IFlowV4, MIN_FLOW_SENTINELS, FlowTransferV1} from "../../interface/unstable/IFlowV5.sol";
+import {IFlowV5, MIN_FLOW_SENTINELS, FlowTransferV1} from "../../interface/unstable/IFlowV5.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
@@ -12,8 +12,8 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 
 /// @title Flow
-/// See `IFlowV4` docs.
-contract Flow is ICloneableV2, IFlowV4, FlowCommon {
+/// See `IFlowV5` docs.
+contract Flow is ICloneableV2, IFlowV5, FlowCommon {
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
 
@@ -32,12 +32,12 @@ contract Flow is ICloneableV2, IFlowV4, FlowCommon {
         return ICLONEABLE_V2_SUCCESS;
     }
 
-    /// @inheritdoc IFlowV4
+    /// @inheritdoc IFlowV5
     function stackToFlow(uint256[] memory stack) external pure virtual override returns (FlowTransferV1 memory) {
         return LibFlow.stackToFlow(stack.dataPointer(), stack.endPointer());
     }
 
-    /// @inheritdoc IFlowV4
+    /// @inheritdoc IFlowV5
     function flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         external
         virtual

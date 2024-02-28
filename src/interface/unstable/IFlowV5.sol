@@ -16,7 +16,7 @@ import {
 } from "../deprecated/v4/IFlowV4.sol";
 import {UnregisteredFlow} from "../../error/ErrFlow.sol";
 
-/// @title IFlowV4
+/// @title IFlowV5
 /// @notice Interface for a flow contract that does NOT require native minting
 /// or burning of itself as a token. This is the base case that all other flow
 /// interfaces model themselves after, with the addition of token minting and
@@ -119,7 +119,7 @@ import {UnregisteredFlow} from "../../error/ErrFlow.sol";
 /// native gas movements. This will be fixed in a future version of the interface
 /// where batching is handled by the flow contract itself, rather than relying
 /// on `Multicall`.
-interface IFlowV4 {
+interface IFlowV5 {
     /// MUST be emitted when the flow contract is initialized.
     /// @param sender The EOA that deployed the flow contract.
     /// @param config The list of evaluable configs that define the flows.
