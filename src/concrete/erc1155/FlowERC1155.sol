@@ -33,9 +33,6 @@ import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInte
 import {FlowCommon, ERC1155Receiver} from "../../abstract/FlowCommon.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 
-/// @dev The hash of the meta data expected by the `FlowCommon` constructor.
-bytes32 constant CALLER_META_HASH = bytes32(0x7ea70f837234357ec1bb5b777e04453ebaf3ca778a98805c4bb20a738d559a21);
-
 /// @title FlowERC1155
 /// See `IFlowERC1155V4` for documentation.
 contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
@@ -47,10 +44,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
     bool private sEvalHandleTransfer;
 
     /// The `Evaluable` that handles transfers.
-    Evaluable internal sEvaluable;
-
-    /// Forwards the `FlowCommon` constructor.
-    constructor(DeployerDiscoverableMetaV2ConstructionConfig memory config) FlowCommon(CALLER_META_HASH, config) {}
+    EvaluableV2 internal sEvaluable;
 
     /// Overloaded typed initialize function MUST revert with this error.
     /// As per `ICloneableV2` interface.
@@ -67,7 +61,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
         // Set state before external calls here.
         bool evalHandleTransfer = LibBytecode.sourceCount(flowERC1155Config.evaluableConfig.bytecode) > 0
             && LibBytecode.sourceOpsCount(
-                flowERC1155Config.evaluableConfig.bytecode, SourceIndex.unwrap(FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT)
+                flowERC1155Config.evaluableConfig.bytecode, SourceIndexV2.unwrap(FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT)
             ) > 0;
         sEvalHandleTransfer = evalHandleTransfer;
 
@@ -167,7 +161,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
     }
 
     /// @inheritdoc IFlowERC1155V4
-    function flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
+    function flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         external
         virtual
         returns (FlowERC1155IOV1 memory)
@@ -207,7 +201,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
     /// of the flow contract itself. This involves consuming the mint/burn
     /// sentinels from the stack and minting/burning the tokens accordingly, then
     /// calling `LibFlow.flow` to handle the rest of the flow.
-    function _flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
+    function _flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         internal
         virtual
         nonReentrant
