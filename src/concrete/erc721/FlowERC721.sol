@@ -64,7 +64,8 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
     /// @dev The evaluable that contains the entrypoints for `handleTransfer` and
     /// `tokenURI`. This is only set if `sEvalHandleTransfer` or `sEvalTokenURI`
     /// is true.
-    EvaluableV2 internal sEvaluable;
+    EvaluableV2 internal sEvaluable =
+        EvaluableV2(IInterpreterV2(address(0)), IInterpreterStoreV2(address(0)), address(0));
 
     /// @dev The base URI for all token URIs. This is set during initialization
     /// and cannot be changed. The token URI evaluable can be used for dynamic
