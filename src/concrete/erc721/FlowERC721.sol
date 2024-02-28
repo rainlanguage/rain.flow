@@ -35,11 +35,13 @@ import {
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterStoreV2.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {BurnerNotOwner} from "../../error/ErrFlow.sol";
-
-
-/// @dev The hash of the meta data expected to be passed to `FlowCommon`'s
-/// constructor.
-bytes32 constant CALLER_META_HASH = bytes32(0xf0003e81ff90467c9933f3ac68db3ca49df8b30ab83a0b88e1ed8381ed28fdd6);
+import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/LibNamespace.sol";
+import {
+    InsufficientHandleTransferOutputs,
+    InsufficientTokenURIOutputs,
+    UnsupportedHandleTransferInputs,
+    UnsupportedTokenURIInputs
+} from "../../error/ErrFlow.sol";
 
 /// @title FlowERC721
 /// See `IFlowERC721V4` for documentation.
@@ -110,18 +112,43 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
         flowCommonInit(flowERC721Config.flowConfig, FLOW_ERC721_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            // Include the token URI min outputs if we expect to eval it,
-            // otherwise only include the handle transfer min outputs.
-            uint256[] memory minOutputs = evalTokenURI
-                ? LibUint256Array.arrayFrom(FLOW_ERC721_HANDLE_TRANSFER_MIN_OUTPUTS, FLOW_ERC721_TOKEN_URI_MIN_OUTPUTS)
-                : LibUint256Array.arrayFrom(FLOW_ERC721_HANDLE_TRANSFER_MIN_OUTPUTS);
-
-            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression) = flowERC721Config
+            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) = flowERC721Config
                 .evaluableConfig
                 .deployer
                 .deployExpression2(
-                flowERC721Config.evaluableConfig.bytecode, flowERC721Config.evaluableConfig.constants, minOutputs
+                flowERC721Config.evaluableConfig.bytecode, flowERC721Config.evaluableConfig.constants
             );
+
+            {
+                uint256 handleTransferInputs;
+                uint256 handleTransferOutputs;
+                uint256 tokenURIInputs;
+                uint256 tokenURIOutputs;
+                assembly ("memory-safe") {
+                    let ioWords := add(io, 0x20)
+                    handleTransferInputs := byte(0, ioWords)
+                    handleTransferOutputs := byte(1, ioWords)
+                    tokenURIInputs := byte(2, ioWords)
+                    tokenURIOutputs := byte(3, ioWords)
+                }
+
+                if (handleTransferInputs != 0) {
+                    revert UnsupportedHandleTransferInputs();
+                }
+
+                if (handleTransferOutputs < FLOW_ERC721_HANDLE_TRANSFER_MIN_OUTPUTS) {
+                    revert InsufficientHandleTransferOutputs();
+                }
+
+                if (evalTokenURI && tokenURIInputs != 0) {
+                    revert UnsupportedTokenURIInputs();
+                }
+
+                if (evalTokenURI && tokenURIOutputs < FLOW_ERC721_TOKEN_URI_MIN_OUTPUTS) {
+                    revert InsufficientTokenURIOutputs();
+                }
+            }
+
             // There's no way to set this before the external call because the
             // output of the `deployExpression` call is the input to `Evaluable`.
             // Even if we could set it before the external call, we wouldn't want
@@ -154,11 +181,12 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
             EvaluableV2 memory evaluable = sEvaluable;
             (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                 evaluable.store,
-                DEFAULT_STATE_NAMESPACE,
+                DEFAULT_STATE_NAMESPACE.qualifyNamespace(address(this)),
                 LibEncodedDispatch.encode2(
                     evaluable.expression, FLOW_ERC721_TOKEN_URI_ENTRYPOINT, FLOW_ERC721_TOKEN_URI_MAX_OUTPUTS
                 ),
-                LibContext.build(LibUint256Array.arrayFrom(tokenId).matrixFrom(), new SignedContextV1[](0))
+                LibContext.build(LibUint256Array.arrayFrom(tokenId).matrixFrom(), new SignedContextV1[](0)),
+                new uint256[](0)
             );
             // @todo it would be nice if we could do something with the kvs here,
             // but the interface is view.
