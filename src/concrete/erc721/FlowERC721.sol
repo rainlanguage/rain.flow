@@ -112,10 +112,8 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
         flowCommonInit(flowERC721Config.flowConfig, FLOW_ERC721_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) = flowERC721Config
-                .evaluableConfig
-                .deployer
-                .deployExpression2(
+            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) =
+            flowERC721Config.evaluableConfig.deployer.deployExpression2(
                 flowERC721Config.evaluableConfig.bytecode, flowERC721Config.evaluableConfig.constants
             );
 
@@ -290,12 +288,11 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
     /// from the stack as additional sentinel separated tuples. The mints are
     /// consumed first, then the burns, then the remaining stack is converted to
     /// a flow as normal.
-    function _flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
-        internal
-        virtual
-        nonReentrant
-        returns (FlowERC721IOV1 memory)
-    {
+    function _flow(
+        EvaluableV2 memory evaluable,
+        uint256[] memory callerContext,
+        SignedContextV1[] memory signedContexts
+    ) internal virtual nonReentrant returns (FlowERC721IOV1 memory) {
         unchecked {
             (Pointer stackBottom, Pointer stackTop, uint256[] memory kvs) =
                 _flowStack(evaluable, callerContext, signedContexts);

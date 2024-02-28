@@ -30,10 +30,7 @@ import {ReentrancyGuardUpgradeable as ReentrancyGuard} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/LibNamespace.sol";
-import {
-    UnsupportedFlowInputs,
-    InsufficientFlowOutputs
-} from "../error/ErrFlow.sol";
+import {UnsupportedFlowInputs, InsufficientFlowOutputs} from "../error/ErrFlow.sol";
 
 /// Thrown when the min outputs for a flow is fewer than the sentinels.
 /// This is always an implementation bug as the min outputs and sentinel count
@@ -154,9 +151,8 @@ abstract contract FlowCommon is ERC721Holder, ERC1155Holder, Multicall, Reentran
                 // Reentrancy is just one of many ways that a malicious deployer
                 // can cause problems, and it's probably the least of your
                 // worries if you're using a malicious deployer.
-                (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) = config
-                    .deployer
-                    .deployExpression2(config.bytecode, config.constants);
+                (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) =
+                    config.deployer.deployExpression2(config.bytecode, config.constants);
 
                 {
                     uint256 flowInputs;

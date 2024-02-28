@@ -78,12 +78,10 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {
         flowCommonInit(flowERC20Config.flowConfig, FLOW_ERC20_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) = flowERC20Config
-                .evaluableConfig
-                .deployer
-                .deployExpression2(
-                flowERC20Config.evaluableConfig.bytecode,
-                flowERC20Config.evaluableConfig.constants);
+            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) =
+            flowERC20Config.evaluableConfig.deployer.deployExpression2(
+                flowERC20Config.evaluableConfig.bytecode, flowERC20Config.evaluableConfig.constants
+            );
 
             {
                 uint256 handleTransferInputs;
@@ -203,12 +201,11 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {
     /// the mints and burns from the `FlowERC20IOV1` struct. The mints are
     /// processed first, then the burns, then the remaining flow is processed
     /// as normal.
-    function _flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
-        internal
-        virtual
-        nonReentrant
-        returns (FlowERC20IOV1 memory)
-    {
+    function _flow(
+        EvaluableV2 memory evaluable,
+        uint256[] memory callerContext,
+        SignedContextV1[] memory signedContexts
+    ) internal virtual nonReentrant returns (FlowERC20IOV1 memory) {
         unchecked {
             (Pointer stackBottom, Pointer stackTop, uint256[] memory kvs) =
                 _flowStack(evaluable, callerContext, signedContexts);

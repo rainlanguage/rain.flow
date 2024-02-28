@@ -14,9 +14,7 @@ import {
     RAIN_FLOW_SENTINEL,
     MIN_FLOW_SENTINELS
 } from "../deprecated/v4/IFlowV4.sol";
-import {
-    UnregisteredFlow
-} from "../../error/ErrFlow.sol";
+import {UnregisteredFlow} from "../../error/ErrFlow.sol";
 
 /// @title IFlowV4
 /// @notice Interface for a flow contract that does NOT require native minting
