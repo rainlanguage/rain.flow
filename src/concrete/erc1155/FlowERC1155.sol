@@ -21,7 +21,7 @@ import {
     FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC1155_MIN_FLOW_SENTINELS
 } from "../../interface/unstable/IFlowERC1155V4.sol";
-// import {LibBytecode} from "lib/rain.interpreter/src/lib/bytecode/LibBytecode.sol";
+import {LibBytecode} from "rain.interpreter.interface/lib/bytecode/LibBytecode.sol";
 import {IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
 import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
 import {Evaluable, DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
