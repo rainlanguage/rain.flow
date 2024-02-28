@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import {EvaluableConfigV2, Evaluable} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
+import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 
@@ -12,14 +12,11 @@ import {
     ERC721Transfer,
     ERC1155Transfer,
     RAIN_FLOW_SENTINEL,
-    UnregisteredFlow,
-    UnsupportedERC20Flow,
-    UnsupportedERC721Flow,
-    UnsupportedERC1155Flow,
     MIN_FLOW_SENTINELS
-} from "../IFlowV3.sol";
+} from "../deprecated/v4/IFlowV4.sol";
+import {UnregisteredFlow} from "../../error/ErrFlow.sol";
 
-/// @title IFlowV4
+/// @title IFlowV5
 /// @notice Interface for a flow contract that does NOT require native minting
 /// or burning of itself as a token. This is the base case that all other flow
 /// interfaces model themselves after, with the addition of token minting and
@@ -122,11 +119,11 @@ import {
 /// native gas movements. This will be fixed in a future version of the interface
 /// where batching is handled by the flow contract itself, rather than relying
 /// on `Multicall`.
-interface IFlowV4 {
+interface IFlowV5 {
     /// MUST be emitted when the flow contract is initialized.
     /// @param sender The EOA that deployed the flow contract.
     /// @param config The list of evaluable configs that define the flows.
-    event Initialize(address sender, EvaluableConfigV2[] config);
+    event Initialize(address sender, EvaluableConfigV3[] config);
 
     /// Given a stack of values, convert it to a flow transfer. MUST NOT modify
     /// state but MAY revert if the stack is malformed. The intended workflow is
@@ -155,7 +152,7 @@ interface IFlowV4 {
     /// @param signedContexts The signed contexts to pass to the evaluable.
     /// @return flowTransfer The resulting flow transfer.
     function flow(
-        Evaluable calldata evaluable,
+        EvaluableV2 calldata evaluable,
         uint256[] calldata callerContext,
         SignedContextV1[] calldata signedContexts
     ) external returns (FlowTransferV1 calldata flowTransfer);

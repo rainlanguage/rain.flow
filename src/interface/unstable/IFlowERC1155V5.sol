@@ -1,34 +1,36 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import {Evaluable, EvaluableConfigV2} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
+import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
+import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
-import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
+import {RAIN_FLOW_SENTINEL} from "./IFlowV5.sol";
 
 import {
     FlowERC1155IOV1,
     ERC1155SupplyChange,
     FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS,
-    FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC1155_MIN_FLOW_SENTINELS
-} from "../IFlowERC1155V3.sol";
+} from "../deprecated/v4/IFlowERC1155V4.sol";
+
+SourceIndexV2 constant FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT = SourceIndexV2.wrap(0);
 
 /// Initialization config.
 /// @param uri As per Open Zeppelin `ERC1155Upgradeable`.
-/// @param evaluableConfig The `EvaluableConfigV2` to use to build the
-/// `evaluable` that can be used to handle transfers.
+/// @param evaluableConfig Config to use to build the `evaluable` that can be
+/// used to handle transfers.
 /// @param flowConfig Initialization config for the `Evaluable`s that define the
 /// flow behaviours outside self mints/burns.
-struct FlowERC1155ConfigV2 {
+struct FlowERC1155ConfigV3 {
     string uri;
-    EvaluableConfigV2 evaluableConfig;
-    EvaluableConfigV2[] flowConfig;
+    EvaluableConfigV3 evaluableConfig;
+    EvaluableConfigV3[] flowConfig;
 }
 
-/// @title IFlowERC1155V4
-/// Conceptually identical to `IFlowV4`, but the flow contract itself is an
+/// @title IFlowERC1155V5
+/// Conceptually identical to `IFlowV5`, but the flow contract itself is an
 /// ERC1155 token. This means that ERC1155 self mints and burns are included in
 /// the stack that the flows must evaluate to. As stacks are processed by flow
 /// from bottom to top, this means that the self mint/burn will be the last thing
@@ -40,12 +42,12 @@ struct FlowERC1155ConfigV2 {
 /// allows expression authors to prevent transfers from occurring if they don't
 /// want them to, by reverting within the expression.
 ///
-/// Otherwise the flow contract is identical to `IFlowV4`.
-interface IFlowERC1155V4 {
+/// Otherwise the flow contract is identical to `IFlowV5`.
+interface IFlowERC1155V5 {
     /// Contract has initialized.
     /// @param sender `msg.sender` initializing the contract (factory).
     /// @param config All initialized config.
-    event Initialize(address sender, FlowERC1155ConfigV2 config);
+    event Initialize(address sender, FlowERC1155ConfigV3 config);
 
     /// As per `IFlowV4` but returns a `FlowERC1155IOV1` instead of a
     /// `FlowTransferV1`.
@@ -61,7 +63,7 @@ interface IFlowERC1155V4 {
     /// @return flowERC1155IO The `FlowERC1155IOV1` representing all token
     /// mint/burns and transfers that occurred during the flow.
     function flow(
-        Evaluable calldata evaluable,
+        EvaluableV2 calldata evaluable,
         uint256[] calldata callerContext,
         SignedContextV1[] calldata signedContexts
     ) external returns (FlowERC1155IOV1 calldata);

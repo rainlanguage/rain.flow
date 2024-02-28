@@ -1,24 +1,18 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {IFlowV4, RAIN_FLOW_SENTINEL} from "../interface/unstable/IFlowV4.sol";
+import {IFlowV5, RAIN_FLOW_SENTINEL} from "../interface/unstable/IFlowV5.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
-import {
-    FlowTransferV1,
-    ERC20Transfer,
-    ERC721Transfer,
-    ERC1155Transfer,
-    UnsupportedERC20Flow,
-    UnsupportedERC721Flow,
-    UnsupportedERC1155Flow
-} from "../interface/unstable/IFlowV4.sol";
-import {IInterpreterStoreV1, DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
+import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "../interface/unstable/IFlowV5.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterStoreV2.sol";
 import {LibStackSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
+import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
 
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
+import {UnsupportedERC20Flow, UnsupportedERC721Flow, UnsupportedERC1155Flow} from "../error/ErrFlow.sol";
 
 /// @title LibFlow
 /// Standard processing used by all variants of `Flow`. These utilities can't
@@ -135,7 +129,7 @@ library LibFlow {
     /// @param flowTransfer The `FlowTransferV1` to process.
     /// @param interpreterStore The `IInterpreterStoreV1` to set state on.
     /// @param kvs The key value pairs to set on the interpreter store.
-    function flow(FlowTransferV1 memory flowTransfer, IInterpreterStoreV1 interpreterStore, uint256[] memory kvs)
+    function flow(FlowTransferV1 memory flowTransfer, IInterpreterStoreV2 interpreterStore, uint256[] memory kvs)
         internal
     {
         if (kvs.length > 0) {

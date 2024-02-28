@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import "rain.interpreter/src/lib/caller/LibEvaluable.sol";
+import "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 
 import "./IFlowV3.sol";
 
