@@ -33,10 +33,7 @@ import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInte
 import {FlowCommon, ERC1155Receiver} from "../../abstract/FlowCommon.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/LibNamespace.sol";
-import {
-    InsufficientHandleTransferOutputs,
-    UnsupportedHandleTransferInputs
-} from "../../error/ErrFlow.sol";
+import {InsufficientHandleTransferOutputs, UnsupportedHandleTransferInputs} from "../../error/ErrFlow.sol";
 
 /// @title FlowERC1155
 /// See `IFlowERC1155V4` for documentation.
@@ -74,12 +71,9 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
         flowCommonInit(flowERC1155Config.flowConfig, FLOW_ERC1155_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) = flowERC1155Config
-                .evaluableConfig
-                .deployer
-                .deployExpression2(
-                flowERC1155Config.evaluableConfig.bytecode,
-                flowERC1155Config.evaluableConfig.constants
+            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) =
+            flowERC1155Config.evaluableConfig.deployer.deployExpression2(
+                flowERC1155Config.evaluableConfig.bytecode, flowERC1155Config.evaluableConfig.constants
             );
 
             {
@@ -226,12 +220,11 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
     /// of the flow contract itself. This involves consuming the mint/burn
     /// sentinels from the stack and minting/burning the tokens accordingly, then
     /// calling `LibFlow.flow` to handle the rest of the flow.
-    function _flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
-        internal
-        virtual
-        nonReentrant
-        returns (FlowERC1155IOV1 memory)
-    {
+    function _flow(
+        EvaluableV2 memory evaluable,
+        uint256[] memory callerContext,
+        SignedContextV1[] memory signedContexts
+    ) internal virtual nonReentrant returns (FlowERC1155IOV1 memory) {
         unchecked {
             (Pointer stackBottom, Pointer stackTop, uint256[] memory kvs) =
                 _flowStack(evaluable, callerContext, signedContexts);
