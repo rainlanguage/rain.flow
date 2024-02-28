@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {Evaluable, EvaluableConfigV2} from "rain.interpreter.interface/interface/deprecated/IInterpreterCallerV1.sol";
+import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 
 import {
@@ -14,7 +15,7 @@ import {
     FLOW_ERC721_TOKEN_URI_ENTRYPOINT,
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_MIN_FLOW_SENTINELS
-} from "../IFlowERC721V3.sol";
+} from "../v3/IFlowERC721V3.sol";
 
 import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
-import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
+import {RAIN_FLOW_SENTINEL} from "./IFlowV5.sol";
 
 import {
     FlowERC1155IOV1,
@@ -13,7 +13,7 @@ import {
     FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC1155_MIN_FLOW_SENTINELS
-} from "../IFlowERC1155V3.sol";
+} from "../deprecated/v4/IFlowERC1155V4.sol";
 
 /// Initialization config.
 /// @param uri As per Open Zeppelin `ERC1155Upgradeable`.

@@ -3,7 +3,7 @@ pragma solidity =0.8.19;
 
 import "forge-std/Test.sol";
 
-import {IFlowV4, RAIN_FLOW_SENTINEL} from "src/interface/unstable/IFlowV4.sol";
+import {IFlowV4, RAIN_FLOW_SENTINEL} from "src/interface/deprecated/v4/IFlowV4.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 
 contract IFlowV4Test is Test {

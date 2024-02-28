@@ -20,7 +20,7 @@ import {
     FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC1155_MIN_FLOW_SENTINELS
-} from "../../interface/unstable/IFlowERC1155V4.sol";
+} from "../../interface/unstable/IFlowERC1155V5.sol";
 import {LibBytecode} from "rain.interpreter.interface/lib/bytecode/LibBytecode.sol";
 import {
     IInterpreterV2, DEFAULT_STATE_NAMESPACE
@@ -68,10 +68,10 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
         flowCommonInit(flowERC1155Config.flowConfig, FLOW_ERC1155_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            (IInterpreterV1 interpreter, IInterpreterStoreV1 store, address expression) = flowERC1155Config
+            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression) = flowERC1155Config
                 .evaluableConfig
                 .deployer
-                .deployExpression(
+                .deployExpression2(
                 flowERC1155Config.evaluableConfig.bytecode,
                 flowERC1155Config.evaluableConfig.constants,
                 LibUint256Array.arrayFrom(FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS)
@@ -83,7 +83,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
             // integrity checks are complete.
             // The deployer MUST be a trusted contract anyway.
             // slither-disable-next-line reentrancy-benign
-            sEvaluable = Evaluable(interpreter, store, expression);
+            sEvaluable = EvaluableV2(interpreter, store, expression);
         }
 
         return ICLONEABLE_V2_SUCCESS;
@@ -115,7 +115,7 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
             // Mint and burn access MUST be handled by flow.
             // HANDLE_TRANSFER will only restrict subsequent transfers.
             if (sEvalHandleTransfer && !(from == address(0) || to == address(0))) {
-                Evaluable memory evaluable = sEvaluable;
+                EvaluableV2 memory evaluable = sEvaluable;
                 uint256[][] memory context;
                 {
                     context = LibContext.build(
@@ -132,10 +132,10 @@ contract FlowERC1155 is ICloneableV2, IFlowERC1155V4, FlowCommon, ERC1155 {
                     );
                 }
 
-                (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval(
+                (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                     evaluable.store,
                     DEFAULT_STATE_NAMESPACE,
-                    LibEncodedDispatch.encode(
+                    LibEncodedDispatch.encode2(
                         evaluable.expression,
                         FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
                         FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS

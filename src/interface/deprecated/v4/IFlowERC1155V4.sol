@@ -13,7 +13,7 @@ import {
     FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC1155_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC1155_MIN_FLOW_SENTINELS
-} from "../IFlowERC1155V3.sol";
+} from "../v3/IFlowERC1155V3.sol";
 
 /// Initialization config.
 /// @param uri As per Open Zeppelin `ERC1155Upgradeable`.

@@ -3,13 +3,12 @@ pragma solidity =0.8.19;
 
 import {ICloneableV2, ICLONEABLE_V2_SUCCESS} from "rain.factory/src/interface/ICloneableV2.sol";
 import {FlowCommon, LibContext} from "../../abstract/FlowCommon.sol";
-import {IFlowV4, MIN_FLOW_SENTINELS} from "../../interface/unstable/IFlowV4.sol";
+import {IFlowV4, MIN_FLOW_SENTINELS, FlowTransferV1} from "../../interface/unstable/IFlowV5.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
-import {FlowTransferV1} from "../../interface/unstable/IFlowV4.sol";
 import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 
 /// @title Flow

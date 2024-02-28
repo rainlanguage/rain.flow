@@ -12,12 +12,8 @@ import {
     ERC721Transfer,
     ERC1155Transfer,
     RAIN_FLOW_SENTINEL,
-    UnregisteredFlow,
-    UnsupportedERC20Flow,
-    UnsupportedERC721Flow,
-    UnsupportedERC1155Flow,
     MIN_FLOW_SENTINELS
-} from "../IFlowV3.sol";
+} from "../v3/IFlowV3.sol";
 
 /// @title IFlowV4
 /// @notice Interface for a flow contract that does NOT require native minting
