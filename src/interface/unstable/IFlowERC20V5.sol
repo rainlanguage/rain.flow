@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {
@@ -11,8 +11,8 @@ import {
     FLOW_ERC20_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS,
     FLOW_ERC20_MIN_FLOW_SENTINELS
-} from "../IFlowERC20V3.sol";
-import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
+} from "../deprecated/v4/IFlowERC20V4.sol";
+import {RAIN_FLOW_SENTINEL} from "./IFlowV5.sol";
 
 /// Initialization config.
 /// @param name As per Open Zeppelin `ERC20Upgradeable`.
@@ -24,8 +24,8 @@ import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
 struct FlowERC20ConfigV2 {
     string name;
     string symbol;
-    EvaluableConfigV2 evaluableConfig;
-    EvaluableConfigV2[] flowConfig;
+    EvaluableConfigV3 evaluableConfig;
+    EvaluableConfigV3[] flowConfig;
 }
 
 /// @title IFlowERC20V5
@@ -62,7 +62,7 @@ interface IFlowERC20V5 {
     /// @return flowERC20IO The `FlowERC20IOV1` representing all token mint/burns
     /// and transfers that occurred during the flow.
     function flow(
-        Evaluable calldata evaluable,
+        EvaluableV2 calldata evaluable,
         uint256[] calldata callerContext,
         SignedContextV1[] calldata signedContexts
     ) external returns (FlowERC20IOV1 calldata flowERC20IO);

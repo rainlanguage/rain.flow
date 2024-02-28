@@ -7,7 +7,7 @@ import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {ICloneableV2, ICLONEABLE_V2_SUCCESS} from "rain.factory/src/interface/ICloneableV2.sol";
 import {
-    IFlowERC20V4,
+    IFlowERC20V5,
     FlowERC20IOV1,
     FlowERC20ConfigV2,
     ERC20SupplyChange,
@@ -17,7 +17,7 @@ import {
     FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS,
     RAIN_FLOW_SENTINEL,
     FLOW_ERC20_MIN_FLOW_SENTINELS
-} from "../../interface/unstable/IFlowERC20V4.sol";
+} from "../../interface/unstable/IFlowERC20V5.sol";
 import {LibBytecode} from "rain.interpreter.interface/lib/bytecode/LibBytecode.sol";
 import {EncodedDispatch, LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
 import {Sentinel, LibStackSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
@@ -28,7 +28,7 @@ import {
     IInterpreterV2,
     DEFAULT_STATE_NAMESPACE
 } from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
-import {IInterpreterStoreV1} from "rain.interpreter.interface/interface/IInterpreterStoreV1.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterStoreV2.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
@@ -38,8 +38,8 @@ import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 bytes32 constant CALLER_META_HASH = bytes32(0xff0499e4ee7171a54d176cfe13165a7ea512d146dbd99d42b3d3ec9963025acf);
 
 /// @title FlowERC20
-/// See `IFlowERC20V4` for documentation.
-contract FlowERC20 is ICloneableV2, IFlowERC20V4, FlowCommon, ERC20 {
+/// See `IFlowERC20V5` for documentation.
+contract FlowERC20 is ICloneableV2, IFlowERC20V5, FlowCommon, ERC20 {
     using LibStackSentinel for Pointer;
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
@@ -51,10 +51,7 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V4, FlowCommon, ERC20 {
 
     /// @dev The evaluable that will be used to evaluate `handleTransfer` on
     /// every transfer. This is only set if `sEvalHandleTransfer` is true.
-    Evaluable internal sEvaluable;
-
-    /// Forwards the `FlowCommon` constructor arguments to the `FlowCommon`.
-    constructor(DeployerDiscoverableMetaV2ConstructionConfig memory config) FlowCommon(CALLER_META_HASH, config) {}
+    EvaluableV2 internal sEvaluable;
 
     /// Overloaded typed initialize function MUST revert with this error.
     /// As per `ICloneableV2` interface.
@@ -71,17 +68,17 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V4, FlowCommon, ERC20 {
         // Set state before external calls here.
         bool evalHandleTransfer = LibBytecode.sourceCount(flowERC20Config.evaluableConfig.bytecode) > 0
             && LibBytecode.sourceOpsCount(
-                flowERC20Config.evaluableConfig.bytecode, SourceIndex.unwrap(FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT)
+                flowERC20Config.evaluableConfig.bytecode, SourceIndexV2.unwrap(FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT)
             ) > 0;
         sEvalHandleTransfer = evalHandleTransfer;
 
         flowCommonInit(flowERC20Config.flowConfig, FLOW_ERC20_MIN_FLOW_SENTINELS);
 
         if (evalHandleTransfer) {
-            (IInterpreterV1 interpreter, IInterpreterStoreV1 store, address expression) = flowERC20Config
+            (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression) = flowERC20Config
                 .evaluableConfig
                 .deployer
-                .deployExpression(
+                .deployExpression2(
                 flowERC20Config.evaluableConfig.bytecode,
                 flowERC20Config.evaluableConfig.constants,
                 LibUint256Array.arrayFrom(FLOW_ERC20_HANDLE_TRANSFER_MIN_OUTPUTS)
@@ -93,19 +90,19 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V4, FlowCommon, ERC20 {
             // integrity checks are complete.
             // The deployer MUST be a trusted contract anyway.
             // slither-disable-next-line reentrancy-benign
-            sEvaluable = Evaluable(interpreter, store, expression);
+            sEvaluable = EvaluableV2(interpreter, store, expression);
         }
 
         return ICLONEABLE_V2_SUCCESS;
     }
 
-    /// @inheritdoc IFlowERC20V4
+    /// @inheritdoc IFlowERC20V5
     function stackToFlow(uint256[] memory stack) external pure virtual override returns (FlowERC20IOV1 memory) {
         return _stackToFlow(stack.dataPointer(), stack.endPointer());
     }
 
-    /// @inheritdoc IFlowERC20V4
-    function flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
+    /// @inheritdoc IFlowERC20V5
+    function flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         external
         virtual
         returns (FlowERC20IOV1 memory)
@@ -126,11 +123,11 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V4, FlowCommon, ERC20 {
             // Mint and burn access MUST be handled by flow.
             // HANDLE_TRANSFER will only restrict subsequent transfers.
             if (sEvalHandleTransfer && !(from == address(0) || to == address(0))) {
-                Evaluable memory evaluable = sEvaluable;
-                (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval(
+                EvaluableV2 memory evaluable = sEvaluable;
+                (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                     evaluable.store,
                     DEFAULT_STATE_NAMESPACE,
-                    LibEncodedDispatch.encode(
+                    LibEncodedDispatch.encode2(
                         evaluable.expression,
                         FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT,
                         FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
@@ -185,7 +182,7 @@ contract FlowERC20 is ICloneableV2, IFlowERC20V4, FlowCommon, ERC20 {
     /// the mints and burns from the `FlowERC20IOV1` struct. The mints are
     /// processed first, then the burns, then the remaining flow is processed
     /// as normal.
-    function _flow(Evaluable memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
+    function _flow(EvaluableV2 memory evaluable, uint256[] memory callerContext, SignedContextV1[] memory signedContexts)
         internal
         virtual
         nonReentrant

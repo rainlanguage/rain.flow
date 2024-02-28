@@ -10,7 +10,7 @@ import {
 } from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
-import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/unstable/IFlowV4.sol";
+import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/unstable/IFlowV5.sol";
 import {LibEvaluable, EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {
     SourceIndexV2,
@@ -198,10 +198,10 @@ abstract contract FlowCommon is ERC721Holder, ERC1155Holder, Multicall, Reentran
             }
         }
 
-        (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval(
+        (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
             evaluable.store,
             DEFAULT_STATE_NAMESPACE,
-            LibEncodedDispatch.encode(evaluable.expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
+            LibEncodedDispatch.encode2(evaluable.expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
             context
         );
         return (stack.dataPointer(), stack.endPointer(), kvs);

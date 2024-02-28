@@ -7,22 +7,6 @@ import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreter
 import "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 
-/// Thrown when the flow being evaluated is unregistered.
-/// @param unregisteredHash Hash of the unregistered flow.
-error UnregisteredFlow(bytes32 unregisteredHash);
-
-/// Thrown for unsupported native transfers.
-error UnsupportedNativeFlow();
-
-/// Thrown for unsupported erc20 transfers.
-error UnsupportedERC20Flow();
-
-/// Thrown for unsupported erc721 transfers.
-error UnsupportedERC721Flow();
-
-/// Thrown for unsupported erc1155 transfers.
-error UnsupportedERC1155Flow();
-
 /// @dev The number of sentinels required by `FlowCommon`. An evaluable can never
 /// have fewer minimum outputs than required sentinels.
 uint256 constant MIN_FLOW_SENTINELS = 3;
