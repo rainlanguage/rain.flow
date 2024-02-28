@@ -23,7 +23,7 @@ import {
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_MIN_FLOW_SENTINELS
 } from "../../interface/unstable/IFlowERC721V4.sol";
-import {LibBytecode} from "lib/rain.interpreter/src/lib/bytecode/LibBytecode.sol";
+// import {LibBytecode} from "lib/rain.interpreter/src/lib/bytecode/LibBytecode.sol";
 import {SourceIndex} from "rain.interpreter/src/interface/IInterpreterV1.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
 import {
