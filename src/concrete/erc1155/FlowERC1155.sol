@@ -4,7 +4,7 @@ pragma solidity =0.8.19;
 import {ERC1155Upgradeable as ERC1155} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
 
-import {LibEncodedDispatch, EncodedDispatch} from "rain.interpreter/src/lib/caller/LibEncodedDispatch.sol";
+import {LibEncodedDispatch, EncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
 import {Sentinel, LibStackSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {ICloneableV2, ICLONEABLE_V2_SUCCESS} from "rain.factory/src/interface/ICloneableV2.sol";
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
@@ -22,16 +22,16 @@ import {
     FLOW_ERC1155_MIN_FLOW_SENTINELS
 } from "../../interface/unstable/IFlowERC1155V4.sol";
 import {LibBytecode} from "rain.interpreter.interface/lib/bytecode/LibBytecode.sol";
-import {IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
-import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
-import {Evaluable, DEFAULT_STATE_NAMESPACE} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
+import {
+    IInterpreterV2, DEFAULT_STATE_NAMESPACE
+} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterStoreV2.sol";
+import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
-import {SourceIndex} from "rain.interpreter/src/interface/IInterpreterV1.sol";
-import {
-    FlowCommon, DeployerDiscoverableMetaV2ConstructionConfig, ERC1155Receiver
-} from "../../abstract/FlowCommon.sol";
-import {LibContext} from "rain.interpreter/src/lib/caller/LibContext.sol";
+import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
+import {FlowCommon, ERC1155Receiver} from "../../abstract/FlowCommon.sol";
+import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 
 /// @dev The hash of the meta data expected by the `FlowCommon` constructor.
 bytes32 constant CALLER_META_HASH = bytes32(0x7ea70f837234357ec1bb5b777e04453ebaf3ca778a98805c4bb20a738d559a21);
