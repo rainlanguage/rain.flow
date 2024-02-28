@@ -36,6 +36,7 @@ import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {BurnerNotOwner} from "../../error/ErrFlow.sol";
 
+
 /// @dev The hash of the meta data expected to be passed to `FlowCommon`'s
 /// constructor.
 bytes32 constant CALLER_META_HASH = bytes32(0xf0003e81ff90467c9933f3ac68db3ca49df8b30ab83a0b88e1ed8381ed28fdd6);
@@ -46,6 +47,7 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
     using LibStackSentinel for Pointer;
+    using LibNamespace for StateNamespace;
 
     /// @dev True if we need to eval `handleTransfer` on every transfer. For many
     /// tokens this will be false, so we don't want to invoke the external
@@ -201,7 +203,7 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
                 EvaluableV2 memory evaluable = sEvaluable;
                 (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
                     evaluable.store,
-                    DEFAULT_STATE_NAMESPACE,
+                    DEFAULT_STATE_NAMESPACE.qualifyNamespace(address(this)),
                     LibEncodedDispatch.encode2(
                         evaluable.expression,
                         FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
@@ -213,7 +215,8 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
                         // transfer is NOT called for mints.
                         LibUint256Array.arrayFrom(uint256(uint160(from)), uint256(uint160(to)), tokenId).matrixFrom(),
                         new SignedContextV1[](0)
-                    )
+                    ),
+                    new uint256[](0)
                 );
                 (stack);
                 if (kvs.length > 0) {
