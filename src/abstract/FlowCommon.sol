@@ -3,23 +3,21 @@ pragma solidity =0.8.19;
 
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
-import {IInterpreterCallerV2, SignedContextV1} from "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import {LibEncodedDispatch} from "rain.interpreter/src/lib/caller/LibEncodedDispatch.sol";
-import {LibContext} from "rain.interpreter/src/lib/caller/LibContext.sol";
-import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/unstable/IFlowV4.sol";
 import {
-    DeployerDiscoverableMetaV2,
-    DeployerDiscoverableMetaV2ConstructionConfig
-} from "rain.interpreter/src/abstract/DeployerDiscoverableMetaV2.sol";
+    IInterpreterCallerV2,
+    SignedContextV1,
+    EvaluableConfigV3
+} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
+import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
+import {UnregisteredFlow, MIN_FLOW_SENTINELS} from "../interface/unstable/IFlowV5.sol";
+import {LibEvaluable, EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {
-    LibEvaluable,
-    Evaluable,
-    EvaluableConfigV2,
+    SourceIndexV2,
+    IInterpreterV2,
+    IInterpreterStoreV2,
     DEFAULT_STATE_NAMESPACE
-} from "rain.interpreter/src/lib/caller/LibEvaluable.sol";
-import {SourceIndex, IInterpreterV1} from "rain.interpreter/src/interface/IInterpreterV1.sol";
-import {IInterpreterStoreV1} from "rain.interpreter/src/interface/IInterpreterStoreV1.sol";
-
+} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
 import {MulticallUpgradeable as Multicall} from
     "openzeppelin-contracts-upgradeable/contracts/utils/MulticallUpgradeable.sol";
 import {ERC721HolderUpgradeable as ERC721Holder} from
@@ -31,6 +29,8 @@ import {
 import {ReentrancyGuardUpgradeable as ReentrancyGuard} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/LibNamespace.sol";
+import {UnsupportedFlowInputs, InsufficientFlowOutputs} from "../error/ErrFlow.sol";
 
 /// Thrown when the min outputs for a flow is fewer than the sentinels.
 /// This is always an implementation bug as the min outputs and sentinel count
@@ -41,7 +41,7 @@ error BadMinStackLength(uint256 flowMinOutputs);
 /// @dev The entrypoint for a flow is always `0` because each flow has its own
 /// evaluable with its own entrypoint. Running multiple flows involves evaluating
 /// several expressions in sequence.
-SourceIndex constant FLOW_ENTRYPOINT = SourceIndex.wrap(0);
+SourceIndexV2 constant FLOW_ENTRYPOINT = SourceIndexV2.wrap(0);
 /// @dev There is no maximum number of outputs for a flow. Pragmatically gas will
 /// limit the number of outputs well before this limit is reached.
 uint16 constant FLOW_MAX_OUTPUTS = type(uint16).max;
@@ -82,17 +82,11 @@ uint256 constant FLOW_IS_NOT_REGISTERED = 0;
 /// This is a known issue with `Multicall` so in the future, we may refactor
 /// `FlowCommon` to not use `Multicall` and instead implement flow batching
 /// directly in the flow contracts.
-abstract contract FlowCommon is
-    ERC721Holder,
-    ERC1155Holder,
-    Multicall,
-    ReentrancyGuard,
-    IInterpreterCallerV2,
-    DeployerDiscoverableMetaV2
-{
+abstract contract FlowCommon is ERC721Holder, ERC1155Holder, Multicall, ReentrancyGuard, IInterpreterCallerV2 {
     using LibUint256Array for uint256[];
     using LibUint256Matrix for uint256[];
-    using LibEvaluable for Evaluable;
+    using LibEvaluable for EvaluableV2;
+    using LibNamespace for StateNamespace;
 
     /// @dev This mapping tracks all flows that are registered at initialization.
     /// This is used to ensure that only registered flows are evaluated.
@@ -107,7 +101,7 @@ abstract contract FlowCommon is
     /// @param evaluable The evaluable of the flow that was registered. The hash
     /// of this evaluable is used as the key in `registeredFlows` so users MUST
     /// provide the same evaluable when they evaluate the flow.
-    event FlowInitialized(address sender, Evaluable evaluable);
+    event FlowInitialized(address sender, EvaluableV2 evaluable);
 
     /// Forwards config to `DeployerDiscoverableMetaV2` and disables
     /// initializers. The initializers are disabled because inheriting contracts
@@ -116,11 +110,7 @@ abstract contract FlowCommon is
     /// in the implementation contract forces that the only way to initialize
     /// the contract is via. a proxy, which should also strongly encourage
     /// patterns that _atomically_ clone and initialize via. some factory.
-    /// @param metaHash As per `DeployerDiscoverableMetaV2`.
-    /// @param config As per `DeployerDiscoverableMetaV2`.
-    constructor(bytes32 metaHash, DeployerDiscoverableMetaV2ConstructionConfig memory config)
-        DeployerDiscoverableMetaV2(metaHash, config)
-    {
+    constructor() {
         _disableInitializers();
     }
 
@@ -131,7 +121,7 @@ abstract contract FlowCommon is
     /// movements at runtime for the inheriting contract.
     /// @param flowMinOutputs The minimum number of outputs for each flow. All
     /// flows share the same minimum number of outputs for simplicity.
-    function flowCommonInit(EvaluableConfigV2[] memory evaluableConfigs, uint256 flowMinOutputs)
+    function flowCommonInit(EvaluableConfigV3[] memory evaluableConfigs, uint256 flowMinOutputs)
         internal
         onlyInitializing
     {
@@ -149,8 +139,8 @@ abstract contract FlowCommon is
                 revert BadMinStackLength(flowMinOutputs);
             }
 
-            EvaluableConfigV2 memory config;
-            Evaluable memory evaluable;
+            EvaluableConfigV3 memory config;
+            EvaluableV2 memory evaluable;
             // Every evaluable MUST deploy cleanly (e.g. pass integrity checks)
             // otherwise the entire initialization will fail.
             for (uint256 i = 0; i < evaluableConfigs.length; ++i) {
@@ -161,10 +151,26 @@ abstract contract FlowCommon is
                 // Reentrancy is just one of many ways that a malicious deployer
                 // can cause problems, and it's probably the least of your
                 // worries if you're using a malicious deployer.
-                (IInterpreterV1 interpreter, IInterpreterStoreV1 store, address expression) = config
-                    .deployer
-                    .deployExpression(config.bytecode, config.constants, LibUint256Array.arrayFrom(flowMinOutputs));
-                evaluable = Evaluable(interpreter, store, expression);
+                (IInterpreterV2 interpreter, IInterpreterStoreV2 store, address expression, bytes memory io) =
+                    config.deployer.deployExpression2(config.bytecode, config.constants);
+
+                {
+                    uint256 flowInputs;
+                    uint256 flowOutputs;
+                    assembly ("memory-safe") {
+                        let ioWord := mload(add(io, 0x20))
+                        flowInputs := byte(0, ioWord)
+                        flowOutputs := byte(1, ioWord)
+                    }
+                    if (flowInputs != 0) {
+                        revert UnsupportedFlowInputs();
+                    }
+                    if (flowOutputs < flowMinOutputs) {
+                        revert InsufficientFlowOutputs();
+                    }
+                }
+
+                evaluable = EvaluableV2(interpreter, store, expression);
                 // There's no way to set this mapping before the external
                 // contract call because the output of the external contract
                 // call is used to build the evaluable that we're registering.
@@ -196,7 +202,7 @@ abstract contract FlowCommon is
     /// @return The top of the stack after evaluation.
     /// @return The key-value pairs that were emitted during evaluation.
     function _flowStack(
-        Evaluable memory evaluable,
+        EvaluableV2 memory evaluable,
         uint256[] memory callerContext,
         SignedContextV1[] memory signedContexts
     ) internal returns (Pointer, Pointer, uint256[] memory) {
@@ -211,11 +217,12 @@ abstract contract FlowCommon is
             }
         }
 
-        (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval(
+        (uint256[] memory stack, uint256[] memory kvs) = evaluable.interpreter.eval2(
             evaluable.store,
-            DEFAULT_STATE_NAMESPACE,
-            LibEncodedDispatch.encode(evaluable.expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
-            context
+            DEFAULT_STATE_NAMESPACE.qualifyNamespace(address(this)),
+            LibEncodedDispatch.encode2(evaluable.expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
+            context,
+            new uint256[](0)
         );
         return (stack.dataPointer(), stack.endPointer(), kvs);
     }

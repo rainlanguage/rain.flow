@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import "rain.interpreter/src/interface/IInterpreterCallerV2.sol";
-import "rain.interpreter/src/lib/caller/LibEvaluable.sol";
-
+import {SignedContextV1, EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
+import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
 import {
     FlowERC721IOV1,
     ERC721SupplyChange,
@@ -11,35 +11,32 @@ import {
     FLOW_ERC721_TOKEN_URI_MAX_OUTPUTS,
     FLOW_ERC721_HANDLE_TRANSFER_MIN_OUTPUTS,
     FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS,
-    FLOW_ERC721_TOKEN_URI_ENTRYPOINT,
-    FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_MIN_FLOW_SENTINELS
-} from "../IFlowERC721V3.sol";
+} from "../deprecated/v4/IFlowERC721V4.sol";
 
-import {RAIN_FLOW_SENTINEL} from "./IFlowV4.sol";
+SourceIndexV2 constant FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT = SourceIndexV2.wrap(0);
+SourceIndexV2 constant FLOW_ERC721_TOKEN_URI_ENTRYPOINT = SourceIndexV2.wrap(1);
 
-/// Thrown when burner of tokens is not the owner of tokens.
-error BurnerNotOwner();
+import {RAIN_FLOW_SENTINEL} from "../deprecated/v4/IFlowV4.sol";
 
 /// Initialization config.
 /// @param name As per Open Zeppelin `ERC721Upgradeable`.
 /// @param symbol As per Open Zeppelin `ERC721Upgradeable`.
 /// @param baseURI As per Open Zeppelin `ERC721Upgradeable`.
-/// @param evaluableConfig The `EvaluableConfigV2` to use to build the
-/// `evaluable` that can be used to handle transfers and build token IDs for the
-/// token URI.
+/// @param evaluableConfig Config to use to build the `evaluable` that can be
+/// used to handle transfers and build token IDs for the token URI.
 /// @param flowConfig Initialization config for the `Evaluable`s that define the
 /// flow behaviours outside self mints/burns.
 struct FlowERC721ConfigV2 {
     string name;
     string symbol;
     string baseURI;
-    EvaluableConfigV2 evaluableConfig;
-    EvaluableConfigV2[] flowConfig;
+    EvaluableConfigV3 evaluableConfig;
+    EvaluableConfigV3[] flowConfig;
 }
 
-/// @title IFlowERC721V4
-/// Conceptually identical to `IFlowV4`, but the flow contract itself is an
+/// @title IFlowERC721V5
+/// Conceptually identical to `IFlowV5`, but the flow contract itself is an
 /// ERC721 token. This means that ERC721 self mints and burns are included in the
 /// stack that the flows must evaluate to. As stacks are processed by flow from
 /// bottom to top, this means that the self mint/burn will be the last thing
@@ -57,8 +54,8 @@ struct FlowERC721ConfigV2 {
 /// optional, and if not provided the token URI will be the default Open Zeppelin
 /// token URI logic.
 ///
-/// Otherwise the flow contract is identical to `IFlowV4`.
-interface IFlowERC721V4 {
+/// Otherwise the flow contract is identical to `IFlowV5`.
+interface IFlowERC721V5 {
     /// Contract has initialized.
     /// @param sender `msg.sender` initializing the contract (factory).
     /// @param config All initialized config.
@@ -76,7 +73,7 @@ interface IFlowERC721V4 {
     /// @return flowERC721IO The `FlowERC721IOV1` representing all token
     /// mint/burns and transfers that occurred during the flow.
     function flow(
-        Evaluable calldata evaluable,
+        EvaluableV2 calldata evaluable,
         uint256[] calldata callerContext,
         SignedContextV1[] calldata signedContexts
     ) external returns (FlowERC721IOV1 calldata flowERC721IO);
