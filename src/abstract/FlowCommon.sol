@@ -17,7 +17,7 @@ import {
     IInterpreterV2,
     IInterpreterStoreV2,
     DEFAULT_STATE_NAMESPACE
-} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
+} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {MulticallUpgradeable as Multicall} from
     "openzeppelin-contracts-upgradeable/contracts/utils/MulticallUpgradeable.sol";
 import {ERC721HolderUpgradeable as ERC721Holder} from
