@@ -27,8 +27,8 @@ import {
     SourceIndexV2,
     IInterpreterV2,
     DEFAULT_STATE_NAMESPACE
-} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
-import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterStoreV2.sol";
+} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
