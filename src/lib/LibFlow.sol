@@ -4,9 +4,9 @@ pragma solidity ^0.8.18;
 import {IFlowV5, RAIN_FLOW_SENTINEL} from "../interface/unstable/IFlowV5.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "../interface/unstable/IFlowV5.sol";
-import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterStoreV2.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {LibStackSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
-import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
+import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
