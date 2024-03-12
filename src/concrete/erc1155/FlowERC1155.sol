@@ -25,11 +25,11 @@ import {
 import {LibBytecode} from "rain.interpreter.interface/lib/bytecode/LibBytecode.sol";
 import {
     IInterpreterV2, DEFAULT_STATE_NAMESPACE
-} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
-import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/unstable/IInterpreterStoreV2.sol";
+} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
-import {SourceIndexV2} from "rain.interpreter.interface/interface/unstable/IInterpreterV2.sol";
+import {SourceIndexV2} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {FlowCommon, ERC1155Receiver} from "../../abstract/FlowCommon.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 import {LibNamespace, StateNamespace} from "rain.interpreter.interface/lib/ns/LibNamespace.sol";
