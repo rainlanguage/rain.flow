@@ -9,11 +9,7 @@ import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpret
 import {IExpressionDeployerV3} from "rain.interpreter.interface/interface/IExpressionDeployerV3.sol";
 import {STUB_EXPRESSION_BYTECODE} from "test/util/lib/LibTestConstants.sol";
 
-
-
-
 contract FlowConstructionTest is FlowMockRealTest {
-
     function testInitializeOnTheGoodPath() external {
         vm.mockCall(
             address(iDeployer),
@@ -21,7 +17,6 @@ contract FlowConstructionTest is FlowMockRealTest {
             abi.encode(iInterpreter, iStore, address(0), hex"0007") // 1 in, 1 out
         );
 
-        
         bytes memory bytecode = STUB_EXPRESSION_BYTECODE;
         uint256[] memory constants = new uint256[](1);
         constants[0] = 2;
@@ -32,14 +27,12 @@ contract FlowConstructionTest is FlowMockRealTest {
         vm.recordLogs();
         iCloneableFactoryV2.clone(address(iFlow), abi.encode(flowConfig));
 
-
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        bytes32 eventSignature = keccak256(
-            "Initialize(address,(address,bytes,uint256[])[])"
-        );
-        
+        bytes32 eventSignature = keccak256("Initialize(address,(address,bytes,uint256[])[])");
+
         Vm.Log memory concreteEvent = findEvent(logs, eventSignature);
-        (address sender, EvaluableConfigV3[] memory config) = abi.decode(concreteEvent.data, (address, EvaluableConfigV3[]));
+        (address sender, EvaluableConfigV3[] memory config) =
+            abi.decode(concreteEvent.data, (address, EvaluableConfigV3[]));
 
         assertEq(sender, address(iCloneableFactoryV2), "wrong sender in Initialize event");
         assertEq(keccak256(abi.encode(flowConfig)), keccak256(abi.encode(config)), "wrong sender in Initialize event");
