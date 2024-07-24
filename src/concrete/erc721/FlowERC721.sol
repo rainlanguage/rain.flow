@@ -29,9 +29,7 @@ import {SourceIndexV2} from "rain.interpreter.interface/interface/IInterpreterV2
 import {LibFlow} from "../../lib/LibFlow.sol";
 import {FlowCommon, LibContext, ERC1155Receiver} from "../../abstract/FlowCommon.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
-import {
-    IInterpreterV2, DEFAULT_STATE_NAMESPACE
-} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {IInterpreterV2, DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {BurnerNotOwner} from "../../error/ErrFlow.sol";
