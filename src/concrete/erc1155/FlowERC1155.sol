@@ -23,9 +23,7 @@ import {
     EvaluableV2
 } from "../../interface/unstable/IFlowERC1155V5.sol";
 import {LibBytecode} from "rain.interpreter.interface/lib/bytecode/LibBytecode.sol";
-import {
-    IInterpreterV2, DEFAULT_STATE_NAMESPACE
-} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {IInterpreterV2, DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {LibFlow} from "../../lib/LibFlow.sol";
