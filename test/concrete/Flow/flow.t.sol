@@ -47,8 +47,9 @@ contract FlowConstructionTest is FlowMockRealTest {
             flow = IFlowV5(iCloneableFactoryV2.clone(address(flowImplementation), abi.encode(flowConfig)));
         }
 
-        uint256[] memory stack;
         {
+            uint256[] memory stack;
+
             // Block 2: Prepare the data stack
             stack = new uint256[](12);
 
@@ -65,24 +66,6 @@ contract FlowConstructionTest is FlowMockRealTest {
             stack[9] = uint256(uint160(address(flow))); // TO
             stack[10] = erc721TokenId; // ID
             stack[11] = 115183058774379759847873638693462432260838474092724525396123647190314935293775;
-        }
-
-        {
-            vm.mockCall(
-                erc1155Out,
-                abi.encodeWithSelector(
-                    IERC1155.safeTransferFrom.selector, address(flow), alice, erc1155OutTokenId, erc1155OutAmmount, ""
-                ),
-                abi.encode()
-            );
-
-            vm.mockCall(
-                erc721In,
-                abi.encodeWithSelector(
-                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, address(flow), erc721TokenId
-                ),
-                abi.encode()
-            );
 
             vm.mockCall(
                 address(iInterpreter),
@@ -91,8 +74,24 @@ contract FlowConstructionTest is FlowMockRealTest {
             );
         }
 
+        vm.mockCall(
+            erc1155Out,
+            abi.encodeWithSelector(
+                IERC1155.safeTransferFrom.selector, address(flow), alice, erc1155OutTokenId, erc1155OutAmmount, ""
+            ),
+            abi.encode()
+        );
+
+        vm.mockCall(
+            erc721In,
+            abi.encodeWithSelector(
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, address(flow), erc721TokenId
+            ),
+            abi.encode()
+        );
+
         {
-            // Block 5: Processing logs and calling the flow function
+            // Block 3: Processing logs and calling the flow function
             Vm.Log[] memory logs = vm.getRecordedLogs();
             Vm.Log memory concreteEvent =
                 findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
@@ -100,6 +99,9 @@ contract FlowConstructionTest is FlowMockRealTest {
 
             vm.prank(alice);
             flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
         }
+
+        vm.clearMockedCalls();
     }
 }
