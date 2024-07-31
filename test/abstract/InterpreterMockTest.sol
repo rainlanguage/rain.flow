@@ -25,13 +25,13 @@ abstract contract InterpreterMockTest is Test {
         vm.resumeGasMetering();
     }
 
-    function interpreterEval2MockCall(uint256[] memory stack, uint256[] memory writes) public {
+    function interpreterEval2MockCall(uint256[] memory stack, uint256[] memory writes) internal {
         vm.mockCall(
             address(iInterpreter), abi.encodeWithSelector(IInterpreterV2.eval2.selector), abi.encode(stack, writes)
         );
     }
 
-    function expressionDeployerDeployExpression2MockCall(address expression, bytes memory io) public {
+    function expressionDeployerDeployExpression2MockCall(address expression, bytes memory io) internal {
         vm.mockCall(
             address(iDeployer),
             abi.encodeWithSelector(IExpressionDeployerV3.deployExpression2.selector),
