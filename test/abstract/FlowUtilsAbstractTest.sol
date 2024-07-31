@@ -30,7 +30,7 @@ abstract contract FlowUtilsAbstractTest is Test {
         ERC1155Transfer[] memory erc1155Transfers,
         ERC721Transfer[] memory erc721Transfers,
         ERC20Transfer[] memory erc20Transfers
-    ) public pure returns (uint256[] memory stack) {
+    ) internal pure returns (uint256[] memory stack) {
         uint256 totalItems =
             1 + (erc1155Transfers.length * 5) + 1 + (erc721Transfers.length * 4) + 1 + (erc20Transfers.length * 4);
         stack = new uint256[](totalItems);
