@@ -2,28 +2,8 @@
 pragma solidity ^0.8.18;
 
 import {Test, Vm} from "forge-std/Test.sol";
-
-struct ERC1155Transfer {
-    address token;
-    address from;
-    address to;
-    uint256 id;
-    uint256 amount;
-}
-
-struct ERC721Transfer {
-    address token;
-    address from;
-    address to;
-    uint256 id;
-}
-
-struct ERC20Transfer {
-    address token;
-    address from;
-    address to;
-    uint256 amount;
-}
+import {ERC20Transfer, ERC721Transfer, ERC1155Transfer, RAIN_FLOW_SENTINEL} from "src/interface/unstable/IFlowV5.sol";
+import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 
 abstract contract FlowUtilsAbstractTest is Test {
     function generateTokenTransferStack(
@@ -36,7 +16,7 @@ abstract contract FlowUtilsAbstractTest is Test {
         stack = new uint256[](totalItems);
         uint256 index = 0;
 
-        uint256 separator = 115183058774379759847873638693462432260838474092724525396123647190314935293775;
+        uint256 separator = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
 
         stack[index++] = separator;
         for (uint256 i = 0; i < erc1155Transfers.length; i++) {
