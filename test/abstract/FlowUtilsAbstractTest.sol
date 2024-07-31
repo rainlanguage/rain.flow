@@ -25,7 +25,7 @@ struct ERC20Transfer {
     uint256 amount;
 }
 
-abstract contract FlowAbstractTest is Test {
+abstract contract FlowUtilsAbstractTest is Test {
     function generateTokenTransferStack(
         ERC1155Transfer[] memory erc1155Transfers,
         ERC721Transfer[] memory erc721Transfers,
