@@ -11,13 +11,13 @@ import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 
 contract FlowConstructionInitializeTest is InterpreterMockTest, FlowUtilsAbstractTest {
-    CloneFactory internal immutable _iCloneFactory;
-    IFlowV5 internal immutable _flowImplementation;
+    CloneFactory internal immutable iCloneFactory;
+    IFlowV5 internal immutable iFlowImplementation;
 
     constructor() {
         vm.pauseGasMetering();
-        _iCloneFactory = new CloneFactory();
-        _flowImplementation = new Flow();
+        iCloneFactory = new CloneFactory();
+        iFlowImplementation = new Flow();
         vm.resumeGasMetering();
     }
 
@@ -30,7 +30,7 @@ contract FlowConstructionInitializeTest is InterpreterMockTest, FlowUtilsAbstrac
         flowConfig[0] = EvaluableConfigV3(iDeployer, bytecode, constants);
 
         vm.recordLogs();
-        _iCloneFactory.clone(address(_flowImplementation), abi.encode(flowConfig));
+        iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowConfig));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature = keccak256("Initialize(address,(address,bytes,uint256[])[])");
@@ -39,7 +39,7 @@ contract FlowConstructionInitializeTest is InterpreterMockTest, FlowUtilsAbstrac
         (address sender, EvaluableConfigV3[] memory config) =
             abi.decode(concreteEvent.data, (address, EvaluableConfigV3[]));
 
-        assertEq(sender, address(_iCloneFactory), "wrong sender in Initialize event");
+        assertEq(sender, address(iCloneFactory), "wrong sender in Initialize event");
         assertEq(keccak256(abi.encode(flowConfig)), keccak256(abi.encode(config)), "wrong compare Structs");
     }
 }
