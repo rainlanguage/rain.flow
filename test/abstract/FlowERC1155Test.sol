@@ -2,7 +2,13 @@
 pragma solidity ^0.8.18;
 
 import {Vm} from "forge-std/Test.sol";
-import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
+import {
+    FlowUtilsAbstractTest,
+    ERC20Transfer,
+    ERC721Transfer,
+    ERC1155Transfer,
+    ERC1155SupplyChange
+} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {InterpreterMockTest} from "test/abstract/InterpreterMockTest.sol";
 import {IFlowERC1155V5, FlowERC1155ConfigV3} from "src/interface/unstable/IFlowERC1155V5.sol";
 import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
@@ -40,5 +46,22 @@ abstract contract FlowERC1155Test is FlowUtilsAbstractTest, InterpreterMockTest 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
         (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));
+    }
+
+    function performErc1155Flow(
+        IFlowERC1155V5 erc1155flow,
+        EvaluableV2 memory evaluable,
+        ERC20Transfer[] memory erc20Transfers,
+        ERC721Transfer[] memory erc721Transfers,
+        ERC1155Transfer[] memory erc1155Transfers,
+        ERC1155SupplyChange[] memory mints,
+        ERC1155SupplyChange[] memory burns
+    ) internal {
+        vm.pauseGasMetering();
+        uint256[] memory stack =
+            generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers, mints, burns);
+        interpreterEval2MockCall(stack, new uint256[](0));
+        vm.resumeGasMetering();
+        erc1155flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
     }
 }
