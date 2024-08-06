@@ -17,13 +17,13 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 
 abstract contract FlowBaseTest is FlowUtilsAbstractTest, InterpreterMockTest {
-    CloneFactory internal immutable _iCloneFactory;
-    IFlowV5 internal immutable _flowImplementation;
+    CloneFactory internal immutable iCloneFactory;
+    IFlowV5 internal immutable iFlowImplementation;
 
     constructor() {
         vm.pauseGasMetering();
-        _iCloneFactory = new CloneFactory();
-        _flowImplementation = new Flow();
+        iCloneFactory = new CloneFactory();
+        iFlowImplementation = new Flow();
         vm.resumeGasMetering();
     }
 
@@ -33,7 +33,7 @@ abstract contract FlowBaseTest is FlowUtilsAbstractTest, InterpreterMockTest {
         EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](1);
         flowConfig[0] = EvaluableConfigV3(iDeployer, STUB_EXPRESSION_BYTECODE, new uint256[](0));
         vm.recordLogs();
-        flow = IFlowV5(_iCloneFactory.clone(address(_flowImplementation), abi.encode(flowConfig)));
+        flow = IFlowV5(iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowConfig)));
         Vm.Log[] memory logs = vm.getRecordedLogs();
         Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
         (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));

@@ -4,13 +4,10 @@ pragma solidity ^0.8.18;
 import {FlowBaseTest} from "test/abstract/FlowBaseTest.sol";
 import {IFlowV5, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
-import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 
 contract FlowERC721ToERC1155Test is FlowBaseTest {
-    function setUp() public {}
-
     address internal immutable _iERC721;
     address internal immutable _iERC1155;
 
@@ -51,24 +48,14 @@ contract FlowERC721ToERC1155Test is FlowBaseTest {
         vm.mockCall(
             _iERC1155,
             abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256,uint256,bytes)")),
-                flow,
-                alice,
-                erc1155OutTokenId,
-                erc1155OutAmmount,
-                ""
+                IERC1155.safeTransferFrom.selector, flow, alice, erc1155OutTokenId, erc1155OutAmmount, ""
             ),
             abi.encode()
         );
         vm.expectCall(
             _iERC1155,
             abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256,uint256,bytes)")),
-                flow,
-                alice,
-                erc1155OutTokenId,
-                erc1155OutAmmount,
-                ""
+                IERC1155.safeTransferFrom.selector, flow, alice, erc1155OutTokenId, erc1155OutAmmount, ""
             )
         );
 
@@ -79,7 +66,6 @@ contract FlowERC721ToERC1155Test is FlowBaseTest {
             ),
             abi.encode()
         );
-
         vm.expectCall(
             _iERC721,
             abi.encodeWithSelector(
