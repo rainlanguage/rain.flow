@@ -17,7 +17,6 @@ import {FlowERC1155Test} from "../../abstract/FlowERC1155Test.sol";
 import {SignContextAbstractTest} from "../../abstract/SignContextAbstractTest.sol";
 
 contract FlowSignedContextTest is SignContextAbstractTest, FlowUtilsAbstractTest, FlowERC1155Test {
-
     /// Should validate multiple signed contexts
     function testValidateMultipleSignedContexts(
         string memory uri,
