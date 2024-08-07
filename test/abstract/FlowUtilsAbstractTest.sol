@@ -5,17 +5,17 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {ERC20Transfer, ERC721Transfer, ERC1155Transfer, RAIN_FLOW_SENTINEL} from "src/interface/unstable/IFlowV5.sol";
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {ERC1155SupplyChange} from "src/interface/unstable/IFlowERC1155V5.sol";
+import {ERC721SupplyChange} from "src/interface/unstable/IFlowERC721V5.sol";
+import {ERC20SupplyChange} from "src/interface/unstable/IFlowERC20V5.sol";
 
 abstract contract FlowUtilsAbstractTest is Test {
     function generateTokenTransferStack(
         ERC1155Transfer[] memory erc1155Transfers,
         ERC721Transfer[] memory erc721Transfers,
-        ERC20Transfer[] memory erc20Transfers,
-        ERC1155SupplyChange[] memory mints,
-        ERC1155SupplyChange[] memory burns
+        ERC20Transfer[] memory erc20Transfers
     ) internal pure returns (uint256[] memory stack) {
-        uint256 totalItems = 1 + (erc1155Transfers.length * 5) + 1 + (erc721Transfers.length * 4) + 1
-            + (erc20Transfers.length * 4) + 1 + (mints.length * 3) + 1 + (burns.length * 3);
+        uint256 totalItems =
+            1 + (erc1155Transfers.length * 5) + 1 + (erc721Transfers.length * 4) + 1 + (erc20Transfers.length * 4);
         stack = new uint256[](totalItems);
         uint256 index = 0;
 
@@ -46,21 +46,102 @@ abstract contract FlowUtilsAbstractTest is Test {
             stack[index++] = erc20Transfers[i].amount;
         }
 
-        stack[index++] = separator;
-        for (uint256 i = 0; i < mints.length; i++) {
-            stack[index++] = uint256(uint160(mints[i].account));
-            stack[index++] = uint256(uint160(mints[i].id));
-            stack[index++] = mints[i].amount;
-        }
-
-        stack[index++] = separator;
-        for (uint256 i = 0; i < burns.length; i++) {
-            stack[index++] = uint256(uint160(burns[i].account));
-            stack[index++] = uint256(uint160(burns[i].id));
-            stack[index++] = burns[i].amount;
-        }
-
         return stack;
+    }
+
+    function generateFlowERC1155Stack(
+        ERC1155Transfer[] memory erc1155Transfers,
+        ERC721Transfer[] memory erc721Transfers,
+        ERC20Transfer[] memory erc20Transfers,
+        ERC1155SupplyChange[] memory erc1155Burns,
+        ERC1155SupplyChange[] memory erc1155Mints
+    ) internal pure returns (uint256[] memory stack) {
+        uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
+        uint256 totalItems = transfersStack.length + 1 + (erc1155Burns.length * 3) + 1 + (erc1155Mints.length * 3);
+
+        stack = new uint256[](totalItems);
+        uint256 index = 0;
+        uint256 separator = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
+
+        for (uint256 i = 0; i < transfersStack.length; i++) {
+            stack[index++] = transfersStack[i];
+        }
+
+        stack[index++] = separator;
+        for (uint256 i = 0; i < erc1155Burns.length; i++) {
+            stack[index++] = uint256(uint160(erc1155Burns[i].account));
+            stack[index++] = erc1155Burns[i].id;
+            stack[index++] = erc1155Burns[i].amount;
+        }
+
+        stack[index++] = separator;
+        for (uint256 i = 0; i < erc1155Mints.length; i++) {
+            stack[index++] = uint256(uint160(erc1155Mints[i].account));
+            stack[index++] = erc1155Mints[i].id;
+            stack[index++] = erc1155Mints[i].amount;
+        }
+    }
+
+    function generateFlowERC721Stack(
+        ERC1155Transfer[] memory erc1155Transfers,
+        ERC721Transfer[] memory erc721Transfers,
+        ERC20Transfer[] memory erc20Transfers,
+        ERC721SupplyChange[] memory erc721Burns,
+        ERC721SupplyChange[] memory erc721Mints
+    ) internal pure returns (uint256[] memory stack) {
+        uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
+        uint256 totalItems = transfersStack.length + 1 + (erc721Burns.length * 2) + 1 + (erc721Mints.length * 2);
+
+        stack = new uint256[](totalItems);
+        uint256 index = 0;
+        uint256 separator = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
+
+        for (uint256 i = 0; i < transfersStack.length; i++) {
+            stack[index++] = transfersStack[i];
+        }
+
+        stack[index++] = separator;
+        for (uint256 i = 0; i < erc721Burns.length; i++) {
+            stack[index++] = uint256(uint160(erc721Burns[i].account));
+            stack[index++] = erc721Burns[i].id;
+        }
+
+        stack[index++] = separator;
+        for (uint256 i = 0; i < erc721Mints.length; i++) {
+            stack[index++] = uint256(uint160(erc721Mints[i].account));
+            stack[index++] = erc721Mints[i].id;
+        }
+    }
+
+    function generateFlowERC20Stack(
+        ERC1155Transfer[] memory erc1155Transfers,
+        ERC721Transfer[] memory erc721Transfers,
+        ERC20Transfer[] memory erc20Transfers,
+        ERC20SupplyChange[] memory erc20Burns,
+        ERC20SupplyChange[] memory erc20Mints
+    ) internal pure returns (uint256[] memory stack) {
+        uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
+        uint256 totalItems = transfersStack.length + 1 + (erc20Mints.length * 2) + 1 + (erc20Mints.length * 2);
+
+        stack = new uint256[](totalItems);
+        uint256 index = 0;
+        uint256 separator = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
+
+        for (uint256 i = 0; i < transfersStack.length; i++) {
+            stack[index++] = transfersStack[i];
+        }
+
+        stack[index++] = separator;
+        for (uint256 i = 0; i < erc20Burns.length; i++) {
+            stack[index++] = uint256(uint160(erc20Burns[i].account));
+            stack[index++] = erc20Burns[i].amount;
+        }
+
+        stack[index++] = separator;
+        for (uint256 i = 0; i < erc20Mints.length; i++) {
+            stack[index++] = uint256(uint160(erc20Mints[i].account));
+            stack[index++] = erc20Mints[i].amount;
+        }
     }
 
     function findEvent(Vm.Log[] memory logs, bytes32 eventSignature) internal pure returns (Vm.Log memory) {
