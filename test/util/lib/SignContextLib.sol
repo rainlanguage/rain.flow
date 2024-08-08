@@ -7,7 +7,7 @@ import {ECDSAUpgradeable as ECDSA} from "openzeppelin/utils/cryptography/ECDSAUp
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 
 library SignContextLib {
-    function signContext(uint256 privateKey, Vm vm, uint256[] memory context)
+    function signContext(Vm vm, uint256 privateKey, uint256[] memory context)
         internal
         pure
         returns (SignedContextV1 memory)
