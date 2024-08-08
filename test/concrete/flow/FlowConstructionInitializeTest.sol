@@ -9,17 +9,9 @@ import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpret
 import {Flow} from "src/concrete/basic/Flow.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
+import {FlowBaseTest} from "test/abstract/FlowBaseTest.sol";
 
-contract FlowConstructionInitializeTest is InterpreterMockTest, FlowUtilsAbstractTest {
-    CloneFactory internal immutable iCloneFactory;
-    IFlowV5 internal immutable iFlowImplementation;
-
-    constructor() {
-        vm.pauseGasMetering();
-        iCloneFactory = new CloneFactory();
-        iFlowImplementation = new Flow();
-        vm.resumeGasMetering();
-    }
+contract FlowConstructionInitializeTest is FlowBaseTest {
 
     function testFlowConstructionInitialize(address expression, bytes memory bytecode, uint256[] memory constants)
         external
