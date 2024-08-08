@@ -7,7 +7,7 @@ import {ECDSAUpgradeable as ECDSA} from "openzeppelin/utils/cryptography/ECDSAUp
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 
 library SignContextLib {
-    function signContext(Vm vm, uint256 privateKey, uint256[] memory context)
+    function signContext(Vm vm, uint256 signerPrivateKey, uint256 signaturePrivateKey, uint256[] memory context)
         internal
         pure
         returns (SignedContextV1 memory)
@@ -15,7 +15,7 @@ library SignContextLib {
         SignedContextV1 memory signedContext;
 
         // Store the signer's address in the struct
-        signedContext.signer = vm.addr(privateKey);
+        signedContext.signer = vm.addr(signerPrivateKey);
         signedContext.context = context; // copy the context data into the struct
 
         // Create a digest of the context data
@@ -23,7 +23,7 @@ library SignContextLib {
         bytes32 digest = ECDSA.toEthSignedMessageHash(contextHash);
 
         // Create the signature using the cheatCode 'sign'
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signaturePrivateKey, digest);
         signedContext.signature = abi.encodePacked(r, s, v);
 
         return signedContext;
