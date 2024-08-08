@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {FlowTest} from "test/abstract/FlowTest.sol";
+import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {IFlowV5, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 
-contract FlowERC721ToERC1155Test is FlowTest {
+contract FlowTest is FlowBasicTest {
     address internal immutable iERC721;
     address internal immutable iERC1155;
 
