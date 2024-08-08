@@ -36,8 +36,8 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
 
         SignedContextV1[] memory signedContexts = new SignedContextV1[](2);
 
-        signedContexts[0] = vm.signContext(aliceKey, context0);
-        signedContexts[1] = vm.signContext(aliceKey, context1);
+        signedContexts[0] = vm.signContext(aliceKey, aliceKey, context0);
+        signedContexts[1] = vm.signContext(aliceKey, aliceKey, context1);
 
         uint256[] memory stack = generateFlowERC1155Stack(
             new ERC1155Transfer[](0),
@@ -51,8 +51,8 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
 
         // With bad signature in second signed context
         SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
-        signedContexts[0] = vm.signContext(aliceKey, context0);
-        signedContexts[1] = vm.signContext(bobKey, context1);
+        signedContexts1[0] = vm.signContext(aliceKey, aliceKey, context0);
+        signedContexts1[1] = vm.signContext(aliceKey, bobKey, context1);
 
         uint256[] memory stack1 = generateFlowERC1155Stack(
             new ERC1155Transfer[](0),
@@ -63,7 +63,7 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
         );
         interpreterEval2MockCall(stack1, new uint256[](0));
 
-        vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 0));
+        vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 1));
         erc1155Flow.flow(evaluable, new uint256[](0), signedContexts1);
     }
 
@@ -81,8 +81,8 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         uint256 bobKey = (fuzzedKeyBob % (SECP256K1_ORDER - 1)) + 1;
 
-        SignedContextV1[] memory signedContexts = new SignedContextV1[](1);
-        signedContexts[0] = vm.signContext(aliceKey, context0);
+        SignedContextV1[] memory signedContext = new SignedContextV1[](1);
+        signedContext[0] = vm.signContext(aliceKey, aliceKey, context0);
 
         uint256[] memory stack = generateFlowERC1155Stack(
             new ERC1155Transfer[](0),
@@ -92,11 +92,11 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
             new ERC1155SupplyChange[](0)
         );
         interpreterEval2MockCall(stack, new uint256[](0));
-        erc1155Flow.flow(evaluable, new uint256[](0), signedContexts);
+        erc1155Flow.flow(evaluable, new uint256[](0), signedContext);
 
         // With bad signature in second signed context
-        SignedContextV1[] memory signedContexts1 = new SignedContextV1[](1);
-        signedContexts[0] = vm.signContext(bobKey, context0);
+        SignedContextV1[] memory signedContext1 = new SignedContextV1[](1);
+        signedContext1[0] = vm.signContext(aliceKey, bobKey, context0);
 
         uint256[] memory stack1 = generateFlowERC1155Stack(
             new ERC1155Transfer[](0),
@@ -108,6 +108,6 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
         interpreterEval2MockCall(stack1, new uint256[](0));
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 0));
-        erc1155Flow.flow(evaluable, new uint256[](0), signedContexts1);
+        erc1155Flow.flow(evaluable, new uint256[](0), signedContext1);
     }
 }
