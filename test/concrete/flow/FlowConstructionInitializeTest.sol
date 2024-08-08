@@ -12,7 +12,6 @@ import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {FlowBaseTest} from "test/abstract/FlowBaseTest.sol";
 
 contract FlowConstructionInitializeTest is FlowBaseTest {
-
     function testFlowConstructionInitialize(address expression, bytes memory bytecode, uint256[] memory constants)
         external
     {
