@@ -16,7 +16,7 @@ import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 
-abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
+abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
     CloneFactory internal immutable iCloneFactory;
     IFlowV5 internal immutable iFlowImplementation;
 
