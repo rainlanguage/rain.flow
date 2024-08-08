@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, Vm} from "forge-std/Test.sol";
 import {FlowERC1155} from "../../../src/concrete/erc1155/FlowERC1155.sol";
 import {
     FlowUtilsAbstractTest,
@@ -14,9 +14,11 @@ import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol
 import {EvaluableV2, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {InvalidSignature} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 import {FlowERC1155Test} from "../../abstract/FlowERC1155Test.sol";
-import {SignContextAbstractTest} from "../../abstract/SignContextAbstractTest.sol";
+import {SignContextLib} from "test/util/lib/SignContextLib.sol";
 
-contract FlowSignedContextTest is SignContextAbstractTest, FlowUtilsAbstractTest, FlowERC1155Test {
+contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
+    using SignContextLib for Vm;
+
     /// Should validate multiple signed contexts
     function testValidateMultipleSignedContexts(
         string memory uri,
@@ -33,8 +35,8 @@ contract FlowSignedContextTest is SignContextAbstractTest, FlowUtilsAbstractTest
         uint256 bobKey = (fuzzedKeyBob % (SECP256K1_ORDER - 1)) + 1;
 
         SignedContextV1[] memory signedContexts = new SignedContextV1[](2);
-        signedContexts[0] = signContext(aliceKey, context0);
-        signedContexts[1] = signContext(aliceKey, context1);
+        signedContexts[0] = vm.signContext(aliceKey, context0);
+        signedContexts[1] = vm.signContext(aliceKey, context1);
 
         uint256[] memory stack = generateFlowERC1155Stack(
             new ERC1155Transfer[](0),
@@ -48,8 +50,9 @@ contract FlowSignedContextTest is SignContextAbstractTest, FlowUtilsAbstractTest
 
         // With bad signature in second signed context
         SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
-        signedContexts[0] = signContext(aliceKey, context0);
-        signedContexts[1] = signContext(bobKey, context1);
+
+        signedContexts1[0] = vm.signContext(aliceKey, context0);
+        signedContexts1[1] = vm.signContext(bobKey, context1);
 
         uint256[] memory stack1 = generateFlowERC1155Stack(
             new ERC1155Transfer[](0),
