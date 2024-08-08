@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {Vm} from "forge-std/Test.sol";
 
 import {ECDSAUpgradeable as ECDSA} from "openzeppelin/utils/cryptography/ECDSAUpgradeable.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 
-abstract contract SignContextAbstractTest is Test {
-    function signContext(uint256 privateKey, uint256[] memory context) public pure returns (SignedContextV1 memory) {
+library SignContextLib {
+    function signContext(uint256 privateKey, Vm vm, uint256[] memory context)
+        internal
+        pure
+        returns (SignedContextV1 memory)
+    {
         SignedContextV1 memory signedContext;
 
         // Store the signer's address in the struct
