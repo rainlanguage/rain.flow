@@ -89,10 +89,18 @@ contract FlowTimeTest is FlowUtilsAbstractTest, FlowERC1155Test {
         flowId1234[0] = 1234;
         erc1155Flow.flow(evaluable, flowId1234, signedContexts);
 
+        // Fund Alice and the contract with necessary tokens
+        erc20In.transfer(alice, erc20Transfers[0].amount);
+        erc20Out.transfer(address(erc1155Flow), erc20Transfers[1].amount);
+
         // Perform another flow with a different id 5678
         uint256[] memory flowId5678 = new uint256[](1);
         flowId5678[0] = 5678;
         erc1155Flow.flow(evaluable, flowId5678, signedContexts);
+
+        // Fund Alice and the contract with necessary tokens
+        erc20In.transfer(alice, erc20Transfers[0].amount);
+        erc20Out.transfer(address(erc1155Flow), erc20Transfers[1].amount);
 
         // Attempt to perform the flow again with id 1234, should revert
         vm.expectRevert();
