@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, Vm} from "forge-std/Test.sol";
 import {StdUtils} from "forge-std/StdUtils.sol";
 import {FlowERC1155} from "../../../src/concrete/erc1155/FlowERC1155.sol";
 import {
@@ -14,12 +14,14 @@ import {
 import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {EvaluableV2, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {FlowERC1155Test} from "../../abstract/FlowERC1155Test.sol";
-import {SignContextAbstractTest} from "../../abstract/SignContextAbstractTest.sol";
 import {MockERC20} from "../../../lib/rain.factory/lib/rain.interpreter.interface/lib/forge-std/src/mocks/MockERC20.sol";
 import {FlowTransferV1} from "../../../src/interface/deprecated/v3/IFlowV3.sol";
 import {ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
+import {SignContextLib} from "test/lib/SignContextLib.sol";
 
-contract FlowTimeTest is SignContextAbstractTest, FlowUtilsAbstractTest, FlowERC1155Test {
+contract FlowTimeTest is FlowUtilsAbstractTest, FlowERC1155Test {
+    using SignContextLib for Vm;
+
     /// Should validate multiple signed contexts
     function testFlowTime(
         string memory uri,
@@ -57,8 +59,6 @@ contract FlowTimeTest is SignContextAbstractTest, FlowUtilsAbstractTest, FlowERC
             token: address(erc20Out),
             amount: 20
         });
-        FlowTransferV1 memory flowTransfer =
-            FlowTransferV1({erc20: erc20Transfers, erc721: new ERC721Transfer[](0), erc1155: new ERC1155Transfer[](0)});
 
         deal(address(erc20In), alice, 1e18);
         deal(address(erc20Out), alice, 1e18);
@@ -66,16 +66,14 @@ contract FlowTimeTest is SignContextAbstractTest, FlowUtilsAbstractTest, FlowERC
         vm.startPrank(address(alice));
 
         // Fund Alice and the contract with necessary tokens
-        erc20In.transfer(alice, flowTransfer.erc20[0].amount);
+        erc20In.transfer(alice, erc20Transfers[0].amount);
         //emit log_named_uint("Alice ERC20In Balance1", erc20In.balanceOf(alice));
-
-        erc20Out.transfer(address(erc1155Flow), flowTransfer.erc20[1].amount);
+        erc20Out.transfer(address(erc1155Flow), erc20Transfers[1].amount);
 
         // Approve ERC20 transfers
-        erc20In.approve(address(erc1155Flow), flowTransfer.erc20[0].amount);
         SignedContextV1[] memory signedContexts = new SignedContextV1[](2);
-        signedContexts[0] = signContext(aliceKey, context0);
-        signedContexts[1] = signContext(aliceKey, context1);
+        signedContexts[0] = vm.signContext(aliceKey, aliceKey, context0);
+        signedContexts[1] = vm.signContext(aliceKey, aliceKey, context1);
 
         uint256[] memory stack1 = generateFlowERC1155Stack(
             new ERC1155Transfer[](0),
