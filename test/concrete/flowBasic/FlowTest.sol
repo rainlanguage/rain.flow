@@ -51,13 +51,7 @@ contract FlowTest is FlowBasicTest {
             amount: erc1155OutAmmount
         });
 
-        vm.mockCall(
-            iERC1155,
-            abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, flow, alice, erc1155OutTokenId, erc1155OutAmmount, ""
-            ),
-            abi.encode()
-        );
+        vm.mockCall(iERC1155, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
         vm.expectCall(
             iERC1155,
             abi.encodeWithSelector(
@@ -67,9 +61,7 @@ contract FlowTest is FlowBasicTest {
 
         vm.mockCall(
             iERC721,
-            abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, flow, erc721InTokenId
-            ),
+            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
             abi.encode()
         );
         vm.expectCall(
