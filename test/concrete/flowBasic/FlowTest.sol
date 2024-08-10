@@ -19,7 +19,7 @@ contract FlowTest is FlowBasicTest {
         iERC721 = address(uint160(uint256(keccak256("erc721.test"))));
         vm.etch(address(iERC721), REVERTING_MOCK_BYTECODE);
 
-        iERC1155 = address(uint160(uint256(keccak256("store.rain.test"))));
+        iERC1155 = address(uint160(uint256(keccak256("erc1155.test"))));
         vm.etch(address(iERC1155), REVERTING_MOCK_BYTECODE);
         vm.resumeGasMetering();
 
