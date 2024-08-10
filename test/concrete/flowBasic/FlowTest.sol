@@ -6,6 +6,7 @@ import {IFlowV5, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/inter
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
+import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 
 contract FlowTest is FlowBasicTest {
     address internal immutable iERC721;
@@ -28,6 +29,11 @@ contract FlowTest is FlowBasicTest {
         uint256 erc1155OutAmmount
     ) external {
         vm.assume(alice != address(0));
+        vm.assume(sentinel != uint256(uint160(alice)));
+        vm.assume(sentinel != erc721InTokenId);
+        vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmmount);
+
         vm.label(alice, "Alice");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
@@ -73,8 +79,12 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
+        uint256[] memory stack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, new ERC20Transfer[](0));
+
+        interpreterEval2MockCall(stack, new uint256[](0));
+
         vm.startPrank(alice);
-        performFlow(flow, evaluable, new ERC20Transfer[](0), erc721Transfers, erc1155Transfers);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 }

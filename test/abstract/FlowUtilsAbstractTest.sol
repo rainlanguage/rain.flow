@@ -6,19 +6,25 @@ import {ERC20Transfer, ERC721Transfer, ERC1155Transfer, RAIN_FLOW_SENTINEL} from
 import {Sentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 
 abstract contract FlowUtilsAbstractTest is Test {
+    uint256 internal immutable sentinel;
+
+    constructor() {
+        vm.pauseGasMetering();
+        sentinel = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
+        vm.resumeGasMetering();
+    }
+
     function generateTokenTransferStack(
         ERC1155Transfer[] memory erc1155Transfers,
         ERC721Transfer[] memory erc721Transfers,
         ERC20Transfer[] memory erc20Transfers
-    ) internal pure returns (uint256[] memory stack) {
+    ) internal view returns (uint256[] memory stack) {
         uint256 totalItems =
             1 + (erc1155Transfers.length * 5) + 1 + (erc721Transfers.length * 4) + 1 + (erc20Transfers.length * 4);
         stack = new uint256[](totalItems);
         uint256 index = 0;
 
-        uint256 separator = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
-
-        stack[index++] = separator;
+        stack[index++] = sentinel;
         for (uint256 i = 0; i < erc1155Transfers.length; i++) {
             stack[index++] = uint256(uint160(erc1155Transfers[i].token));
             stack[index++] = uint256(uint160(erc1155Transfers[i].from));
@@ -27,7 +33,7 @@ abstract contract FlowUtilsAbstractTest is Test {
             stack[index++] = erc1155Transfers[i].amount;
         }
 
-        stack[index++] = separator;
+        stack[index++] = sentinel;
         for (uint256 i = 0; i < erc721Transfers.length; i++) {
             stack[index++] = uint256(uint160(erc721Transfers[i].token));
             stack[index++] = uint256(uint160(erc721Transfers[i].from));
@@ -35,7 +41,7 @@ abstract contract FlowUtilsAbstractTest is Test {
             stack[index++] = erc721Transfers[i].id;
         }
 
-        stack[index++] = separator;
+        stack[index++] = sentinel;
         for (uint256 i = 0; i < erc20Transfers.length; i++) {
             stack[index++] = uint256(uint160(erc20Transfers[i].token));
             stack[index++] = uint256(uint160(erc20Transfers[i].from));
