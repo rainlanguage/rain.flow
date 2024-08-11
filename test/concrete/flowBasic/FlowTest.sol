@@ -136,6 +136,7 @@ contract FlowTest is FlowBasicTest {
         vm.assume(alice != address(0));
         vm.assume(sentinel != uint256(uint160(alice)));
         vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmmount);
         vm.assume(sentinel != erc1155BInTokenId);
         vm.assume(sentinel != erc1155BInAmmount);
         vm.label(alice, "alice");
@@ -188,11 +189,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
-    function testFlowERC721ToERC721(
-        address bob,
-        uint256 erc721OutTokenId,
-        uint256 erc721BInTokenId
-    ) external {
+    function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721BInTokenId) external {
         vm.assume(bob != address(0));
         vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(sentinel != erc721OutTokenId);
@@ -205,9 +202,10 @@ contract FlowTest is FlowBasicTest {
         vm.etch(address(iERC721B), REVERTING_MOCK_BYTECODE);
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
-        erc721Transfers[0] = ERC721Transfer({token: address(iERC721), from: address(flow), to: bob, id: erc721OutTokenId});
-        erc721Transfers[1] = ERC721Transfer({token: address(iERC721B), from: bob, to: address(flow), id: erc721BInTokenId});
-
+        erc721Transfers[0] =
+            ERC721Transfer({token: address(iERC721), from: address(flow), to: bob, id: erc721OutTokenId});
+        erc721Transfers[1] =
+            ERC721Transfer({token: address(iERC721B), from: bob, to: address(flow), id: erc721BInTokenId});
 
         vm.mockCall(
             iERC721,
@@ -239,6 +237,40 @@ contract FlowTest is FlowBasicTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(bob);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testFlowERC20ToERC20(address alise, uint256 erc20OutAmmount, uint256 erc20BInAmmount) external {
+        vm.assume(alise != address(0));
+        vm.assume(sentinel != uint256(uint160(alise)));
+        vm.assume(sentinel != erc20OutAmmount);
+        vm.assume(sentinel != erc20BInAmmount);
+        vm.label(alise, "Alise");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        address iIERC20B = address(uint160(uint256(keccak256("erc20B.test"))));
+        vm.etch(address(iIERC20B), REVERTING_MOCK_BYTECODE);
+
+        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+        erc20Transfers[0] =
+            ERC20Transfer({token: address(iIERC20), from: address(flow), to: alise, amount: erc20OutAmmount});
+        erc20Transfers[1] =
+            ERC20Transfer({token: address(iIERC20B), from: alise, to: address(flow), amount: erc20BInAmmount});
+
+        vm.mockCall(iIERC20, abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
+        vm.expectCall(iIERC20, abi.encodeWithSelector(IERC20.transfer.selector, alise, erc20OutAmmount));
+
+        vm.mockCall(iIERC20B, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+        vm.expectCall(iIERC20B, abi.encodeWithSelector(IERC20.transferFrom.selector, alise, flow, erc20BInAmmount));
+
+        uint256[] memory stack =
+            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        vm.startPrank(alise);
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
