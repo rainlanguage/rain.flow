@@ -8,6 +8,7 @@ import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {UnsupportedERC20Flow} from "src/error/ErrFlow.sol";
 
 contract FlowTest is FlowBasicTest {
     address internal immutable iERC721;
@@ -271,6 +272,62 @@ contract FlowTest is FlowBasicTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(alise);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testFlowShouldErrorIfERC20FlowFromIsOtherThanSourceContractOrMsgSender(
+        address alise,
+        address bob,
+        uint256 erc20Ammount
+    ) external {
+        vm.assume(alise != address(0));
+        vm.assume(sentinel != uint256(uint160(alise)));
+        vm.assume(bob != address(0));
+        vm.assume(sentinel != uint256(uint160(bob)));
+        vm.assume(sentinel != erc20Ammount);
+        vm.assume(bob != alise);
+        vm.label(alise, "Alise");
+        vm.label(bob, "Bob");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        address iIERC20B = address(uint160(uint256(keccak256("erc20B.test"))));
+        vm.etch(address(iIERC20B), REVERTING_MOCK_BYTECODE);
+
+        {
+            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iIERC20), from: bob, to: address(flow), amount: erc20Ammount});
+            erc20Transfers[1] =
+                ERC20Transfer({token: address(iIERC20B), from: address(flow), to: alise, amount: erc20Ammount});
+
+            uint256[] memory stack =
+                generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+
+        {
+            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iIERC20), from: alise, to: address(flow), amount: erc20Ammount});
+            erc20Transfers[1] = ERC20Transfer({token: address(iIERC20B), from: bob, to: alise, amount: erc20Ammount});
+            vm.mockCall(iIERC20, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+
+            uint256[] memory stack =
+                generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
