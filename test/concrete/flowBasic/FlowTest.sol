@@ -8,7 +8,7 @@ import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {UnsupportedERC20Flow} from "src/error/ErrFlow.sol";
+import {UnsupportedERC20Flow, UnsupportedERC721Flow} from "src/error/ErrFlow.sol";
 
 contract FlowTest is FlowBasicTest {
     address internal immutable iERC721;
@@ -328,6 +328,44 @@ contract FlowTest is FlowBasicTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testFlowShouldErrorIfERC721FlowFromIsOtherThanSourceContractOrMsgSender(
+        address alise,
+        address bob,
+        uint256 erc721TokenId
+    ) external {
+        vm.assume(alise != address(0));
+        vm.assume(sentinel != uint256(uint160(alise)));
+        vm.assume(bob != address(0));
+        vm.assume(sentinel != uint256(uint160(bob)));
+        vm.assume(sentinel != erc721TokenId);
+        vm.assume(bob != alise);
+        vm.label(alise, "Alise");
+        vm.label(bob, "Bob");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        {
+            address iERC721B = address(uint160(uint256(keccak256("erc721B.test"))));
+            vm.etch(address(iERC721B), REVERTING_MOCK_BYTECODE);
+
+            ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
+            erc721Transfers[0] =
+                ERC721Transfer({token: address(iERC721), from: bob, to: address(flow), id: erc721TokenId});
+            erc721Transfers[1] =
+                ERC721Transfer({token: address(iERC721B), from: address(flow), to: alise, id: erc721TokenId});
+
+            uint256[] memory stack =
+                generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, new ERC20Transfer[](0));
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedERC721Flow.selector));
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
