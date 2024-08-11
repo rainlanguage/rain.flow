@@ -187,4 +187,59 @@ contract FlowTest is FlowBasicTest {
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
+
+    function testFlowERC721ToERC721(
+        address bob,
+        uint256 erc721OutTokenId,
+        uint256 erc721BInTokenId
+    ) external {
+        vm.assume(bob != address(0));
+        vm.assume(sentinel != uint256(uint160(bob)));
+        vm.assume(sentinel != erc721OutTokenId);
+        vm.assume(sentinel != erc721BInTokenId);
+        vm.label(bob, "Bob");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        address iERC721B = address(uint160(uint256(keccak256("erc721B.test"))));
+        vm.etch(address(iERC721B), REVERTING_MOCK_BYTECODE);
+
+        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
+        erc721Transfers[0] = ERC721Transfer({token: address(iERC721), from: address(flow), to: bob, id: erc721OutTokenId});
+        erc721Transfers[1] = ERC721Transfer({token: address(iERC721B), from: bob, to: address(flow), id: erc721BInTokenId});
+
+
+        vm.mockCall(
+            iERC721,
+            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
+            abi.encode()
+        );
+        vm.expectCall(
+            iERC721,
+            abi.encodeWithSelector(
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), flow, bob, erc721OutTokenId
+            )
+        );
+
+        vm.mockCall(
+            iERC721B,
+            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
+            abi.encode()
+        );
+        vm.expectCall(
+            iERC721B,
+            abi.encodeWithSelector(
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, flow, erc721BInTokenId
+            )
+        );
+
+        uint256[] memory stack =
+            generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, new ERC20Transfer[](0));
+
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        vm.startPrank(bob);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
 }
