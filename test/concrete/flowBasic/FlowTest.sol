@@ -170,4 +170,52 @@ contract FlowTest is FlowBasicTest {
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
+
+    function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721BInTokenId) external {
+        vm.assume(sentinel != erc721OutTokenId);
+        vm.assume(sentinel != erc721BInTokenId);
+        vm.label(bob, "Bob");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(bob, address(flow));
+
+        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
+        erc721Transfers[0] =
+            ERC721Transfer({token: address(iTokenA), from: address(flow), to: bob, id: erc721OutTokenId});
+        erc721Transfers[1] =
+            ERC721Transfer({token: address(iTokenB), from: bob, to: address(flow), id: erc721BInTokenId});
+
+        vm.mockCall(
+            iTokenA,
+            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
+            abi.encode()
+        );
+        vm.expectCall(
+            iTokenA,
+            abi.encodeWithSelector(
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), flow, bob, erc721OutTokenId
+            )
+        );
+
+        vm.mockCall(
+            iTokenB,
+            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
+            abi.encode()
+        );
+        vm.expectCall(
+            iTokenB,
+            abi.encodeWithSelector(
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, flow, erc721BInTokenId
+            )
+        );
+
+        uint256[] memory stack =
+            generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, new ERC20Transfer[](0));
+
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        vm.startPrank(bob);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
 }
