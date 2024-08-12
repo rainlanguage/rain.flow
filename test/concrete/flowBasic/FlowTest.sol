@@ -180,13 +180,12 @@ contract FlowTest is FlowBasicTest {
     }
 
     function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721BInTokenId) external {
-        vm.assume(bob != address(0));
-        vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(sentinel != erc721OutTokenId);
         vm.assume(sentinel != erc721BInTokenId);
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(bob, address(flow));
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
         erc721Transfers[0] =
