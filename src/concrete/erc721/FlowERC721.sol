@@ -122,7 +122,7 @@ contract FlowERC721 is ICloneableV2, IFlowERC721V5, FlowCommon, ERC721 {
                 uint256 tokenURIInputs;
                 uint256 tokenURIOutputs;
                 assembly ("memory-safe") {
-                    let ioWords := add(io, 0x20)
+                    let ioWords := mload(add(io, 0x20))
                     handleTransferInputs := byte(0, ioWords)
                     handleTransferOutputs := byte(1, ioWords)
                     tokenURIInputs := byte(2, ioWords)
