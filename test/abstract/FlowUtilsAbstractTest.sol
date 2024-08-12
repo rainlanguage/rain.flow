@@ -61,7 +61,7 @@ abstract contract FlowUtilsAbstractTest is Test {
         ERC20Transfer[] memory erc20Transfers,
         ERC1155SupplyChange[] memory erc1155Burns,
         ERC1155SupplyChange[] memory erc1155Mints
-    ) internal pure returns (uint256[] memory stack) {
+    ) internal view returns (uint256[] memory stack) {
         uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
         uint256 totalItems = transfersStack.length + 1 + (erc1155Burns.length * 3) + 1 + (erc1155Mints.length * 3);
 
@@ -94,7 +94,7 @@ abstract contract FlowUtilsAbstractTest is Test {
         ERC20Transfer[] memory erc20Transfers,
         ERC721SupplyChange[] memory erc721Burns,
         ERC721SupplyChange[] memory erc721Mints
-    ) internal pure returns (uint256[] memory stack) {
+    ) internal view returns (uint256[] memory stack) {
         uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
         uint256 totalItems = transfersStack.length + 1 + (erc721Burns.length * 2) + 1 + (erc721Mints.length * 2);
 
@@ -125,7 +125,7 @@ abstract contract FlowUtilsAbstractTest is Test {
         ERC20Transfer[] memory erc20Transfers,
         ERC20SupplyChange[] memory erc20Burns,
         ERC20SupplyChange[] memory erc20Mints
-    ) internal pure returns (uint256[] memory stack) {
+    ) internal view returns (uint256[] memory stack) {
         uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
         uint256 totalItems = transfersStack.length + 1 + (erc20Mints.length * 2) + 1 + (erc20Mints.length * 2);
 
