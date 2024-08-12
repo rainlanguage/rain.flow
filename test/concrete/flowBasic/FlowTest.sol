@@ -263,19 +263,15 @@ contract FlowTest is FlowBasicTest {
         address bob,
         uint256 erc20Ammount
     ) external {
-        vm.assume(alise != address(0));
-        vm.assume(sentinel != uint256(uint160(alise)));
-        vm.assume(bob != address(0));
-        vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(sentinel != erc20Ammount);
         vm.assume(bob != alise);
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alise, address(flow));
+        assumeEtchable(bob, address(flow));
 
-        vm.assume(bob != address(flow));
-        vm.assume(alise != address(flow));
 
         {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
