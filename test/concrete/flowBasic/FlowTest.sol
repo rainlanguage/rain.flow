@@ -351,10 +351,6 @@ contract FlowTest is FlowBasicTest {
         uint256 erc1155BInTokenId,
         uint256 erc1155BInAmmount
     ) external {
-        vm.assume(alise != address(0));
-        vm.assume(sentinel != uint256(uint160(alise)));
-        vm.assume(bob != address(0));
-        vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(bob != alise);
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmmount);
@@ -364,6 +360,9 @@ contract FlowTest is FlowBasicTest {
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        assumeEtchable(alise, address(flow));
+        assumeEtchable(bob, address(flow));
 
         {
             ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
