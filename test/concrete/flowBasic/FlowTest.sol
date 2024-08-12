@@ -180,11 +180,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
-    function testFlowERC721ToERC721(
-        address bob,
-        uint256 erc721OutTokenId,
-        uint256 erc721BInTokenId
-    ) external {
+    function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721BInTokenId) external {
         vm.assume(bob != address(0));
         vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(sentinel != erc721OutTokenId);
@@ -193,33 +189,31 @@ contract FlowTest is FlowBasicTest {
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
-        address iERC721B = address(uint160(uint256(keccak256("erc721B.test"))));
-        vm.etch(address(iERC721B), REVERTING_MOCK_BYTECODE);
-
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
-        erc721Transfers[0] = ERC721Transfer({token: address(iERC721), from: address(flow), to: bob, id: erc721OutTokenId});
-        erc721Transfers[1] = ERC721Transfer({token: address(iERC721B), from: bob, to: address(flow), id: erc721BInTokenId});
-
+        erc721Transfers[0] =
+            ERC721Transfer({token: address(iTokenA), from: address(flow), to: bob, id: erc721OutTokenId});
+        erc721Transfers[1] =
+            ERC721Transfer({token: address(iTokenB), from: bob, to: address(flow), id: erc721BInTokenId});
 
         vm.mockCall(
-            iERC721,
+            iTokenA,
             abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
             abi.encode()
         );
         vm.expectCall(
-            iERC721,
+            iTokenA,
             abi.encodeWithSelector(
                 bytes4(keccak256("safeTransferFrom(address,address,uint256)")), flow, bob, erc721OutTokenId
             )
         );
 
         vm.mockCall(
-            iERC721B,
+            iTokenB,
             abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
             abi.encode()
         );
         vm.expectCall(
-            iERC721B,
+            iTokenB,
             abi.encodeWithSelector(
                 bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, flow, erc721BInTokenId
             )
