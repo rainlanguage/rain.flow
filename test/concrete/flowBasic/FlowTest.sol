@@ -334,6 +334,9 @@ contract FlowTest is FlowBasicTest {
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
+        vm.assume(bob != address(flow));
+        vm.assume(alise != address(flow));
+        
         {
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
             erc721Transfers[0] =
