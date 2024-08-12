@@ -137,12 +137,9 @@ contract FlowTest is FlowBasicTest {
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
-        address iERC1155B = address(uint160(uint256(keccak256("erc1155B.test"))));
-        vm.etch(address(iERC1155B), REVERTING_MOCK_BYTECODE);
-
         ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
         erc1155Transfers[0] = ERC1155Transfer({
-            token: address(iERC1155),
+            token: address(iTokenA),
             from: address(flow),
             to: alice,
             id: erc1155OutTokenId,
@@ -150,24 +147,24 @@ contract FlowTest is FlowBasicTest {
         });
 
         erc1155Transfers[1] = ERC1155Transfer({
-            token: address(iERC1155B),
+            token: address(iTokenB),
             from: alice,
             to: address(flow),
             id: erc1155BInTokenId,
             amount: erc1155BInAmmount
         });
 
-        vm.mockCall(iERC1155, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
+        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
         vm.expectCall(
-            iERC1155,
+            iTokenA,
             abi.encodeWithSelector(
                 IERC1155.safeTransferFrom.selector, flow, alice, erc1155OutTokenId, erc1155OutAmmount, ""
             )
         );
 
-        vm.mockCall(iERC1155B, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
+        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
         vm.expectCall(
-            iERC1155B,
+            iTokenB,
             abi.encodeWithSelector(
                 IERC1155.safeTransferFrom.selector, alice, flow, erc1155BInTokenId, erc1155BInAmmount, ""
             )
