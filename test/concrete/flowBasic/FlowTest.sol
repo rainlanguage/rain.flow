@@ -38,8 +38,6 @@ contract FlowTest is FlowBasicTest {
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmmount
     ) external {
-        vm.assume(alice != address(0));
-        vm.assume(sentinel != uint256(uint160(alice)));
         vm.assume(sentinel != erc721InTokenId);
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmmount);
@@ -47,6 +45,8 @@ contract FlowTest is FlowBasicTest {
         vm.label(alice, "Alice");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        assumeEtchable(alice, address(flow));
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
         erc721Transfers[0] =
@@ -91,13 +91,12 @@ contract FlowTest is FlowBasicTest {
     }
 
     function testFlowERC20ToERC721(address bob, uint256 erc20InAmount, uint256 erc721OutTokenId) external {
-        vm.assume(bob != address(0));
-        vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(sentinel != erc20InAmount);
         vm.assume(sentinel != erc721OutTokenId);
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(bob, address(flow));
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
         erc20Transfers[0] =
@@ -137,8 +136,6 @@ contract FlowTest is FlowBasicTest {
         uint256 erc1155BInTokenId,
         uint256 erc1155BInAmmount
     ) external {
-        vm.assume(alice != address(0));
-        vm.assume(sentinel != uint256(uint160(alice)));
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmmount);
         vm.assume(sentinel != erc1155BInTokenId);
@@ -146,6 +143,7 @@ contract FlowTest is FlowBasicTest {
         vm.label(alice, "alice");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alice, address(flow));
 
         ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
         erc1155Transfers[0] = ERC1155Transfer({
@@ -191,13 +189,12 @@ contract FlowTest is FlowBasicTest {
     }
 
     function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721BInTokenId) external {
-        vm.assume(bob != address(0));
-        vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(sentinel != erc721OutTokenId);
         vm.assume(sentinel != erc721BInTokenId);
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(bob, address(flow));
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
         erc721Transfers[0] =
@@ -240,13 +237,12 @@ contract FlowTest is FlowBasicTest {
     }
 
     function testFlowERC20ToERC20(address alise, uint256 erc20OutAmmount, uint256 erc20BInAmmount) external {
-        vm.assume(alise != address(0));
-        vm.assume(sentinel != uint256(uint160(alise)));
         vm.assume(sentinel != erc20OutAmmount);
         vm.assume(sentinel != erc20BInAmmount);
         vm.label(alise, "Alise");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alise, address(flow));
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
         erc20Transfers[0] =
@@ -275,16 +271,14 @@ contract FlowTest is FlowBasicTest {
         address bob,
         uint256 erc20Ammount
     ) external {
-        vm.assume(alise != address(0));
-        vm.assume(sentinel != uint256(uint160(alise)));
-        vm.assume(bob != address(0));
-        vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(sentinel != erc20Ammount);
         vm.assume(bob != alise);
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alise, address(flow));
+        assumeEtchable(bob, address(flow));
 
         {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
@@ -328,16 +322,15 @@ contract FlowTest is FlowBasicTest {
         address bob,
         uint256 erc721TokenId
     ) external {
-        vm.assume(alise != address(0));
-        vm.assume(sentinel != uint256(uint160(alise)));
-        vm.assume(bob != address(0));
-        vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(sentinel != erc721TokenId);
         vm.assume(bob != alise);
+
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alise, address(flow));
+        assumeEtchable(bob, address(flow));
 
         {
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
@@ -366,10 +359,6 @@ contract FlowTest is FlowBasicTest {
         uint256 erc1155BInTokenId,
         uint256 erc1155BInAmmount
     ) external {
-        vm.assume(alise != address(0));
-        vm.assume(sentinel != uint256(uint160(alise)));
-        vm.assume(bob != address(0));
-        vm.assume(sentinel != uint256(uint160(bob)));
         vm.assume(bob != alise);
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmmount);
@@ -379,6 +368,9 @@ contract FlowTest is FlowBasicTest {
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        assumeEtchable(alise, address(flow));
+        assumeEtchable(bob, address(flow));
 
         {
             ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);

@@ -38,4 +38,23 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
         (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));
     }
+
+    function assumeEtchable(address account) internal view {
+        assumeEtchable(account, address(0));
+    }
+
+    function assumeEtchable(address account, address expression) internal view {
+        assumeNotPrecompile(account);
+        vm.assume(account != address(iDeployer));
+        vm.assume(account != address(iInterpreter));
+        vm.assume(account != address(iStore));
+        vm.assume(account != address(iCloneFactory));
+        vm.assume(account != address(iFlowImplementation));
+        vm.assume(account != address(this));
+        vm.assume(account != address(vm));
+        vm.assume(sentinel != uint256(uint160(account)));
+        vm.assume(account != address(expression));
+        // The console.
+        vm.assume(account != address(0x000000000000000000636F6e736F6c652e6c6f67));
+    }
 }
