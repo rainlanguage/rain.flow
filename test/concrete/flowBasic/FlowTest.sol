@@ -373,12 +373,9 @@ contract FlowTest is FlowBasicTest {
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
         {
-            address iERC1155B = address(uint160(uint256(keccak256("erc1155B.test"))));
-            vm.etch(address(iERC1155B), REVERTING_MOCK_BYTECODE);
-
             ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
             erc1155Transfers[0] = ERC1155Transfer({
-                token: address(iERC1155),
+                token: address(iTokenA),
                 from: bob,
                 to: address(flow),
                 id: erc1155OutTokenId,
@@ -386,7 +383,7 @@ contract FlowTest is FlowBasicTest {
             });
 
             erc1155Transfers[1] = ERC1155Transfer({
-                token: address(iERC1155B),
+                token: address(iTokenB),
                 from: address(flow),
                 to: alise,
                 id: erc1155BInTokenId,
