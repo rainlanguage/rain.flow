@@ -128,6 +128,7 @@ contract FlowTest is FlowBasicTest {
         uint256 erc1155BInAmmount
     ) external {
         vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmmount);
         vm.assume(sentinel != erc1155BInTokenId);
         vm.assume(sentinel != erc1155BInAmmount);
         vm.label(alice, "alice");
