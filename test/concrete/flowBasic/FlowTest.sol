@@ -278,15 +278,12 @@ contract FlowTest is FlowBasicTest {
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
-        address iIERC20B = address(uint160(uint256(keccak256("erc20B.test"))));
-        vm.etch(address(iIERC20B), REVERTING_MOCK_BYTECODE);
-
         {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
             erc20Transfers[0] =
-                ERC20Transfer({token: address(iIERC20), from: bob, to: address(flow), amount: erc20Ammount});
+                ERC20Transfer({token: address(iTokenA), from: bob, to: address(flow), amount: erc20Ammount});
             erc20Transfers[1] =
-                ERC20Transfer({token: address(iIERC20B), from: address(flow), to: alise, amount: erc20Ammount});
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alise, amount: erc20Ammount});
 
             uint256[] memory stack =
                 generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
@@ -302,9 +299,9 @@ contract FlowTest is FlowBasicTest {
         {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
             erc20Transfers[0] =
-                ERC20Transfer({token: address(iIERC20), from: alise, to: address(flow), amount: erc20Ammount});
-            erc20Transfers[1] = ERC20Transfer({token: address(iIERC20B), from: bob, to: alise, amount: erc20Ammount});
-            vm.mockCall(iIERC20, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+                ERC20Transfer({token: address(iTokenA), from: alise, to: address(flow), amount: erc20Ammount});
+            erc20Transfers[1] = ERC20Transfer({token: address(iTokenB), from: bob, to: alise, amount: erc20Ammount});
+            vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
 
             uint256[] memory stack =
                 generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
