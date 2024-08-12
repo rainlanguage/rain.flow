@@ -272,7 +272,6 @@ contract FlowTest is FlowBasicTest {
         assumeEtchable(alise, address(flow));
         assumeEtchable(bob, address(flow));
 
-
         {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
             erc20Transfers[0] =
