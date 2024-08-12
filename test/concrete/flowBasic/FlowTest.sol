@@ -8,9 +8,17 @@ import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {UnsupportedERC20Flow, UnsupportedERC721Flow, UnsupportedERC1155Flow} from "src/error/ErrFlow.sol";
+import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
+import {
+    UnsupportedERC20Flow,
+    UnsupportedERC721Flow,
+    UnsupportedERC1155Flow,
+    UnregisteredFlow
+} from "src/error/ErrFlow.sol";
 
 contract FlowTest is FlowBasicTest {
+    using LibEvaluable for EvaluableV2;
+
     address internal immutable iTokenA;
     address internal immutable iTokenB;
 
@@ -53,7 +61,7 @@ contract FlowTest is FlowBasicTest {
             amount: erc1155OutAmmount
         });
 
-        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
+        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
@@ -61,11 +69,7 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        vm.mockCall(
-            iTokenA,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
-        );
+        vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenA,
             abi.encodeWithSelector(
@@ -100,11 +104,7 @@ contract FlowTest is FlowBasicTest {
         vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector, bob, flow, erc20InAmount));
 
-        vm.mockCall(
-            iTokenB,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
-        );
+        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
@@ -154,7 +154,7 @@ contract FlowTest is FlowBasicTest {
             amount: erc1155BInAmmount
         });
 
-        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
+        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
         vm.expectCall(
             iTokenA,
             abi.encodeWithSelector(
@@ -162,7 +162,7 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
+        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
@@ -194,11 +194,7 @@ contract FlowTest is FlowBasicTest {
         erc721Transfers[1] =
             ERC721Transfer({token: address(iTokenB), from: bob, to: address(flow), id: erc721BInTokenId});
 
-        vm.mockCall(
-            iTokenA,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
-        );
+        vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenA,
             abi.encodeWithSelector(
@@ -206,11 +202,7 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        vm.mockCall(
-            iTokenB,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
-        );
+        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
@@ -391,6 +383,23 @@ contract FlowTest is FlowBasicTest {
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC1155Flow.selector));
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testShouldErrorIfFlowBeingEvaluatedIsUnregistered(address alise, address expressionA, address expressionB)
+        external
+    {
+        vm.assume(alise != address(0));
+        vm.assume(expressionA != expressionB);
+        assumeEtchable(alise);
+
+        vm.label(alise, "Alise");
+
+        (, EvaluableV2 memory evaluableA) = deployFlow(expressionA);
+        (IFlowV5 flowB,) = deployFlow(expressionB);
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnregisteredFlow.selector, evaluableA.hash()));
+        flowB.flow(evaluableA, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 }
