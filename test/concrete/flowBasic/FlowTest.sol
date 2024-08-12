@@ -8,8 +8,17 @@ import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
+import {
+    UnsupportedERC20Flow,
+    UnsupportedERC721Flow,
+    UnsupportedERC1155Flow,
+    UnregisteredFlow
+} from "src/error/ErrFlow.sol";
 
 contract FlowTest is FlowBasicTest {
+    using LibEvaluable for EvaluableV2;
+
     address internal immutable iTokenA;
     address internal immutable iTokenB;
 
@@ -185,11 +194,7 @@ contract FlowTest is FlowBasicTest {
         erc721Transfers[1] =
             ERC721Transfer({token: address(iTokenB), from: bob, to: address(flow), id: erc721BInTokenId});
 
-        vm.mockCall(
-            iTokenA,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
-        );
+        vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenA,
             abi.encodeWithSelector(
@@ -197,11 +202,7 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        vm.mockCall(
-            iTokenB,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
-        );
+        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
@@ -216,6 +217,189 @@ contract FlowTest is FlowBasicTest {
 
         vm.startPrank(bob);
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testFlowERC20ToERC20(address alise, uint256 erc20OutAmmount, uint256 erc20BInAmmount) external {
+        vm.assume(sentinel != erc20OutAmmount);
+        vm.assume(sentinel != erc20BInAmmount);
+        vm.label(alise, "Alise");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alise, address(flow));
+
+        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+        erc20Transfers[0] =
+            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alise, amount: erc20OutAmmount});
+        erc20Transfers[1] =
+            ERC20Transfer({token: address(iTokenB), from: alise, to: address(flow), amount: erc20BInAmmount});
+
+        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
+        vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transfer.selector, alise, erc20OutAmmount));
+
+        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+        vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, alise, flow, erc20BInAmmount));
+
+        uint256[] memory stack =
+            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        vm.startPrank(alise);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testFlowShouldErrorIfERC20FlowFromIsOtherThanSourceContractOrMsgSender(
+        address alise,
+        address bob,
+        uint256 erc20Ammount
+    ) external {
+        vm.assume(sentinel != erc20Ammount);
+        vm.assume(bob != alise);
+        vm.label(alise, "Alise");
+        vm.label(bob, "Bob");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alise, address(flow));
+        assumeEtchable(bob, address(flow));
+
+        {
+            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iTokenA), from: bob, to: address(flow), amount: erc20Ammount});
+            erc20Transfers[1] =
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alise, amount: erc20Ammount});
+
+            uint256[] memory stack =
+                generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+
+        {
+            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iTokenA), from: alise, to: address(flow), amount: erc20Ammount});
+            erc20Transfers[1] = ERC20Transfer({token: address(iTokenB), from: bob, to: alise, amount: erc20Ammount});
+            vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+
+            uint256[] memory stack =
+                generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testFlowShouldErrorIfERC721FlowFromIsOtherThanSourceContractOrMsgSender(
+        address alise,
+        address bob,
+        uint256 erc721TokenId
+    ) external {
+        vm.assume(sentinel != erc721TokenId);
+        vm.assume(bob != alise);
+
+        vm.label(alise, "Alise");
+        vm.label(bob, "Bob");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alise, address(flow));
+        assumeEtchable(bob, address(flow));
+
+        {
+            ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
+            erc721Transfers[0] =
+                ERC721Transfer({token: address(iTokenA), from: bob, to: address(flow), id: erc721TokenId});
+            erc721Transfers[1] =
+                ERC721Transfer({token: address(iTokenB), from: address(flow), to: alise, id: erc721TokenId});
+
+            uint256[] memory stack =
+                generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, new ERC20Transfer[](0));
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedERC721Flow.selector));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testFlowShouldErrorIfERC1155FlowFromIsOtherThanSourceContractOrMsgSender(
+        address alise,
+        address bob,
+        uint256 erc1155OutTokenId,
+        uint256 erc1155OutAmmount,
+        uint256 erc1155BInTokenId,
+        uint256 erc1155BInAmmount
+    ) external {
+        vm.assume(bob != alise);
+        vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmmount);
+        vm.assume(sentinel != erc1155BInTokenId);
+        vm.assume(sentinel != erc1155BInAmmount);
+        vm.label(alise, "Alise");
+        vm.label(bob, "Bob");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        assumeEtchable(alise, address(flow));
+        assumeEtchable(bob, address(flow));
+
+        {
+            ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
+            erc1155Transfers[0] = ERC1155Transfer({
+                token: address(iTokenA),
+                from: bob,
+                to: address(flow),
+                id: erc1155OutTokenId,
+                amount: erc1155OutAmmount
+            });
+
+            erc1155Transfers[1] = ERC1155Transfer({
+                token: address(iTokenB),
+                from: address(flow),
+                to: alise,
+                id: erc1155BInTokenId,
+                amount: erc1155BInAmmount
+            });
+
+            uint256[] memory stack =
+                generateTokenTransferStack(erc1155Transfers, new ERC721Transfer[](0), new ERC20Transfer[](0));
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedERC1155Flow.selector));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    function testShouldErrorIfFlowBeingEvaluatedIsUnregistered(address alise, address expressionA, address expressionB)
+        external
+    {
+        vm.assume(alise != address(0));
+        vm.assume(expressionA != expressionB);
+        assumeEtchable(alise);
+
+        vm.label(alise, "Alise");
+
+        (, EvaluableV2 memory evaluableA) = deployFlow(expressionA);
+        (IFlowV5 flowB,) = deployFlow(expressionB);
+        vm.startPrank(alise);
+        vm.expectRevert(abi.encodeWithSelector(UnregisteredFlow.selector, evaluableA.hash()));
+        flowB.flow(evaluableA, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 }
