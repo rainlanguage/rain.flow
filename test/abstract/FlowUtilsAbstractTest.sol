@@ -9,19 +9,25 @@ import {ERC721SupplyChange} from "src/interface/unstable/IFlowERC721V5.sol";
 import {ERC20SupplyChange} from "src/interface/unstable/IFlowERC20V5.sol";
 
 abstract contract FlowUtilsAbstractTest is Test {
+    uint256 internal immutable sentinel;
+
+    constructor() {
+        vm.pauseGasMetering();
+        sentinel = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
+        vm.resumeGasMetering();
+    }
+
     function generateTokenTransferStack(
         ERC1155Transfer[] memory erc1155Transfers,
         ERC721Transfer[] memory erc721Transfers,
         ERC20Transfer[] memory erc20Transfers
-    ) internal pure returns (uint256[] memory stack) {
+    ) internal view returns (uint256[] memory stack) {
         uint256 totalItems =
             1 + (erc1155Transfers.length * 5) + 1 + (erc721Transfers.length * 4) + 1 + (erc20Transfers.length * 4);
         stack = new uint256[](totalItems);
         uint256 index = 0;
 
-        uint256 separator = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
-
-        stack[index++] = separator;
+        stack[index++] = sentinel;
         for (uint256 i = 0; i < erc1155Transfers.length; i++) {
             stack[index++] = uint256(uint160(erc1155Transfers[i].token));
             stack[index++] = uint256(uint160(erc1155Transfers[i].from));
@@ -30,7 +36,7 @@ abstract contract FlowUtilsAbstractTest is Test {
             stack[index++] = erc1155Transfers[i].amount;
         }
 
-        stack[index++] = separator;
+        stack[index++] = sentinel;
         for (uint256 i = 0; i < erc721Transfers.length; i++) {
             stack[index++] = uint256(uint160(erc721Transfers[i].token));
             stack[index++] = uint256(uint160(erc721Transfers[i].from));
@@ -38,7 +44,7 @@ abstract contract FlowUtilsAbstractTest is Test {
             stack[index++] = erc721Transfers[i].id;
         }
 
-        stack[index++] = separator;
+        stack[index++] = sentinel;
         for (uint256 i = 0; i < erc20Transfers.length; i++) {
             stack[index++] = uint256(uint160(erc20Transfers[i].token));
             stack[index++] = uint256(uint160(erc20Transfers[i].from));
@@ -55,7 +61,7 @@ abstract contract FlowUtilsAbstractTest is Test {
         ERC20Transfer[] memory erc20Transfers,
         ERC1155SupplyChange[] memory erc1155Burns,
         ERC1155SupplyChange[] memory erc1155Mints
-    ) internal pure returns (uint256[] memory stack) {
+    ) internal view returns (uint256[] memory stack) {
         uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
         uint256 totalItems = transfersStack.length + 1 + (erc1155Burns.length * 3) + 1 + (erc1155Mints.length * 3);
 
@@ -88,7 +94,7 @@ abstract contract FlowUtilsAbstractTest is Test {
         ERC20Transfer[] memory erc20Transfers,
         ERC721SupplyChange[] memory erc721Burns,
         ERC721SupplyChange[] memory erc721Mints
-    ) internal pure returns (uint256[] memory stack) {
+    ) internal view returns (uint256[] memory stack) {
         uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
         uint256 totalItems = transfersStack.length + 1 + (erc721Burns.length * 2) + 1 + (erc721Mints.length * 2);
 
@@ -119,7 +125,7 @@ abstract contract FlowUtilsAbstractTest is Test {
         ERC20Transfer[] memory erc20Transfers,
         ERC20SupplyChange[] memory erc20Burns,
         ERC20SupplyChange[] memory erc20Mints
-    ) internal pure returns (uint256[] memory stack) {
+    ) internal view returns (uint256[] memory stack) {
         uint256[] memory transfersStack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, erc20Transfers);
         uint256 totalItems = transfersStack.length + 1 + (erc20Mints.length * 2) + 1 + (erc20Mints.length * 2);
 
