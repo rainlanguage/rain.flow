@@ -332,14 +332,11 @@ contract FlowTest is FlowBasicTest {
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
         {
-            address iERC721B = address(uint160(uint256(keccak256("erc721B.test"))));
-            vm.etch(address(iERC721B), REVERTING_MOCK_BYTECODE);
-
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
             erc721Transfers[0] =
-                ERC721Transfer({token: address(iERC721), from: bob, to: address(flow), id: erc721TokenId});
+                ERC721Transfer({token: address(iTokenA), from: bob, to: address(flow), id: erc721TokenId});
             erc721Transfers[1] =
-                ERC721Transfer({token: address(iERC721B), from: address(flow), to: alise, id: erc721TokenId});
+                ERC721Transfer({token: address(iTokenB), from: address(flow), to: alise, id: erc721TokenId});
 
             uint256[] memory stack =
                 generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, new ERC20Transfer[](0));
