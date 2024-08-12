@@ -12,13 +12,13 @@ import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {FlowERC1155} from "../../src/concrete/erc1155/FlowERC1155.sol";
 
 abstract contract FlowERC1155Test is FlowUtilsAbstractTest, InterpreterMockTest {
-    CloneFactory internal immutable _iCloneFactory;
-    IFlowERC1155V5 internal immutable _flowImplementation;
+    CloneFactory internal immutable iCloneFactory;
+    IFlowERC1155V5 internal immutable iFlowImplementation;
 
     constructor() {
         vm.pauseGasMetering();
-        _iCloneFactory = new CloneFactory();
-        _flowImplementation = new FlowERC1155();
+        iCloneFactory = new CloneFactory();
+        iFlowImplementation = new FlowERC1155();
         vm.resumeGasMetering();
     }
 
@@ -36,7 +36,7 @@ abstract contract FlowERC1155Test is FlowUtilsAbstractTest, InterpreterMockTest 
         // Initialize the FlowERC1155ConfigV3 struct
         FlowERC1155ConfigV3 memory flowErc1155Config = FlowERC1155ConfigV3(uri, evaluableConfig, flowConfigArray);
         vm.recordLogs();
-        flowErc1155 = IFlowERC1155V5(_iCloneFactory.clone(address(_flowImplementation), abi.encode(flowErc1155Config)));
+        flowErc1155 = IFlowERC1155V5(iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowErc1155Config)));
         Vm.Log[] memory logs = vm.getRecordedLogs();
         Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
         (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));
