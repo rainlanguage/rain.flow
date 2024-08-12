@@ -197,7 +197,7 @@ contract FlowTest is FlowBasicTest {
         vm.mockCall(
             iTokenA,
             abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
+            ""
         );
         vm.expectCall(
             iTokenA,
@@ -209,7 +209,7 @@ contract FlowTest is FlowBasicTest {
         vm.mockCall(
             iTokenB,
             abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
+            ""
         );
         vm.expectCall(
             iTokenB,
