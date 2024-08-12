@@ -20,11 +20,9 @@ contract FlowERC721Test is InterpreterMockTest, FlowUtilsAbstractTest {
         vm.pauseGasMetering();
         iCloneFactory = new CloneFactory();
         iFlowERC721Implementation = new FlowERC721();
-        vm.pauseGasMetering();
         iDeployerForEvalHandleTransfer =
             IExpressionDeployerV3(address(uint160(uint256(keccak256("deployer.for.evalhandle.transfer.rain.test")))));
         vm.etch(address(iInterpreter), REVERTING_MOCK_BYTECODE);
-
         vm.resumeGasMetering();
     }
 }
