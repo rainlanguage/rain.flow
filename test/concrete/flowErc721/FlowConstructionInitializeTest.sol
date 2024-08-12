@@ -9,7 +9,7 @@ import {IExpressionDeployerV3} from "rain.interpreter.interface/interface/IExpre
 import {FlowERC721Test} from "test/abstract/FlowERC721Test.sol";
 
 contract FlowConstructionInitializeTest is FlowERC721Test {
-    function testFlowConstructionInitialize(address expression, bytes memory bytecode, uint256[] memory constants)
+    function testFlowConstructionInitializeERC721(address expression, bytes memory bytecode, uint256[] memory constants)
         external
     {
         expressionDeployerDeployExpression2MockCall(expression, bytes(hex"0006"));

@@ -7,7 +7,7 @@ import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpret
 import {FlowERC20Test} from "test/abstract/FlowERC20Test.sol";
 
 contract FlowConstructionInitializeTest is FlowERC20Test {
-    function testFlowConstructionInitialize(address expression, bytes memory bytecode, uint256[] memory constants)
+    function testFlowERC20ConstructionInitialize(address expression, bytes memory bytecode, uint256[] memory constants)
         external
     {
         expressionDeployerDeployExpression2MockCall(expression, bytes(hex"0007"));
