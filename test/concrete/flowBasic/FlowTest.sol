@@ -52,7 +52,7 @@ contract FlowTest is FlowBasicTest {
             amount: erc1155OutAmmount
         });
 
-        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
+        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
@@ -60,11 +60,7 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        vm.mockCall(
-            iTokenA,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
-        );
+        vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenA,
             abi.encodeWithSelector(
@@ -99,11 +95,7 @@ contract FlowTest is FlowBasicTest {
         vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector, bob, flow, erc20InAmount));
 
-        vm.mockCall(
-            iTokenB,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            abi.encode()
-        );
+        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
@@ -153,7 +145,7 @@ contract FlowTest is FlowBasicTest {
             amount: erc1155BInAmmount
         });
 
-        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
+        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
         vm.expectCall(
             iTokenA,
             abi.encodeWithSelector(
@@ -161,7 +153,7 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), abi.encode());
+        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
