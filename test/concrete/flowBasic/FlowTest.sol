@@ -407,6 +407,7 @@ contract FlowTest is FlowBasicTest {
     {
         vm.assume(alise != address(0));
         vm.assume(expressionA != expressionB);
+        assumeEtchable(alise);
 
         vm.label(alise, "Alise");
 
