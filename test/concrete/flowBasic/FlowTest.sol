@@ -194,11 +194,7 @@ contract FlowTest is FlowBasicTest {
         erc721Transfers[1] =
             ERC721Transfer({token: address(iTokenB), from: bob, to: address(flow), id: erc721BInTokenId});
 
-        vm.mockCall(
-            iTokenA,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            ""
-        );
+        vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenA,
             abi.encodeWithSelector(
@@ -206,11 +202,7 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        vm.mockCall(
-            iTokenB,
-            abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))),
-            ""
-        );
+        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
