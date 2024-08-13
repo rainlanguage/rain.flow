@@ -10,15 +10,16 @@ import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {FlowERC1155} from "../../src/concrete/erc1155/FlowERC1155.sol";
+import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 
 abstract contract FlowERC1155Test is FlowUtilsAbstractTest, InterpreterMockTest {
-    CloneFactory internal immutable iCloneFactory;
-    IFlowERC1155V5 internal immutable iFlowImplementation;
+    CloneFactory internal immutable iCloneErc1155Factory;
+    IFlowERC1155V5 internal immutable iFlowErc1155Implementation;
 
     constructor() {
         vm.pauseGasMetering();
-        iCloneFactory = new CloneFactory();
-        iFlowImplementation = new FlowERC1155();
+        iCloneErc1155Factory = new CloneFactory();
+        iFlowErc1155Implementation = new FlowERC1155();
         vm.resumeGasMetering();
     }
 
@@ -36,7 +37,9 @@ abstract contract FlowERC1155Test is FlowUtilsAbstractTest, InterpreterMockTest 
         // Initialize the FlowERC1155ConfigV3 struct
         FlowERC1155ConfigV3 memory flowErc1155Config = FlowERC1155ConfigV3(uri, evaluableConfig, flowConfigArray);
         vm.recordLogs();
-        flowErc1155 = IFlowERC1155V5(iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowErc1155Config)));
+        flowErc1155 = IFlowERC1155V5(
+            iCloneErc1155Factory.clone(address(iFlowErc1155Implementation), abi.encode(flowErc1155Config))
+        );
         Vm.Log[] memory logs = vm.getRecordedLogs();
         Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
         (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));
