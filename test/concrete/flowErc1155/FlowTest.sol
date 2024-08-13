@@ -36,7 +36,7 @@ contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTes
         vm.resumeGasMetering();
     }
 
-    function testFlowERC20ToERC20(
+    function testFlowERC1155_FlowERC20ToERC20(
         uint256 erc20OutAmmount,
         uint256 erc20BInAmmount,
         string memory uri,
