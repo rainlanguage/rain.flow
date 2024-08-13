@@ -23,15 +23,15 @@ contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTes
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
 
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
+    IERC20 internal immutable iTokenA;
+    IERC20 internal immutable iTokenB;
 
     constructor() {
         vm.pauseGasMetering();
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
+        iTokenA = IERC20(address(uint160(uint256(keccak256("tokenA.test")))));
         vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
 
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
+        iTokenB = IERC20(address(uint160(uint256(keccak256("tokenB.test")))));
         vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
         vm.resumeGasMetering();
     }
@@ -61,24 +61,23 @@ contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTes
 
         vm.startPrank(alice);
 
-        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
-        vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmmount));
+        vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
+        vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmmount));
 
-        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+        vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(
-            iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc1155Flow, erc20BInAmmount)
+            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc1155Flow, erc20BInAmmount)
         );
 
         uint256[] memory stack = generateFlowERC1155Stack(
             new ERC1155Transfer[](0),
             new ERC721Transfer[](0),
-            new ERC20Transfer[](0),
+            erc20Transfers,
             new ERC1155SupplyChange[](0),
             new ERC1155SupplyChange[](0)
         );
         interpreterEval2MockCall(stack, new uint256[](0));
 
-        // With bad signature in second signed context
         SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
         signedContexts1[0] = vm.signContext(aliceKey, aliceKey, new uint256[](0));
         signedContexts1[1] = vm.signContext(aliceKey, aliceKey, new uint256[](0));
