@@ -48,7 +48,6 @@ contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTes
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         address alice = vm.addr(aliceKey);
-        vm.label(alice, "Alice");
 
         (IFlowERC1155V5 erc1155Flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
         assumeEtchable(alice, address(erc1155Flow));
@@ -95,7 +94,6 @@ contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTes
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         address alice = vm.addr(aliceKey);
-        vm.label(alice, "Alice");
 
         vm.assume(sentinel != erc721OutTokenId);
         vm.assume(sentinel != erc721BInTokenId);
