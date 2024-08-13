@@ -23,7 +23,11 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
     }
 
     function deployFlow() internal returns (IFlowV5 flow, EvaluableV2 memory evaluable) {
-        expressionDeployerDeployExpression2MockCall(address(0), bytes(hex"0006"));
+        (flow, evaluable) = deployFlow(address(0));
+    }
+
+    function deployFlow(address expression) internal returns (IFlowV5 flow, EvaluableV2 memory evaluable) {
+        expressionDeployerDeployExpression2MockCall(expression, bytes(hex"0006"));
 
         EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](1);
         flowConfig[0] = EvaluableConfigV3(iDeployer, STUB_EXPRESSION_BYTECODE, new uint256[](0));
