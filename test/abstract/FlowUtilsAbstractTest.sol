@@ -151,11 +151,28 @@ abstract contract FlowUtilsAbstractTest is Test {
     }
 
     function findEvent(Vm.Log[] memory logs, bytes32 eventSignature) internal pure returns (Vm.Log memory) {
+        Vm.Log[] memory foundLogs = findEvents(logs, eventSignature);
+        require(foundLogs.length >= 1, "Event not found!");
+        return (foundLogs[0]);
+    }
+
+    function findEvents(Vm.Log[] memory logs, bytes32 eventSignature)
+        internal
+        pure
+        returns (Vm.Log[] memory foundLogs)
+    {
+        foundLogs = new Vm.Log[](logs.length);
+        uint256 foundCount = 0;
+
         for (uint256 i = 0; i < logs.length; i++) {
             if (logs[i].topics[0] == eventSignature) {
-                return logs[i];
+                foundLogs[foundCount] = logs[i];
+                foundCount++;
             }
         }
-        revert("Event not found!");
+
+        assembly ("memory-safe") {
+            mstore(foundLogs, foundCount)
+        }
     }
 }
