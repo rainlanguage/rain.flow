@@ -207,4 +207,53 @@ contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTes
         erc1155Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
+
+    function testFlowERC1155FlowERC20ToERC721(
+        uint256 fuzzedKeyAlice,
+        uint256 erc20InAmount,
+        uint256 erc721OutTokenId,
+        string memory uri
+    ) external {
+        // Ensure the fuzzed key is within the valid range for secp256k1
+        uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
+        address alice = vm.addr(aliceKey);
+
+        vm.assume(sentinel != erc20InAmount);
+        vm.assume(sentinel != erc721OutTokenId);
+
+        (IFlowERC1155V5 erc1155Flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
+        assumeEtchable(alice, address(erc1155Flow));
+
+        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
+        erc20Transfers[0] =
+            ERC20Transfer({token: address(iTokenA), from: alice, to: address(erc1155Flow), amount: erc20InAmount});
+
+        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
+        erc721Transfers[0] =
+            ERC721Transfer({token: iTokenB, from: address(erc1155Flow), to: alice, id: erc721OutTokenId});
+
+        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+        vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc1155Flow, erc20InAmount));
+
+        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
+        vm.expectCall(
+            iTokenB,
+            abi.encodeWithSelector(
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), erc1155Flow, alice, erc721OutTokenId
+            )
+        );
+
+        uint256[] memory stack = generateFlowERC1155Stack(
+            new ERC1155Transfer[](0),
+            erc721Transfers,
+            erc20Transfers,
+            new ERC1155SupplyChange[](0),
+            new ERC1155SupplyChange[](0)
+        );
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        vm.startPrank(alice);
+        erc1155Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
 }
