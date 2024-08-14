@@ -140,7 +140,7 @@ contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTes
         vm.stopPrank();
     }
 
-    function testFlowERC1155_FlowERC1155ToERC1155(
+    function testFlowERC1155FlowERC1155ToERC1155(
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmmount,
