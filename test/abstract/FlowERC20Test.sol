@@ -11,13 +11,13 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
 
-contract FlowERC20Test is InterpreterMockTest, FlowUtilsAbstractTest {
-    CloneFactory internal immutable iCloneFactory;
+contract FlowERC20Test is FlowUtilsAbstractTest, InterpreterMockTest {
+    CloneFactory internal immutable iCloneErc20Factory;
     IFlowERC20V5 internal immutable iFlowERC20Implementation;
 
     constructor() {
         vm.pauseGasMetering();
-        iCloneFactory = new CloneFactory();
+        iCloneErc20Factory = new CloneFactory();
         iFlowERC20Implementation = new FlowERC20();
         vm.resumeGasMetering();
     }
@@ -36,7 +36,8 @@ contract FlowERC20Test is InterpreterMockTest, FlowUtilsAbstractTest {
         // Initialize the FlowERC20Config struct
         FlowERC20ConfigV2 memory flowErc20Config = FlowERC20ConfigV2(name, symbol, evaluableConfig, flowConfigArray);
         vm.recordLogs();
-        flowErc20 = IFlowERC20V5(iCloneFactory.clone(address(iFlowERC20Implementation), abi.encode(flowErc20Config)));
+        flowErc20 =
+            IFlowERC20V5(iCloneErc20Factory.clone(address(iFlowERC20Implementation), abi.encode(flowErc20Config)));
         Vm.Log[] memory logs = vm.getRecordedLogs();
         Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
         (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));
