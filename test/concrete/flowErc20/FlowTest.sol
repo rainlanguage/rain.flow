@@ -205,4 +205,54 @@ contract Erc20FlowTest is FlowERC20Test, FlowBasicTest {
         erc20Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
+
+    function testFlowERC20FlowERC20ToERC20(
+        uint256 erc20OutAmmount,
+        uint256 erc20BInAmmount,
+        string memory name,
+        string memory symbol,
+        uint256 fuzzedKeyAlice
+    ) external {
+        vm.assume(sentinel != erc20OutAmmount);
+        vm.assume(sentinel != erc20BInAmmount);
+
+        // Ensure the fuzzed key is within the valid range for secp256k1
+        uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
+        address alice = vm.addr(aliceKey);
+
+        (IFlowERC20V5 erc20Flow, EvaluableV2 memory evaluable) = deployFlowERC20(name, symbol);
+        assumeEtchable(alice, address(erc20Flow));
+
+        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+        erc20Transfers[0] =
+            ERC20Transfer({token: address(iTokenA), from: address(erc20Flow), to: alice, amount: erc20OutAmmount});
+        erc20Transfers[1] =
+            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc20Flow), amount: erc20BInAmmount});
+
+        vm.startPrank(alice);
+
+        vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
+        vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmmount));
+
+        vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+        vm.expectCall(
+            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc20Flow, erc20BInAmmount)
+        );
+
+        uint256[] memory stack = generateFlowERC1155Stack(
+            new ERC1155Transfer[](0),
+            new ERC721Transfer[](0),
+            erc20Transfers,
+            new ERC1155SupplyChange[](0),
+            new ERC1155SupplyChange[](0)
+        );
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
+        signedContexts1[0] = vm.signContext(aliceKey, aliceKey, new uint256[](0));
+        signedContexts1[1] = vm.signContext(aliceKey, aliceKey, new uint256[](0));
+
+        erc20Flow.flow(evaluable, new uint256[](0), signedContexts1);
+        vm.stopPrank();
+    }
 }
