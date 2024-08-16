@@ -285,4 +285,21 @@ contract FlowPreviewTest is FlowBasicTest {
             keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
         );
     }
+
+    /**
+     * @dev Tests the preview of an empty Flow IO.
+     */
+    function testFlowBasePreviewEmptyFlowIO() public {
+        (IFlowV5 flow,) = deployFlow();
+
+        uint256[] memory stack =
+            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), new ERC20Transfer[](0));
+
+        FlowTransferV1 memory flowTransfer =
+            FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0));
+
+        assertEq(
+            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+        );
+    }
 }
