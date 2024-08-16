@@ -175,7 +175,7 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of defined Flow IO for ERC1155
      * using single-element arrays.
      */
-    function testPreviewDefinedFlowIOForERC1155SingleElementArrays(
+    function testFlowBasePreviewDefinedFlowIOForERC1155SingleElementArrays(
         address alice,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmmount,
