@@ -88,4 +88,70 @@ contract Erc721FlowTest is FlowERC721Test, FlowBasicTest {
         erc721Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
+
+    function testFlowERC721lowERC1155ToERC1155(
+        address alice,
+        uint256 erc1155OutTokenId,
+        uint256 erc1155OutAmmount,
+        uint256 erc1155BInTokenId,
+        uint256 erc1155BInAmmount,
+        string memory name,
+        string memory symbol,
+        string memory baseURI
+    ) external {
+        vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmmount);
+        vm.assume(sentinel != erc1155BInTokenId);
+        vm.assume(sentinel != erc1155BInAmmount);
+
+        (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721({name: name, symbol: symbol, baseURI: baseURI});
+        assumeEtchable(alice, address(erc721Flow));
+
+        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
+        erc1155Transfers[0] = ERC1155Transfer({
+            token: address(iTokenA),
+            from: address(erc721Flow),
+            to: alice,
+            id: erc1155OutTokenId,
+            amount: erc1155OutAmmount
+        });
+
+        erc1155Transfers[1] = ERC1155Transfer({
+            token: address(iTokenB),
+            from: alice,
+            to: address(erc721Flow),
+            id: erc1155BInTokenId,
+            amount: erc1155BInAmmount
+        });
+
+        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
+        vm.expectCall(
+            iTokenA,
+            abi.encodeWithSelector(
+                IERC1155.safeTransferFrom.selector, erc721Flow, alice, erc1155OutTokenId, erc1155OutAmmount, ""
+            )
+        );
+
+        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
+        vm.expectCall(
+            iTokenB,
+            abi.encodeWithSelector(
+                IERC1155.safeTransferFrom.selector, alice, erc721Flow, erc1155BInTokenId, erc1155BInAmmount, ""
+            )
+        );
+
+        uint256[] memory stack = generateFlowERC1155Stack(
+            erc1155Transfers,
+            new ERC721Transfer[](0),
+            new ERC20Transfer[](0),
+            new ERC1155SupplyChange[](0),
+            new ERC1155SupplyChange[](0)
+        );
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        vm.startPrank(alice);
+        erc721Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
 }
