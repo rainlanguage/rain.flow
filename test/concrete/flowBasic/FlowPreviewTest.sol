@@ -224,7 +224,7 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of defined Flow IO for ERC721
      * using single-element arrays.
      */
-    function testPreviewDefinedFlowIOForERC721SingleElementArrays(
+    function testFlowBasePreviewDefinedFlowIOForERC721SingleElementArrays(
         address alice,
         uint256 erc721TokenInId,
         uint256 erc721TokenOutId
