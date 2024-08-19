@@ -5,21 +5,11 @@ import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {
     IFlowV5, FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer
 } from "src/interface/unstable/IFlowV5.sol";
-import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
+import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
+import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 
 contract FlowPreviewTest is FlowBasicTest {
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
-
-    constructor() {
-        vm.pauseGasMetering();
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
-        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
-
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
-        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
-        vm.resumeGasMetering();
-    }
+    using LibEvaluable for EvaluableV2;
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC1155
