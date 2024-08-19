@@ -6,16 +6,7 @@ import {
     IFlowV5, FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer
 } from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
-import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
-import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
-import {
-    UnsupportedERC20Flow,
-    UnsupportedERC721Flow,
-    UnsupportedERC1155Flow,
-    UnregisteredFlow
-} from "src/error/ErrFlow.sol";
 
 contract FlowPreviewTest is FlowBasicTest {
     using LibEvaluable for EvaluableV2;
@@ -266,6 +257,23 @@ contract FlowPreviewTest is FlowBasicTest {
 
         FlowTransferV1 memory flowTransfer =
             FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0));
+
+        assertEq(
+            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+        );
+    }
+
+    /**
+     * @dev Tests the preview of an empty Flow IO.
+     */
+    function testFlowBasePreviewEmptyFlowIO() public {
+        (IFlowV5 flow,) = deployFlow();
+
+        uint256[] memory stack =
+            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), new ERC20Transfer[](0));
+
+        FlowTransferV1 memory flowTransfer =
+            FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0));
 
         assertEq(
             keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
