@@ -39,7 +39,7 @@ abstract contract InterpreterMockTest is Test {
     }
 
     function interpreterEval2MockCall(
-        address nameSapceSender,
+        address nameSpaceSender,
         EncodedDispatch dispatch,
         uint256[] memory stack,
         uint256[] memory writes
@@ -49,10 +49,26 @@ abstract contract InterpreterMockTest is Test {
             abi.encodeWithSelector(
                 IInterpreterV2.eval2.selector,
                 iStore,
-                DEFAULT_STATE_NAMESPACE.qualifyNamespace(nameSapceSender),
+                DEFAULT_STATE_NAMESPACE.qualifyNamespace(nameSpaceSender),
                 dispatch
             ),
             abi.encode(stack, writes)
+        );
+    }
+
+    function interpreterEval2ExpectCall(address nameSpaceSender, EncodedDispatch dispatch, uint256[][] memory context)
+        internal
+    {
+        vm.expectCall(
+            address(iInterpreter),
+            abi.encodeWithSelector(
+                IInterpreterV2.eval2.selector,
+                iStore,
+                DEFAULT_STATE_NAMESPACE.qualifyNamespace(nameSpaceSender),
+                dispatch,
+                context,
+                new uint256[](0)
+            )
         );
     }
 
