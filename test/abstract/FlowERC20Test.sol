@@ -12,7 +12,7 @@ import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpret
 import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 
-contract FlowERC20Test is FlowUtilsAbstractTest, InterpreterMockTest {
+abstract contract FlowERC20Test is FlowUtilsAbstractTest, InterpreterMockTest {
     CloneFactory internal immutable iCloneErc20Factory;
     IFlowERC20V5 internal immutable iFlowERC20Implementation;
     address internal immutable iTokenA;
