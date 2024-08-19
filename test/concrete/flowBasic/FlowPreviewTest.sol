@@ -8,7 +8,6 @@ import {
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {
@@ -20,19 +19,6 @@ import {
 
 contract FlowPreviewTest is FlowBasicTest {
     using LibEvaluable for EvaluableV2;
-
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
-
-    constructor() {
-        vm.pauseGasMetering();
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
-        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
-
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
-        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
-        vm.resumeGasMetering();
-    }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC1155
