@@ -56,6 +56,22 @@ abstract contract InterpreterMockTest is Test {
         );
     }
 
+    function interpreterEval2ExpectCall(address nameSapceSender, EncodedDispatch dispatch, uint256[][] memory context)
+        internal
+    {
+        vm.expectCall(
+            address(iInterpreter),
+            abi.encodeWithSelector(
+                IInterpreterV2.eval2.selector,
+                iStore,
+                DEFAULT_STATE_NAMESPACE.qualifyNamespace(nameSapceSender),
+                dispatch,
+                context,
+                new uint256[](0)
+            )
+        );
+    }
+
     function expressionDeployerDeployExpression2MockCall(address expression, bytes memory io) internal {
         vm.mockCall(
             address(iDeployer),
