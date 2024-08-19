@@ -11,7 +11,7 @@ import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {IExpressionDeployerV3} from "rain.interpreter.interface/interface/IExpressionDeployerV3.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 
-contract FlowERC721Test is InterpreterMockTest, FlowUtilsAbstractTest {
+abstract contract FlowERC721Test is InterpreterMockTest, FlowUtilsAbstractTest {
     CloneFactory internal immutable iCloneFactory;
     IFlowERC721V5 internal immutable iFlowERC721Implementation;
     IExpressionDeployerV3 internal immutable iDeployerForEvalHandleTransfer;
