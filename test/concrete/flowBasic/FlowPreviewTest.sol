@@ -205,4 +205,36 @@ contract FlowPreviewTest is FlowBasicTest {
             keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
         );
     }
+
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC721
+     * using single-element arrays.
+     */
+    function testFlowBasePreviewDefinedFlowIOForERC721SingleElementArrays(
+        address alice,
+        uint256 erc721TokenInId,
+        uint256 erc721TokenOutId
+    ) external {
+        vm.assume(sentinel != erc721TokenInId);
+        vm.assume(sentinel != erc721TokenOutId);
+
+        vm.label(alice, "alice");
+
+        (IFlowV5 flow,) = deployFlow();
+        assumeEtchable(alice, address(flow));
+
+        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
+        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: address(flow), to: alice, id: erc721TokenOutId});
+        erc721Transfers[1] = ERC721Transfer({token: iTokenA, from: alice, to: address(flow), id: erc721TokenInId});
+
+        uint256[] memory stack =
+            generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, new ERC20Transfer[](0));
+
+        FlowTransferV1 memory flowTransfer =
+            FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0));
+
+        assertEq(
+            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+        );
+    }
 }
