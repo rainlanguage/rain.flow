@@ -14,7 +14,7 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
 
-contract FlowERC721Test is FlowUtilsAbstractTest, InterpreterMockTest {
+abstract contract FlowERC721Test is FlowUtilsAbstractTest, InterpreterMockTest {
     CloneFactory internal immutable iCloneErc721Factory;
     IFlowERC721V5 internal immutable iFlowERC721Implementation;
     IExpressionDeployerV3 internal immutable iDeployerForEvalHandleTransfer;
