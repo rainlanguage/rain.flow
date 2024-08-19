@@ -15,7 +15,9 @@ contract FlowContextTest is FlowBasicTest {
     /**
      * @dev Tests context handling during interpreter call, ensuring proper input and output management.
      */
-    function testInterpreterContextInputOutputManagement(address alice, uint256[] memory callerContext) public {
+    function testFlowBasicInterpreterContextInputOutputManagement(address alice, uint256[] memory callerContext)
+        public
+    {
         SignedContextV1[] memory signedContext = new SignedContextV1[](0);
         vm.label(alice, "Alice");
         vm.startPrank(alice);
