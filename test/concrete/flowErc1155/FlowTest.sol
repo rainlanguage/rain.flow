@@ -8,7 +8,6 @@ import {IERC20Upgradeable as IERC20} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import {IERC1155Upgradeable as IERC1155} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
-import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {
@@ -25,19 +24,6 @@ import {SignContextLib} from "test/lib/SignContextLib.sol";
 contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTest {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
-
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
-
-    constructor() {
-        vm.pauseGasMetering();
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
-        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
-
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
-        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
-        vm.resumeGasMetering();
-    }
 
     function testFlowERC1155FlowERC20ToERC20(
         uint256 erc20OutAmmount,
