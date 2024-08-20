@@ -22,9 +22,14 @@ contract FlowERC20Test is FlowUtilsAbstractTest, InterpreterMockTest {
         vm.resumeGasMetering();
     }
 
-    function deployFlowERC20(string memory name, string memory symbol)
+    function deployFlowERC20(string memory name, string memory symbol) internal returns (IFlowERC20V5, EvaluableV2 memory) {
+        (IFlowERC20V5 flowErc20, EvaluableV2[] memory evaluables) = deployFlowERC202(name, symbol);
+        return (flowErc20, evaluables[0]);
+    }
+
+    function deployFlowERC202(string memory name, string memory symbol)
         internal
-        returns (IFlowERC20V5 flowErc20, EvaluableV2 memory evaluable)
+        returns (IFlowERC20V5 flowErc20, EvaluableV2[] memory evaluables)
     {
         expressionDeployerDeployExpression2MockCall(address(0), bytes(hex"0006"));
         // Create the evaluableConfig
@@ -39,7 +44,12 @@ contract FlowERC20Test is FlowUtilsAbstractTest, InterpreterMockTest {
         flowErc20 =
             IFlowERC20V5(iCloneErc20Factory.clone(address(iFlowERC20Implementation), abi.encode(flowErc20Config)));
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
-        (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));
+        logs =  findEvents(logs, keccak256("FlowInitialized(address,(address,address,address))"));
+
+        evaluables = new EvaluableV2[](logs.length);
+        for (uint256 i = 0; i < logs.length; i++) {
+            (, EvaluableV2 memory evaluable) = abi.decode(logs[i].data, (address, EvaluableV2));
+            evaluables[i] = evaluable;
+        }
     }
 }
