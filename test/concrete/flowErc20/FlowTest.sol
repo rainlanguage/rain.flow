@@ -2,7 +2,6 @@
 pragma solidity ^0.8.18;
 
 import {Vm} from "forge-std/Test.sol";
-import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
