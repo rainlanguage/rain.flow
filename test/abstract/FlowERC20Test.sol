@@ -11,22 +11,16 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
+import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 
-abstract contract FlowERC20Test is FlowUtilsAbstractTest, InterpreterMockTest {
+abstract contract FlowERC20Test is FlowBasicTest {
     CloneFactory internal immutable iCloneErc20Factory;
     IFlowERC20V5 internal immutable iFlowERC20Implementation;
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
 
     constructor() {
         vm.pauseGasMetering();
         iCloneErc20Factory = new CloneFactory();
         iFlowERC20Implementation = new FlowERC20();
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
-        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
-
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
-        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
         vm.resumeGasMetering();
     }
 

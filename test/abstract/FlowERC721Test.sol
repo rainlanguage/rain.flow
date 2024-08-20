@@ -13,8 +13,9 @@ import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
+import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 
-abstract contract FlowERC721Test is FlowUtilsAbstractTest, InterpreterMockTest {
+abstract contract FlowERC721Test is FlowBasicTest {
     CloneFactory internal immutable iCloneErc721Factory;
     IFlowERC721V5 internal immutable iFlowERC721Implementation;
     IExpressionDeployerV3 internal immutable iDeployerForEvalHandleTransfer;

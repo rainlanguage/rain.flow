@@ -20,7 +20,7 @@ import {IERC20Upgradeable as IERC20} from
 import {IERC1155Upgradeable as IERC1155} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 
-contract Erc20FlowTest is FlowERC20Test, FlowBasicTest {
+contract Erc20FlowTest is FlowERC20Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
 

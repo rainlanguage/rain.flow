@@ -21,22 +21,9 @@ import {IERC20Upgradeable as IERC20} from
 import {IERC1155Upgradeable as IERC1155} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 
-contract Erc721FlowTest is FlowERC721Test, FlowBasicTest {
+contract Erc721FlowTest is FlowERC721Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
-
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
-
-    constructor() {
-        vm.pauseGasMetering();
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
-        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
-
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
-        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
-        vm.resumeGasMetering();
-    }
 
     function testFlowERC721FlowERC20ToERC721(
         uint256 fuzzedKeyAlice,
