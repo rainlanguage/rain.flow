@@ -16,24 +16,6 @@ import {Multicall} from "openzeppelin-contracts/contracts/utils/Multicall.sol";
 contract FlowMulticallTest is FlowBasicTest {
     using LibUint256Matrix for uint256[];
 
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
-    address internal immutable iTokenC;
-
-    constructor() {
-        vm.pauseGasMetering();
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
-        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
-
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
-        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
-        vm.resumeGasMetering();
-
-        iTokenC = address(uint160(uint256(keccak256("tokenC.test"))));
-        vm.etch(address(iTokenC), REVERTING_MOCK_BYTECODE);
-        vm.resumeGasMetering();
-    }
-
     /**
      * @dev Should call multiple flows from same flow contract at once using multicall
      *
