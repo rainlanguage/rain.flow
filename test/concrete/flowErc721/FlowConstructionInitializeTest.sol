@@ -32,7 +32,7 @@ contract FlowConstructionInitializeTest is FlowERC721Test {
         );
 
         vm.recordLogs();
-        iCloneFactory.clone(address(iFlowERC721Implementation), abi.encode(flowERC721ConfigV2));
+        iCloneErc721Factory.clone(address(iFlowERC721Implementation), abi.encode(flowERC721ConfigV2));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature = keccak256(
@@ -43,7 +43,7 @@ contract FlowConstructionInitializeTest is FlowERC721Test {
         (address sender, FlowERC721ConfigV2 memory config) =
             abi.decode(concreteEvent.data, (address, FlowERC721ConfigV2));
 
-        assertEq(sender, address(iCloneFactory), "wrong sender in Initialize event");
+        assertEq(sender, address(iCloneErc721Factory), "wrong sender in Initialize event");
         assertEq(keccak256(abi.encode(flowERC721ConfigV2)), keccak256(abi.encode(config)), "wrong compare Structs");
     }
 }
