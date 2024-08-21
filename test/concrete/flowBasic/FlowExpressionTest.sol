@@ -9,10 +9,11 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 
 contract FlowExpressionTest is FlowBasicTest {
     using LibUint256Matrix for uint256[];
-    /**
-     * @dev Tests that the expression is correctly deployed.
-     */
 
+    /**
+     * @dev Tests that the addresses of expressions emitted in the event
+     *      match the addresses provided by the deployer.
+     */
     function testFlowBasicShouldDeployExpression(address[] memory expressions) public {
         uint256 length = bound(expressions.length, 0, 10);
         assembly ("memory-safe") {
