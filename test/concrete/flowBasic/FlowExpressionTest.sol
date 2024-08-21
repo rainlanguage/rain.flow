@@ -67,7 +67,7 @@ contract FlowExpressionTest is FlowBasicTest {
         }
 
         {
-            //Replace Flow contract's bytecode with ContextBuilder's bytecode
+            // Replace Flow contract's bytecode with ContextBuilder's bytecode
             vm.etch(address(flow), type(ContextBuilder).runtimeCode);
             uint256[][] memory buildContextInput =
                 ContextBuilder(address(flow)).buildContext(address(this), fuzzedcallerContext0, signedContext);
