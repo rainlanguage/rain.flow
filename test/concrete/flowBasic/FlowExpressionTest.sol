@@ -56,10 +56,9 @@ contract FlowExpressionTest is FlowBasicTest {
 
         SignedContextV1[] memory signedContext = new SignedContextV1[](matrixCallerContext.length);
         {
+            // Ensure the fuzzed key is within the valid range for secp256k1
             uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
             for (uint256 i = 0; i < matrixCallerContext.length; i++) {
-                // Ensure the fuzzed key is within the valid range for secp256k1
-
                 signedContext[i] = vm.signContext(aliceKey, aliceKey, matrixCallerContext[i]);
             }
 
