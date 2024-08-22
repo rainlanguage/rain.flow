@@ -7,7 +7,7 @@ import {InterpreterMockTest} from "test/abstract/InterpreterMockTest.sol";
 import {IFlowV5} from "src/interface/unstable/IFlowV5.sol";
 import {Flow} from "src/concrete/basic/Flow.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
+import {STUB_EXPRESSION_BYTECODE, REVERTING_MOCK_BYTECODE} from "./TestConstants.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
@@ -18,10 +18,24 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
     CloneFactory internal immutable iCloneFactory;
     IFlowV5 internal immutable iFlowImplementation;
 
+    address internal immutable iTokenA;
+    address internal immutable iTokenB;
+    address internal immutable iTokenC;
+
     constructor() {
         vm.pauseGasMetering();
         iCloneFactory = new CloneFactory();
         iFlowImplementation = new Flow();
+
+        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
+        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
+
+        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
+        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
+
+        iTokenC = address(uint160(uint256(keccak256("tokenC.test"))));
+        vm.etch(address(iTokenC), REVERTING_MOCK_BYTECODE);
+
         vm.resumeGasMetering();
     }
 

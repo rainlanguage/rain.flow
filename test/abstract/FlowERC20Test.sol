@@ -2,16 +2,16 @@
 pragma solidity ^0.8.18;
 
 import {Vm} from "forge-std/Test.sol";
-import {InterpreterMockTest} from "test/abstract/InterpreterMockTest.sol";
 import {IFlowERC20V5, FlowERC20ConfigV2} from "src/interface/unstable/IFlowERC20V5.sol";
 import {FlowERC20} from "src/concrete/erc20/FlowERC20.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
-import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
+import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
+import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 
-contract FlowERC20Test is FlowUtilsAbstractTest, InterpreterMockTest {
+abstract contract FlowERC20Test is FlowBasicTest {
     CloneFactory internal immutable iCloneErc20Factory;
     IFlowERC20V5 internal immutable iFlowERC20Implementation;
 
