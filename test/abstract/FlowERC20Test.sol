@@ -42,4 +42,48 @@ abstract contract FlowERC20Test is FlowBasicTest {
         Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
         (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));
     }
+
+    function deployFlowERC20MultipleEvals(string memory name, string memory symbol)
+        internal
+        returns (IFlowERC20V5 flowErc20, EvaluableV2[] memory evaluables)
+    {
+        // Mock the deployExpression2 call
+        expressionDeployerDeployExpression2MockCall(address(0), bytes(hex"0006"));
+
+        // Create the evaluableConfig entries
+        EvaluableConfigV3 memory evaluableConfig1 =
+            EvaluableConfigV3(iDeployer, STUB_EXPRESSION_BYTECODE, new uint256[](0));
+        EvaluableConfigV3 memory evaluableConfig2 =
+            EvaluableConfigV3(iDeployer, STUB_EXPRESSION_BYTECODE, new uint256[](0));
+
+        // Create the flowConfig array with multiple entries if needed
+        EvaluableConfigV3[] memory flowConfigArray = new EvaluableConfigV3[](2);
+        flowConfigArray[0] = evaluableConfig1;
+        flowConfigArray[1] = evaluableConfig2;
+        // Initialize the FlowERC20Config struct
+        FlowERC20ConfigV2 memory flowErc20Config = FlowERC20ConfigV2(name, symbol, evaluableConfig1, flowConfigArray);
+
+        // Record logs to capture events
+        vm.recordLogs();
+
+        // Deploy the FlowERC20 contract
+        flowErc20 =
+            IFlowERC20V5(iCloneErc20Factory.clone(address(iFlowERC20Implementation), abi.encode(flowErc20Config)));
+
+        // Get the recorded logs
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        // Filter the logs to find relevant events
+        Vm.Log[] memory concreteEvents =
+            findEvents(logs, keccak256("FlowInitialized(address,(address,address,address))"));
+
+        // Initialize the evaluables array
+        evaluables = new EvaluableV2[](concreteEvents.length);
+
+        // Decode each log event to get the EvaluableV2 struct and populate the array
+        for (uint256 i = 0; i < concreteEvents.length; i++) {
+            (, EvaluableV2 memory evaluable) = abi.decode(concreteEvents[i].data, (address, EvaluableV2));
+            evaluables[i] = evaluable;
+        }
+    }
 }
