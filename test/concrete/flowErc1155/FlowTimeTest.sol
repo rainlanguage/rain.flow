@@ -3,14 +3,11 @@ pragma solidity ^0.8.19;
 
 import {Test, Vm} from "forge-std/Test.sol";
 import {FlowERC1155} from "../../../src/concrete/erc1155/FlowERC1155.sol";
+import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
+import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {
-    FlowUtilsAbstractTest,
-    ERC20Transfer,
-    ERC721Transfer,
-    ERC1155Transfer,
-    ERC1155SupplyChange
-} from "test/abstract/FlowUtilsAbstractTest.sol";
-import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
+    IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
+} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {EvaluableV2, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {FlowERC1155Test} from "../../abstract/FlowERC1155Test.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
@@ -25,12 +22,12 @@ contract FlowTimeTest is FlowUtilsAbstractTest, FlowERC1155Test {
 
         (IFlowERC1155V5 erc1155Flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
 
-        uint256[] memory stack = generateFlowERC1155Stack(
-            new ERC1155Transfer[](0),
-            new ERC721Transfer[](0),
-            new ERC20Transfer[](0),
-            new ERC1155SupplyChange[](0),
-            new ERC1155SupplyChange[](0)
+        uint256[] memory stack = generateFlowStack(
+            FlowERC1155IOV1(
+                new ERC1155SupplyChange[](0),
+                new ERC1155SupplyChange[](0),
+                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+            )
         );
 
         interpreterEval2MockCall(stack, writeToStore);

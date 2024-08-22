@@ -2,7 +2,9 @@
 pragma solidity ^0.8.18;
 
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
-import {IFlowV5, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
+import {
+    IFlowV5, FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer
+} from "src/interface/unstable/IFlowV5.sol";
 import {FLOW_MAX_OUTPUTS, FLOW_ENTRYPOINT} from "src/abstract/FlowCommon.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
@@ -53,7 +55,7 @@ contract FlowMulticallTest is FlowBasicTest {
             erc20Transfers[0] = ERC20Transfer({token: address(iTokenB), from: bob, to: address(flow), amount: amount});
 
             uint256[] memory stack =
-                generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, erc20Transfers);
+                generateFlowStack(FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)));
 
             interpreterEval2MockCall(
                 address(flow),
@@ -88,7 +90,7 @@ contract FlowMulticallTest is FlowBasicTest {
             erc721Transfers[0] = ERC721Transfer({token: address(iTokenA), from: bob, to: address(flow), id: tokenId});
 
             uint256[] memory stack =
-                generateTokenTransferStack(erc1155Transfers, erc721Transfers, new ERC20Transfer[](0));
+                generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers));
 
             interpreterEval2MockCall(
                 address(flow),
