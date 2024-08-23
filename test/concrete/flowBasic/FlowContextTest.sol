@@ -35,8 +35,10 @@ contract FlowContextTest is FlowBasicTest {
         vm.etch(address(flow), flowBytecode);
 
         {
-            uint256[] memory stack =
-                generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), new ERC20Transfer[](0));
+            uint256[] memory stack = generateFlowStack(
+                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+            );
+
             interpreterEval2MockCall(stack, new uint256[](0));
 
             interpreterEval2ExpectCall(

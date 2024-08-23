@@ -2,7 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
-import {IFlowV5, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
+import {
+    IFlowV5, FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer
+} from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableV2, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {InvalidSignature} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 
@@ -16,7 +18,7 @@ contract FlowTimeTest is FlowBasicTest {
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
         uint256[] memory stack =
-            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), new ERC20Transfer[](0));
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
 
         interpreterEval2MockCall(stack, writeToStore);
 
