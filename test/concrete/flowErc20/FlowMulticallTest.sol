@@ -20,28 +20,41 @@ import {IFlowERC20V5} from "../../../src/interface/unstable/IFlowERC20V5.sol";
 contract FlowMulticallTest is FlowERC20Test {
     using LibUint256Matrix for uint256[];
 
-    function testFlowERC20MulticallFlows(
-        address alice,
-        uint256 amount,
+    /// Should call multiple flows from same flow contract at once using multicall
+    function testFlowErc20MulticallFlows(
+        address bob,
         uint256 tokenId,
+        uint256 amount,
+        address expressionA,
+        address expressionB,
         string memory name,
         string memory symbol
-    ) external {
-        vm.assume(sentinel != amount);
+    ) public {
+        vm.assume(expressionA != expressionB);
         vm.assume(sentinel != tokenId);
+        vm.assume(sentinel != amount);
 
-        (IFlowERC20V5 erc20Flow, EvaluableV2[] memory evaluables) = deployFlowERC20MultipleEvals(name, symbol);
-        assumeEtchable(alice, address(erc20Flow));
+        vm.label(bob, "Bob");
+        vm.label(expressionA, "expressionA");
+        vm.label(expressionB, "expressionB");
 
-        // Flow one
+        address[] memory expressions = new address[](2);
+        expressions[0] = expressionA;
+        expressions[1] = expressionB;
+        uint256[] memory constants = new uint256[](0);
+
+        (IFlowERC20V5 flow, EvaluableV2[] memory evaluables) =
+            deployFlowERC20(expressions, constants.matrixFrom(constants), name, symbol);
+
+        assumeEtchable(bob, address(flow));
+
+        //Flow A
         {
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
-            erc721Transfers[0] =
-                ERC721Transfer({token: address(iTokenA), from: address(erc20Flow), to: alice, id: tokenId});
+            erc721Transfers[0] = ERC721Transfer({token: address(iTokenA), from: address(flow), to: bob, id: tokenId});
 
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
-            erc20Transfers[0] =
-                ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc20Flow), amount: amount});
+            erc20Transfers[0] = ERC20Transfer({token: address(iTokenB), from: bob, to: address(flow), amount: amount});
 
             uint256[] memory stack = generateFlowERC20Stack(
                 new ERC1155Transfer[](0),
@@ -51,36 +64,37 @@ contract FlowMulticallTest is FlowERC20Test {
                 new ERC20SupplyChange[](0)
             );
 
-            interpreterEval2MockCall(stack, new uint256[](0));
+            interpreterEval2MockCall(
+                address(flow),
+                LibEncodedDispatch.encode2(evaluables[0].expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
+                stack,
+                new uint256[](0)
+            );
+        }
 
+        {
             vm.mockCall(
                 iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), ""
             );
             vm.expectCall(
                 iTokenA,
                 abi.encodeWithSelector(
-                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), erc20Flow, alice, tokenId
+                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), flow, bob, tokenId
                 )
             );
 
             vm.mockCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-            vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc20Flow, amount));
+            vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, bob, flow, amount));
         }
 
-        // Flow two
+        //Flow B
         {
             ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](1);
-            erc1155Transfers[0] = ERC1155Transfer({
-                token: address(iTokenC),
-                from: address(erc20Flow),
-                to: alice,
-                id: tokenId,
-                amount: amount
-            });
+            erc1155Transfers[0] =
+                ERC1155Transfer({token: address(iTokenC), from: address(flow), to: bob, id: tokenId, amount: amount});
 
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
-            erc721Transfers[0] =
-                ERC721Transfer({token: address(iTokenA), from: alice, to: address(erc20Flow), id: tokenId});
+            erc721Transfers[0] = ERC721Transfer({token: address(iTokenA), from: bob, to: address(flow), id: tokenId});
 
             uint256[] memory stack = generateFlowERC20Stack(
                 erc1155Transfers,
@@ -90,35 +104,35 @@ contract FlowMulticallTest is FlowERC20Test {
                 new ERC20SupplyChange[](0)
             );
             interpreterEval2MockCall(
-                address(erc20Flow),
+                address(flow),
                 LibEncodedDispatch.encode2(evaluables[1].expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
                 stack,
                 new uint256[](0)
             );
+        }
 
+        {
             vm.mockCall(
                 iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), ""
             );
             vm.expectCall(
                 iTokenA,
                 abi.encodeWithSelector(
-                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, erc20Flow, tokenId
+                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, flow, tokenId
                 )
             );
 
             vm.mockCall(iTokenC, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
             vm.expectCall(
-                iTokenC,
-                abi.encodeWithSelector(IERC1155.safeTransferFrom.selector, erc20Flow, alice, tokenId, amount, "")
+                iTokenC, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector, flow, bob, tokenId, amount, "")
             );
         }
 
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeCall(erc20Flow.flow, (evaluables[0], new uint256[](0), new SignedContextV1[](0)));
-        //calldatas[0] = abi.encodeCall(erc20Flow.flow, (evaluables[1], new uint256[](0), new SignedContextV1[](0)));
-        vm.startPrank(alice);
+        bytes[] memory calldatas = new bytes[](2);
+        calldatas[0] = abi.encodeCall(flow.flow, (evaluables[0], new uint256[](0), new SignedContextV1[](0)));
+        calldatas[1] = abi.encodeCall(flow.flow, (evaluables[1], new uint256[](0), new SignedContextV1[](0)));
 
-        //vm.expectRevert();
-        Multicall(address(erc20Flow)).multicall(calldatas);
+        vm.startPrank(bob);
+        Multicall(address(flow)).multicall(calldatas);
     }
 }
