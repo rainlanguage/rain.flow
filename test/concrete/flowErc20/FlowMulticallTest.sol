@@ -2,9 +2,7 @@
 pragma solidity ^0.8.18;
 
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
-import {
-    ERC20Transfer, ERC721Transfer, ERC1155Transfer, ERC20SupplyChange
-} from "test/abstract/FlowUtilsAbstractTest.sol";
+import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {FLOW_MAX_OUTPUTS, FLOW_ENTRYPOINT} from "src/abstract/FlowCommon.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
@@ -15,7 +13,7 @@ import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncod
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {Multicall} from "openzeppelin-contracts/contracts/utils/Multicall.sol";
 import {FlowERC20Test} from "../../abstract/FlowERC20Test.sol";
-import {IFlowERC20V5} from "../../../src/interface/unstable/IFlowERC20V5.sol";
+import {IFlowERC20V5, ERC20SupplyChange, FlowERC20IOV1} from "../../../src/interface/unstable/IFlowERC20V5.sol";
 
 contract FlowMulticallTest is FlowERC20Test {
     using LibUint256Matrix for uint256[];
@@ -56,12 +54,12 @@ contract FlowMulticallTest is FlowERC20Test {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
             erc20Transfers[0] = ERC20Transfer({token: address(iTokenB), from: bob, to: address(flow), amount: amount});
 
-            uint256[] memory stack = generateFlowERC20Stack(
-                new ERC1155Transfer[](0),
-                erc721Transfers,
-                erc20Transfers,
-                new ERC20SupplyChange[](0),
-                new ERC20SupplyChange[](0)
+            uint256[] memory stack = generateFlowStack(
+                FlowERC20IOV1(
+                    new ERC20SupplyChange[](0),
+                    new ERC20SupplyChange[](0),
+                    FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0))
+                )
             );
 
             interpreterEval2MockCall(
@@ -96,13 +94,14 @@ contract FlowMulticallTest is FlowERC20Test {
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
             erc721Transfers[0] = ERC721Transfer({token: address(iTokenA), from: bob, to: address(flow), id: tokenId});
 
-            uint256[] memory stack = generateFlowERC20Stack(
-                erc1155Transfers,
-                erc721Transfers,
-                new ERC20Transfer[](0),
-                new ERC20SupplyChange[](0),
-                new ERC20SupplyChange[](0)
+            uint256[] memory stack = generateFlowStack(
+                FlowERC20IOV1(
+                    new ERC20SupplyChange[](0),
+                    new ERC20SupplyChange[](0),
+                    FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers)
+                )
             );
+
             interpreterEval2MockCall(
                 address(flow),
                 LibEncodedDispatch.encode2(evaluables[1].expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
