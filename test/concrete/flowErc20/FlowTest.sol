@@ -5,14 +5,9 @@ import {Vm} from "forge-std/Test.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
-import {
-    ERC20Transfer,
-    ERC721Transfer,
-    ERC1155Transfer,
-    ERC1155SupplyChange
-} from "test/abstract/FlowUtilsAbstractTest.sol";
+import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
+import {IFlowERC20V5, ERC20SupplyChange, FlowERC20IOV1} from "../../../src/interface/unstable/IFlowERC20V5.sol";
 import {FlowERC20Test} from "test/abstract/FlowERC20Test.sol";
-import {IFlowERC20V5} from "../../../src/interface/unstable/IFlowERC20V5.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {IERC20Upgradeable as IERC20} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
@@ -58,12 +53,12 @@ contract Erc20FlowTest is FlowERC20Test {
             )
         );
 
-        uint256[] memory stack = generateFlowERC1155Stack(
-            new ERC1155Transfer[](0),
-            erc721Transfers,
-            erc20Transfers,
-            new ERC1155SupplyChange[](0),
-            new ERC1155SupplyChange[](0)
+        uint256[] memory stack = generateFlowStack(
+            FlowERC20IOV1(
+                new ERC20SupplyChange[](0),
+                new ERC20SupplyChange[](0),
+                FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0))
+            )
         );
         interpreterEval2MockCall(stack, new uint256[](0));
 
@@ -125,13 +120,14 @@ contract Erc20FlowTest is FlowERC20Test {
             )
         );
 
-        uint256[] memory stack = generateFlowERC1155Stack(
-            erc1155Transfers,
-            new ERC721Transfer[](0),
-            new ERC20Transfer[](0),
-            new ERC1155SupplyChange[](0),
-            new ERC1155SupplyChange[](0)
+        uint256[] memory stack = generateFlowStack(
+            FlowERC20IOV1(
+                new ERC20SupplyChange[](0),
+                new ERC20SupplyChange[](0),
+                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
+            )
         );
+
         interpreterEval2MockCall(stack, new uint256[](0));
         vm.startPrank(alice);
         erc20Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
@@ -177,13 +173,14 @@ contract Erc20FlowTest is FlowERC20Test {
             )
         );
 
-        uint256[] memory stack = generateFlowERC1155Stack(
-            new ERC1155Transfer[](0),
-            erc721Transfers,
-            new ERC20Transfer[](0),
-            new ERC1155SupplyChange[](0),
-            new ERC1155SupplyChange[](0)
+        uint256[] memory stack = generateFlowStack(
+            FlowERC20IOV1(
+                new ERC20SupplyChange[](0),
+                new ERC20SupplyChange[](0),
+                FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
+            )
         );
+
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(alice);
@@ -224,12 +221,12 @@ contract Erc20FlowTest is FlowERC20Test {
             address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc20Flow, erc20BInAmmount)
         );
 
-        uint256[] memory stack = generateFlowERC1155Stack(
-            new ERC1155Transfer[](0),
-            new ERC721Transfer[](0),
-            erc20Transfers,
-            new ERC1155SupplyChange[](0),
-            new ERC1155SupplyChange[](0)
+        uint256[] memory stack = generateFlowStack(
+            FlowERC20IOV1(
+                new ERC20SupplyChange[](0),
+                new ERC20SupplyChange[](0),
+                FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+            )
         );
         interpreterEval2MockCall(stack, new uint256[](0));
 

@@ -4,10 +4,11 @@ pragma solidity ^0.8.18;
 import {Vm} from "forge-std/Test.sol";
 
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
-import {IFlowV5, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
+import {
+    IFlowV5, FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer
+} from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableV2, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {InvalidSignature} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 
@@ -34,7 +35,8 @@ contract FlowSignedContextTest is FlowBasicTest {
         signedContexts[1] = vm.signContext(aliceKey, aliceKey, context1);
 
         uint256[] memory stack =
-            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), new ERC20Transfer[](0));
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
+
         interpreterEval2MockCall(stack, new uint256[](0));
         flow.flow(evaluable, new uint256[](0), signedContexts);
 
@@ -44,7 +46,7 @@ contract FlowSignedContextTest is FlowBasicTest {
         signedContexts1[1] = vm.signContext(aliceKey, bobKey, context1);
 
         uint256[] memory stack1 =
-            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), new ERC20Transfer[](0));
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
         interpreterEval2MockCall(stack1, new uint256[](0));
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 1));
@@ -68,7 +70,7 @@ contract FlowSignedContextTest is FlowBasicTest {
         signedContext[0] = vm.signContext(aliceKey, aliceKey, context0);
 
         uint256[] memory stack =
-            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), new ERC20Transfer[](0));
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
         interpreterEval2MockCall(stack, new uint256[](0));
         flow.flow(evaluable, new uint256[](0), signedContext);
 
@@ -77,7 +79,7 @@ contract FlowSignedContextTest is FlowBasicTest {
         signedContext1[0] = vm.signContext(aliceKey, bobKey, context0);
 
         uint256[] memory stack1 =
-            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), new ERC20Transfer[](0));
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
         interpreterEval2MockCall(stack1, new uint256[](0));
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 0));
