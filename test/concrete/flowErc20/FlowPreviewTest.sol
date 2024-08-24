@@ -171,4 +171,61 @@ contract FlowPreviewTest is FlowERC20Test {
             keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
         );
     }
+
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC1155
+     *      using single-element arrays.
+     */
+    function testFlowERC20PreviewDefinedFlowIOForERC1155SingleElementArrays(
+        string memory name,
+        string memory symbol,
+        address alice,
+        uint256 erc1155OutTokenId,
+        uint256 erc1155OutAmmount,
+        uint256 erc1155InTokenId,
+        uint256 erc1155InAmmount
+    ) external {
+        vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmmount);
+        vm.assume(sentinel != erc1155InTokenId);
+        vm.assume(sentinel != erc1155InAmmount);
+        vm.label(alice, "alice");
+
+        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
+        assumeEtchable(alice, address(flow));
+
+        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
+
+        erc1155Transfers[0] = ERC1155Transfer({
+            token: address(iTokenA),
+            from: address(flow),
+            to: alice,
+            id: erc1155OutTokenId,
+            amount: erc1155OutAmmount
+        });
+
+        erc1155Transfers[1] = ERC1155Transfer({
+            token: address(iTokenA),
+            from: alice,
+            to: address(flow),
+            id: erc1155InTokenId,
+            amount: erc1155InAmmount
+        });
+
+        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
+
+        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
+
+        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
+            mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
+        );
+
+        uint256[] memory stack = generateFlowStack(flowERC20IO);
+
+        assertEq(
+            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+        );
+    }
 }
