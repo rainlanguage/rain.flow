@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CAL
-pragma solidity ^0.8.18;
+pragma solidity =0.8.19;
 
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
