@@ -25,10 +25,11 @@ contract FlowMulticallTest is FlowERC20Test {
         uint256 amount,
         address expressionA,
         address expressionB,
+        address expressionC,
         string memory name,
         string memory symbol
     ) public {
-        vm.assume(expressionA != expressionB);
+        vm.assume(expressionA != expressionB && expressionC != expressionB && expressionC != expressionA);
         vm.assume(sentinel != tokenId);
         vm.assume(sentinel != amount);
 
@@ -39,10 +40,9 @@ contract FlowMulticallTest is FlowERC20Test {
         address[] memory expressions = new address[](2);
         expressions[0] = expressionA;
         expressions[1] = expressionB;
-        uint256[] memory constants = new uint256[](0);
 
         (IFlowERC20V5 flow, EvaluableV2[] memory evaluables) =
-            deployFlowERC20(expressions, constants.matrixFrom(constants), name, symbol);
+            deployFlowERC20(expressions, expressionC, new uint256[](0).matrixFrom(new uint256[](0)), name, symbol);
 
         assumeEtchable(bob, address(flow));
 

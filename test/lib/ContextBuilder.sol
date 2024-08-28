@@ -14,11 +14,18 @@ import {IInterpreterCallerV2} from "rain.interpreter.interface/interface/IInterp
 contract ContextBuilder is IInterpreterCallerV2 {
     using LibUint256Matrix for uint256[];
 
+    function buildContext(address caller, uint256[][] memory callerContext, SignedContextV1[] memory signedContext)
+        public
+        returns (uint256[][] memory context)
+    {
+        context = LibContext.build(callerContext, signedContext);
+        emit Context(caller, context);
+    }
+
     function buildContext(address caller, uint256[] memory callerContext, SignedContextV1[] memory signedContext)
         public
         returns (uint256[][] memory context)
     {
-        context = LibContext.build(callerContext.matrixFrom(), signedContext);
-        emit Context(caller, context);
+        return buildContext(caller, callerContext.matrixFrom(), signedContext);
     }
 }
