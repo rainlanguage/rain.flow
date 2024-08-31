@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
+import "forge-std/console.sol";
 import {Vm} from "forge-std/Test.sol";
 
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
@@ -11,12 +12,15 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
+import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
+import {IInterpreterCallerV2} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
-import {ContextBuilder} from "test/lib/ContextBuilder.sol";
 
-contract FlowExpressionTest is FlowBasicTest {
+contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using LibContextWrapper for uint256[][];
 
     /**
      * @dev Tests that the addresses of expressions emitted in the event
@@ -71,10 +75,9 @@ contract FlowExpressionTest is FlowBasicTest {
         }
 
         {
-            // Replace Flow contract's bytecode with ContextBuilder's bytecode
-            vm.etch(address(flow), type(ContextBuilder).runtimeCode);
-            uint256[][] memory buildContextInput =
-                ContextBuilder(address(flow)).buildContext(address(this), fuzzedcallerContext0, signedContext);
+            uint256[][] memory buildContextInput = LibContextWrapper.buildAndSetContext(
+                fuzzedcallerContext0.matrixFrom(), signedContext, address(this), address(flow)
+            );
 
             Vm.Log[] memory logs = vm.getRecordedLogs();
             Vm.Log memory log = findEvent(logs, keccak256("Context(address,uint256[][])"));
