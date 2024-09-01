@@ -23,9 +23,8 @@ contract FlowContextTest is FlowBasicTest {
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
-        uint256[][] memory context = LibContextWrapper.buildAndSetContext(
-            callerContext, signedContext, address(alice), address(flow)
-        );
+        uint256[][] memory context =
+            LibContextWrapper.buildAndSetContext(callerContext, signedContext, address(alice), address(flow));
 
         {
             uint256[] memory stack = generateFlowStack(
