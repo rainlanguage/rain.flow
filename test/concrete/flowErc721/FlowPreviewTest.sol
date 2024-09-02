@@ -281,4 +281,47 @@ contract FlowPreviewTest is FlowERC721Test {
             keccak256(abi.encode(flowERC721IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
         );
     }
+
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC20
+     *      using single-element arrays.
+     */
+    function testFlowERC721PreviewDefinedFlowIOForERC20SingleElementArrays(
+        string memory symbol,
+        string memory baseURI,
+        address alice,
+        uint256 erc20AmmountIn,
+        uint256 erc20AmmountOut
+    ) external {
+        vm.assume(sentinel != erc20AmmountIn);
+        vm.assume(sentinel != erc20AmmountOut);
+
+        vm.label(alice, "alice");
+
+        (IFlowERC721V5 flow,) = deployFlowERC721({name: symbol, symbol: symbol, baseURI: baseURI});
+        assumeEtchable(alice, address(flow));
+
+        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+        erc20Transfers[0] =
+            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmmountOut});
+        erc20Transfers[1] =
+            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmmountIn});
+
+        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
+        mints[0] = ERC721SupplyChange({account: alice, id: 1});
+        mints[1] = ERC721SupplyChange({account: alice, id: 2});
+
+        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+        burns[0] = ERC721SupplyChange({account: alice, id: 2});
+
+        FlowERC721IOV1 memory flowERC721IO = FlowERC721IOV1(
+            mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+        );
+
+        uint256[] memory stack = generateFlowStack(flowERC721IO);
+
+        assertEq(
+            keccak256(abi.encode(flowERC721IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+        );
+    }
 }
