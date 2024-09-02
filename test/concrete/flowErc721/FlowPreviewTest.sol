@@ -182,4 +182,62 @@ contract FlowPreviewTest is FlowERC721Test {
             keccak256(abi.encode(flowERC721IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
         );
     }
+
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC1155
+     *      using single-element arrays.
+     */
+    function testFlowERC721PreviewDefinedFlowIOForERC1155SingleElementArrays(
+        string memory symbol,
+        string memory baseURI,
+        address alice,
+        uint256 erc1155OutTokenId,
+        uint256 erc1155OutAmmount,
+        uint256 erc1155InTokenId,
+        uint256 erc1155InAmmount
+    ) external {
+        vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmmount);
+        vm.assume(sentinel != erc1155InTokenId);
+        vm.assume(sentinel != erc1155InAmmount);
+        vm.label(alice, "alice");
+
+        (IFlowERC721V5 flow,) = deployFlowERC721({name: symbol, symbol: symbol, baseURI: baseURI});
+        assumeEtchable(alice, address(flow));
+
+        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
+
+        erc1155Transfers[0] = ERC1155Transfer({
+            token: address(iTokenA),
+            from: address(flow),
+            to: alice,
+            id: erc1155OutTokenId,
+            amount: erc1155OutAmmount
+        });
+
+        erc1155Transfers[1] = ERC1155Transfer({
+            token: address(iTokenA),
+            from: alice,
+            to: address(flow),
+            id: erc1155InTokenId,
+            amount: erc1155InAmmount
+        });
+
+        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
+        mints[0] = ERC721SupplyChange({account: alice, id: 1});
+        mints[1] = ERC721SupplyChange({account: alice, id: 2});
+
+        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+        burns[0] = ERC721SupplyChange({account: alice, id: 2});
+
+        FlowERC721IOV1 memory flowERC721IO = FlowERC721IOV1(
+            mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
+        );
+
+        uint256[] memory stack = generateFlowStack(flowERC721IO);
+
+        assertEq(
+            keccak256(abi.encode(flowERC721IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+        );
+    }
 }
