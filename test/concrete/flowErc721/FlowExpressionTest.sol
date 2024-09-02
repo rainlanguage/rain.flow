@@ -8,9 +8,9 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
-import {ContextBuilder} from "test/lib/ContextBuilder.sol";
 import {FlowERC721Test} from "../../abstract/FlowERC721Test.sol";
 import {FlowERC721IOV1} from "src/interface/unstable/IFlowERC721V5.sol";
+import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
 
 contract FlowExpressionTest is FlowERC721Test {
     using SignContextLib for Vm;
@@ -54,7 +54,7 @@ contract FlowExpressionTest is FlowERC721Test {
         uint256[][] memory matrixCallerContext =
             fuzzedcallerContext0.matrixFrom(fuzzedcallerContext1, fuzzedcallerContext0);
 
-        (IFlowERC721V5 flowErc20, EvaluableV2 memory evaluable) = deployFlowERC721(name, symbol, uri);
+        (IFlowERC721V5 flowErc721, EvaluableV2 memory evaluable) = deployFlowERC721(name, symbol, uri);
 
         {
             uint256[] memory stack = generateFlowStack(
@@ -77,15 +77,13 @@ contract FlowExpressionTest is FlowERC721Test {
             }
 
             vm.recordLogs();
-            flowErc20.flow(evaluable, fuzzedcallerContext0, signedContext);
+            flowErc721.flow(evaluable, fuzzedcallerContext0, signedContext);
         }
 
         {
-            // Replace Flow contract's bytecode with ContextBuilder's bytecode
-            vm.etch(address(flowErc20), type(ContextBuilder).runtimeCode);
-            uint256[][] memory buildContextInput =
-                ContextBuilder(address(flowErc20)).buildContext(address(this), fuzzedcallerContext0, signedContext);
-
+            uint256[][] memory buildContextInput = LibContextWrapper.buildAndSetContext(
+                fuzzedcallerContext0.matrixFrom(), signedContext, address(this), address(flowErc721)
+            );
             Vm.Log[] memory logs = vm.getRecordedLogs();
             Vm.Log memory log = findEvent(logs, keccak256("Context(address,uint256[][])"));
             (address sender, uint256[][] memory buildContextOutput) = abi.decode(log.data, (address, uint256[][]));
