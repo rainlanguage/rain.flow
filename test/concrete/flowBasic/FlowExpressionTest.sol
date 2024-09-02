@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import "forge-std/console.sol";
 import {Vm} from "forge-std/Test.sol";
 
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
