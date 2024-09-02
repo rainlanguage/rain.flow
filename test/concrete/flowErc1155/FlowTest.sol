@@ -2,7 +2,6 @@
 pragma solidity =0.8.19;
 
 import {Test, Vm} from "forge-std/Test.sol";
-import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC20Upgradeable as IERC20} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
@@ -14,13 +13,11 @@ import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "sr
 import {
     IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
-import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
-
 import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
 
-contract Erc1155FlowTest is FlowUtilsAbstractTest, FlowERC1155Test, FlowBasicTest {
+contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
 
