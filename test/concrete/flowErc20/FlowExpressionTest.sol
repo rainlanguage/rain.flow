@@ -8,13 +8,14 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
-import {ContextBuilder} from "test/lib/ContextBuilder.sol";
+import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
 import {FlowERC20Test} from "../../abstract/FlowERC20Test.sol";
 import {FlowERC20IOV1} from "src/interface/unstable/IFlowERC20V5.sol";
 
 contract FlowExpressionTest is FlowERC20Test {
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using LibContextWrapper for uint256[][];
 
     /**
      * @dev Tests that the addresses of expressions emitted in the event
@@ -77,10 +78,9 @@ contract FlowExpressionTest is FlowERC20Test {
         }
 
         {
-            // Replace Flow contract's bytecode with ContextBuilder's bytecode
-            vm.etch(address(flowErc20), type(ContextBuilder).runtimeCode);
-            uint256[][] memory buildContextInput =
-                ContextBuilder(address(flowErc20)).buildContext(address(this), fuzzedcallerContext0, signedContext);
+            uint256[][] memory buildContextInput = LibContextWrapper.buildAndSetContext(
+                fuzzedcallerContext0.matrixFrom(), signedContext, address(this), address(flowErc20)
+            );
 
             Vm.Log[] memory logs = vm.getRecordedLogs();
             Vm.Log memory log = findEvent(logs, keccak256("Context(address,uint256[][])"));
