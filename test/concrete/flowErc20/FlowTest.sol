@@ -108,6 +108,98 @@ contract Erc20FlowTest is FlowERC20Test {
         }
     }
 
+    /**
+     * @notice Tests minting and burning tokens per flow in exchange for another token (e.g., ERC20).
+     */
+    function testFlowERC20MintAndBurnTokensPerFlowForERC20Exchange(
+        uint256 erc20OutAmmount,
+        uint256 erc20InAmmount,
+        uint256 mintAndBurn,
+        address alice
+    ) external {
+        vm.assume(sentinel != erc20OutAmmount);
+        vm.assume(sentinel != erc20InAmmount);
+        vm.assume(sentinel != mintAndBurn);
+        vm.assume(address(0) != alice);
+
+        (IFlowERC20V5 flow, EvaluableV2 memory evaluable) = deployFlowERC20("Flow ERC20", "F20");
+        assumeEtchable(alice, address(flow));
+
+        {
+            vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+            vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
+
+            vm.expectCall(
+                address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, flow, erc20InAmmount), 2
+            );
+            vm.expectCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmmount), 2);
+        }
+
+        // Stack mint
+        {
+            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20InAmmount});
+
+            erc20Transfers[1] =
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20OutAmmount});
+
+            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+            mints[0] = ERC20SupplyChange({account: alice, amount: mintAndBurn});
+
+            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+            burns[0] = ERC20SupplyChange({account: alice, amount: 0 ether});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC20IOV1(
+                    mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+
+            assertEq(IERC20(address(flow)).balanceOf(alice), mintAndBurn);
+        }
+
+        // Stack burn
+        {
+            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20InAmmount});
+
+            erc20Transfers[1] =
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20OutAmmount});
+
+            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+            mints[0] = ERC20SupplyChange({account: alice, amount: 0 ether});
+
+            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+            burns[0] = ERC20SupplyChange({account: alice, amount: mintAndBurn});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC20IOV1(
+                    mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+
+            assertEq(IERC20(address(flow)).balanceOf(alice), 0 ether);
+        }
+    }
+
     function testFlowERC20FlowERC20ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc20InAmount,
