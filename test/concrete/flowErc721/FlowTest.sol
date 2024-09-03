@@ -19,7 +19,7 @@ import {
 
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
-import {IERC721} from "lib/rain.interpreter/lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
@@ -27,11 +27,13 @@ import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncod
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract Erc721FlowTest is FlowERC721Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using Address for address;
 
     /**
      * @notice Tests the support for the transferPreflight hook.
@@ -123,6 +125,100 @@ contract Erc721FlowTest is FlowERC721Test {
             vm.expectRevert("REVERT_EVAL2_CALL");
             IERC721(address(flow)).transferFrom({from: alice, to: address(flow), tokenId: tokenIdB});
             vm.stopPrank();
+        }
+    }
+
+    /**
+     * @notice Tests minting and burning tokens per flow in exchange for another token (e.g., ERC20).
+     */
+    function testFlowERC721MintAndBurnTokensPerFlowForERC20Exchange(
+        uint256 erc20OutAmmount,
+        uint256 erc20InAmmount,
+        uint256 tokenId,
+        address alice
+    ) external {
+        vm.assume(sentinel != erc20OutAmmount);
+        vm.assume(sentinel != erc20InAmmount);
+        vm.assume(sentinel != tokenId);
+        vm.assume(address(0) != alice);
+        vm.assume(!alice.isContract());
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721({name: "FlowERC721", symbol: "F721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
+
+        {
+            vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+            vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
+
+            vm.expectCall(
+                address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, flow, erc20InAmmount), 2
+            );
+            vm.expectCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmmount), 2);
+        }
+
+        // Stack mint
+        {
+            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20InAmmount});
+
+            erc20Transfers[1] =
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20OutAmmount});
+
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: alice, id: tokenId});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(
+                    mints,
+                    new ERC721SupplyChange[](0),
+                    FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+
+            assertEq(IERC721(address(flow)).balanceOf(alice), 1);
+            assertEq(alice, IERC721(address(flow)).ownerOf(tokenId));
+        }
+
+        // Stack burn
+        {
+            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20InAmmount});
+
+            erc20Transfers[1] =
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20OutAmmount});
+
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: alice, id: tokenId});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(
+                    new ERC721SupplyChange[](0),
+                    burns,
+                    FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+
+            assertEq(IERC721(address(flow)).balanceOf(alice), 0);
         }
     }
 
