@@ -42,7 +42,7 @@ contract FlowMulticallTest is FlowERC721Test {
         uint256[] memory constants = new uint256[](0);
 
         (IFlowERC721V5 erc721Flow, EvaluableV2[] memory evaluables) =
-            deployFlowERC721(expressions, constants.matrixFrom(constants), flow, flow, baseURI);
+            deployFlowERC721(expressions, address(1), constants.matrixFrom(constants), flow, flow, baseURI);
 
         assumeEtchable(bob, address(erc721Flow));
 
