@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CAL
-pragma solidity ^0.8.18;
+pragma solidity =0.8.19;
 
 import {Vm} from "forge-std/Test.sol";
 import {IFlowERC20V5, ERC20SupplyChange} from "src/interface/unstable/IFlowERC20V5.sol";
@@ -21,17 +21,21 @@ contract FlowExpressionTest is FlowERC20Test {
      * @dev Tests that the addresses of expressions emitted in the event
      *      match the addresses provided by the deployer.
      */
-    function testFlowERC20ShouldDeployExpression(address[] memory expressions, string memory name, string memory symbol)
-        public
-    {
-        uint256 length = bound(expressions.length, 1, 10);
-        assembly ("memory-safe") {
-            mstore(expressions, length)
-        }
+    function testFlowERC20ShouldDeployExpression(
+        string memory name,
+        string memory symbol,
+        address expressionA,
+        address expressionB,
+        address expressionC
+    ) public {
+        vm.assume(expressionA != expressionB && expressionC != expressionB && expressionC != expressionA);
 
-        uint256[][] memory constants = new uint256[][](expressions.length);
+        address[] memory expressions = new address[](2);
+        expressions[0] = expressionA;
+        expressions[1] = expressionB;
 
-        (, EvaluableV2[] memory evaluables) = deployFlowERC20(expressions, constants, name, symbol);
+        (, EvaluableV2[] memory evaluables) =
+            deployFlowERC20(expressions, expressionC, new uint256[](0).matrixFrom(new uint256[](0)), name, symbol);
 
         for (uint256 i = 0; i < evaluables.length; i++) {
             assertEq(evaluables[i].expression, expressions[i]);
