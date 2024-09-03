@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CAL
-pragma solidity ^0.8.18;
+pragma solidity =0.8.19;
 
 import {Vm} from "forge-std/Test.sol";
 import {IFlowERC1155V5, ERC1155SupplyChange} from "src/interface/unstable/IFlowERC1155V5.sol";
