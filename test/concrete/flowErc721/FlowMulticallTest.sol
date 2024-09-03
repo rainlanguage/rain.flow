@@ -2,9 +2,7 @@
 pragma solidity =0.8.19;
 
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
-import {
-    IFlowV5, FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer
-} from "src/interface/unstable/IFlowV5.sol";
+import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {FLOW_MAX_OUTPUTS, FLOW_ENTRYPOINT} from "src/abstract/FlowCommon.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
@@ -14,20 +12,21 @@ import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreter
 import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {Multicall} from "openzeppelin-contracts/contracts/utils/Multicall.sol";
+import {FlowERC721Test} from "../../abstract/FlowERC721Test.sol";
+import {IFlowERC721V5, ERC721SupplyChange, FlowERC721IOV1} from "../../../src/interface/unstable/IFlowERC721V5.sol";
 
-contract FlowMulticallTest is FlowBasicTest {
+contract FlowMulticallTest is FlowERC721Test {
     using LibUint256Matrix for uint256[];
 
-    /**
-     * @dev Should call multiple flows from same flow contract at once using multicall
-     *
-     */
-    function testFlowBasicMulticallFlows(
+    /// Should call multiple flows from same flow contract at once using multicall
+    function testFlowErc721MulticallFlows(
         address bob,
         uint256 tokenId,
         uint256 amount,
         address expressionA,
-        address expressionB
+        address expressionB,
+        string memory flow,
+        string memory baseURI
     ) public {
         vm.assume(expressionA != expressionB);
         vm.assume(sentinel != tokenId);
@@ -42,23 +41,31 @@ contract FlowMulticallTest is FlowBasicTest {
         expressions[1] = expressionB;
         uint256[] memory constants = new uint256[](0);
 
-        (IFlowV5 flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, constants.matrixFrom(constants));
+        (IFlowERC721V5 erc721Flow, EvaluableV2[] memory evaluables) =
+            deployFlowERC721(expressions, constants.matrixFrom(constants), flow, flow, baseURI);
 
-        assumeEtchable(bob, address(flow));
+        assumeEtchable(bob, address(erc721Flow));
 
-        //FlowA
+        //Flow A
         {
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
-            erc721Transfers[0] = ERC721Transfer({token: address(iTokenA), from: address(flow), to: bob, id: tokenId});
+            erc721Transfers[0] =
+                ERC721Transfer({token: address(iTokenA), from: address(erc721Flow), to: bob, id: tokenId});
 
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
-            erc20Transfers[0] = ERC20Transfer({token: address(iTokenB), from: bob, to: address(flow), amount: amount});
+            erc20Transfers[0] =
+                ERC20Transfer({token: address(iTokenB), from: bob, to: address(erc721Flow), amount: amount});
 
-            uint256[] memory stack =
-                generateFlowStack(FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)));
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(
+                    new ERC721SupplyChange[](0),
+                    new ERC721SupplyChange[](0),
+                    FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0))
+                )
+            );
 
             interpreterEval2MockCall(
-                address(flow),
+                address(erc721Flow),
                 LibEncodedDispatch.encode2(evaluables[0].expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
                 stack,
                 new uint256[](0)
@@ -72,28 +79,39 @@ contract FlowMulticallTest is FlowBasicTest {
             vm.expectCall(
                 iTokenA,
                 abi.encodeWithSelector(
-                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), flow, bob, tokenId
+                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), erc721Flow, bob, tokenId
                 )
             );
 
             vm.mockCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-            vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, bob, flow, amount));
+            vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, bob, erc721Flow, amount));
         }
 
-        //FlowB
+        //Flow B
         {
             ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](1);
-            erc1155Transfers[0] =
-                ERC1155Transfer({token: address(iTokenC), from: address(flow), to: bob, id: tokenId, amount: amount});
+            erc1155Transfers[0] = ERC1155Transfer({
+                token: address(iTokenC),
+                from: address(erc721Flow),
+                to: bob,
+                id: tokenId,
+                amount: amount
+            });
 
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
-            erc721Transfers[0] = ERC721Transfer({token: address(iTokenA), from: bob, to: address(flow), id: tokenId});
+            erc721Transfers[0] =
+                ERC721Transfer({token: address(iTokenA), from: bob, to: address(erc721Flow), id: tokenId});
 
-            uint256[] memory stack =
-                generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers));
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(
+                    new ERC721SupplyChange[](0),
+                    new ERC721SupplyChange[](0),
+                    FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers)
+                )
+            );
 
             interpreterEval2MockCall(
-                address(flow),
+                address(erc721Flow),
                 LibEncodedDispatch.encode2(evaluables[1].expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS),
                 stack,
                 new uint256[](0)
@@ -107,21 +125,22 @@ contract FlowMulticallTest is FlowBasicTest {
             vm.expectCall(
                 iTokenA,
                 abi.encodeWithSelector(
-                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, flow, tokenId
+                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, erc721Flow, tokenId
                 )
             );
 
             vm.mockCall(iTokenC, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
             vm.expectCall(
-                iTokenC, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector, flow, bob, tokenId, amount, "")
+                iTokenC,
+                abi.encodeWithSelector(IERC1155.safeTransferFrom.selector, erc721Flow, bob, tokenId, amount, "")
             );
         }
 
         bytes[] memory calldatas = new bytes[](2);
-        calldatas[0] = abi.encodeCall(flow.flow, (evaluables[0], new uint256[](0), new SignedContextV1[](0)));
-        calldatas[1] = abi.encodeCall(flow.flow, (evaluables[1], new uint256[](0), new SignedContextV1[](0)));
+        calldatas[0] = abi.encodeCall(erc721Flow.flow, (evaluables[0], new uint256[](0), new SignedContextV1[](0)));
+        calldatas[1] = abi.encodeCall(erc721Flow.flow, (evaluables[1], new uint256[](0), new SignedContextV1[](0)));
 
         vm.startPrank(bob);
-        Multicall(address(flow)).multicall(calldatas);
+        Multicall(address(erc721Flow)).multicall(calldatas);
     }
 }
