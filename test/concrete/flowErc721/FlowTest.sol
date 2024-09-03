@@ -222,6 +222,79 @@ contract Erc721FlowTest is FlowERC721Test {
         }
     }
 
+    /**
+     * @notice Tests the flow between ERC721 and ERC1155 on the good path.
+     */
+    function testFlowERC721FlowERC721ToERC1155(
+        address alice,
+        uint256 erc721InTokenId,
+        uint256 erc1155OutTokenId,
+        uint256 erc1155OutAmmount
+    ) external {
+        vm.assume(sentinel != erc721InTokenId);
+        vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmmount);
+        vm.assume(address(0) != alice);
+
+        vm.label(alice, "Alice");
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721({name: "FlowERC721", symbol: "F721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+
+        assumeEtchable(alice, address(flow));
+
+        {
+            ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
+            erc721Transfers[0] =
+                ERC721Transfer({token: address(iTokenA), from: alice, to: address(flow), id: erc721InTokenId});
+
+            ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](1);
+            erc1155Transfers[0] = ERC1155Transfer({
+                token: address(iTokenB),
+                from: address(flow),
+                to: alice,
+                id: erc1155OutTokenId,
+                amount: erc1155OutAmmount
+            });
+
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
+            mints[0] = ERC721SupplyChange({account: alice, id: 0});
+            mints[1] = ERC721SupplyChange({account: alice, id: 1});
+
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: alice, id: 0});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers))
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
+            vm.expectCall(
+                iTokenB,
+                abi.encodeWithSelector(
+                    IERC1155.safeTransferFrom.selector, flow, alice, erc1155OutTokenId, erc1155OutAmmount, ""
+                )
+            );
+
+            vm.mockCall(
+                iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), ""
+            );
+            vm.expectCall(
+                iTokenA,
+                abi.encodeWithSelector(
+                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, flow, erc721InTokenId
+                )
+            );
+        }
+
+        vm.startPrank(alice);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
     function testFlowERC721FlowERC20ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc20InAmount,
