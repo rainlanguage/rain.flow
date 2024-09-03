@@ -72,6 +72,23 @@ abstract contract InterpreterMockTest is Test {
         );
     }
 
+    function interpreterEval2RevertCall(address nameSpaceSender, EncodedDispatch dispatch, uint256[][] memory context)
+        internal
+    {
+        vm.mockCallRevert(
+            address(iInterpreter),
+            abi.encodeWithSelector(
+                IInterpreterV2.eval2.selector,
+                iStore,
+                DEFAULT_STATE_NAMESPACE.qualifyNamespace(nameSpaceSender),
+                dispatch,
+                context,
+                new uint256[](0)
+            ),
+            "REVERT_EVAL2_CALL"
+        );
+    }
+
     function expressionDeployerDeployExpression2MockCall(address expression, bytes memory io) internal {
         vm.mockCall(
             address(iDeployer),

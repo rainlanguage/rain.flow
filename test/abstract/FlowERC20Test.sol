@@ -40,12 +40,28 @@ abstract contract FlowERC20Test is FlowBasicTest {
         expressions[0] = expression;
         uint256[] memory constants = new uint256[](0);
         (IFlowERC20V5 flow, EvaluableV2[] memory evaluables) =
-            deployFlowERC20(expressions, constants.matrixFrom(), name, symbol);
+            deployFlowERC20(expressions, address(1), constants.matrixFrom(), name, symbol);
         return (flow, evaluables[0]);
+    }
+
+    function expressionDeployer(address expression, uint256[] memory constants, bytes memory bytecode)
+        internal
+        returns (EvaluableConfigV3 memory)
+    {
+        expressionDeployerDeployExpression2MockCall(bytecode, constants, expression, bytes(hex"0006"));
+        return EvaluableConfigV3(iDeployer, bytecode, constants);
+    }
+
+    function expressionDeployer(uint256 key, address expression, uint256[] memory constants)
+        internal
+        returns (EvaluableConfigV3 memory)
+    {
+        return expressionDeployer(expression, constants, abi.encodePacked(vm.addr(key)));
     }
 
     function deployFlowERC20(
         address[] memory expressions,
+        address configExpression,
         uint256[][] memory constants,
         string memory name,
         string memory symbol
@@ -56,25 +72,14 @@ abstract contract FlowERC20Test is FlowBasicTest {
             EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](expressions.length);
 
             for (uint256 i = 0; i < expressions.length; i++) {
-                bytes memory generatedBytecode = abi.encodePacked(vm.addr(i + 1));
-                expressionDeployerDeployExpression2MockCall(
-                    generatedBytecode, constants[i], expressions[i], bytes(hex"0006")
-                );
-
-                flowConfig[i] = EvaluableConfigV3(iDeployer, generatedBytecode, constants[i]);
+                flowConfig[i] = expressionDeployer(i + 1, expressions[i], constants[i]);
             }
+
+            EvaluableConfigV3 memory evaluableConfig =
+                expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
 
             // Initialize the FlowERC20Config struct
-            FlowERC20ConfigV2 memory flowErc20Config = FlowERC20ConfigV2(name, symbol, flowConfig[0], flowConfig);
-
-            for (uint256 i = 0; i < expressions.length; i++) {
-                bytes memory generatedBytecode = abi.encodePacked(vm.addr(i + 1));
-                expressionDeployerDeployExpression2MockCall(
-                    generatedBytecode, constants[i], expressions[i], bytes(hex"0006")
-                );
-
-                flowConfig[i] = EvaluableConfigV3(iDeployer, generatedBytecode, constants[i]);
-            }
+            FlowERC20ConfigV2 memory flowErc20Config = FlowERC20ConfigV2(name, symbol, evaluableConfig, flowConfig);
 
             vm.recordLogs();
             flow = IFlowERC20V5(iCloneFactory.clone(address(iFlowERC20Implementation), abi.encode(flowErc20Config)));

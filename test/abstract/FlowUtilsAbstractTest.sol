@@ -109,7 +109,7 @@ abstract contract FlowUtilsAbstractTest is Test {
     function generateFlowStack(FlowERC20IOV1 memory flowERC20IO) internal view returns (uint256[] memory stack) {
         uint256[] memory transfersStack = generateFlowStack(flowERC20IO.flow);
         uint256 totalItems =
-            transfersStack.length + 1 + (flowERC20IO.mints.length * 2) + 1 + (flowERC20IO.mints.length * 2);
+            transfersStack.length + 1 + (flowERC20IO.burns.length * 2) + 1 + (flowERC20IO.mints.length * 2);
 
         stack = new uint256[](totalItems);
         uint256 index = 0;
