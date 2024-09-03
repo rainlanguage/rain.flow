@@ -19,7 +19,7 @@ import {
 
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
-import {IERC721} from "lib/rain.interpreter/lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
