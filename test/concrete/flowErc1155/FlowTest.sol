@@ -9,6 +9,8 @@ import {IERC1155Upgradeable as IERC1155} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
+import {IInterpreterV2, DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {
     IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
@@ -239,5 +241,61 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.startPrank(alice);
         erc1155Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
+    }
+
+    /// Should utilize context in CAN_TRANSFER entrypoint
+    function testFlowERC1155UtilizeContextInCanTransferEntrypoint(
+        address alice,
+        uint256 amount,
+        address expressionA,
+        address expressionB,
+        uint256[] memory writeToStore,
+        string memory uri,
+        uint256 id
+    ) external {
+        vm.assume(alice != address(0));
+        vm.assume(sentinel != amount);
+        vm.assume(expressionA != expressionB);
+        vm.assume(writeToStore.length != 0);
+
+        address[] memory expressions = new address[](1);
+        expressions[0] = expressionA;
+
+        (IFlowERC1155V5 flowErc1155, EvaluableV2[] memory evaluables) =
+            deployIFlowERC1155V5(expressions, expressionB, new uint256[][](1), uri);
+        assumeEtchable(alice, address(flowErc1155));
+
+        {
+            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+            mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
+
+            ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+            burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: 0 ether});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC1155IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+            flowErc1155.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+        }
+
+        {
+            interpreterEval2MockCall(new uint256[](0), writeToStore);
+            vm.mockCall(address(iStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector), "");
+            vm.expectCall(
+                address(iStore),
+                abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
+            );
+        }
+
+        {
+            vm.startPrank(alice);
+            IERC1155(address(flowErc1155)).safeTransferFrom(alice, address(flowErc1155), id, amount, "");
+            vm.stopPrank();
+        }
     }
 }
