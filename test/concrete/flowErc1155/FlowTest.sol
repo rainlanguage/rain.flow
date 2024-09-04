@@ -313,8 +313,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(address(0) != alice);
         vm.assume(erc20InAmmount > erc20OutAmmount);
 
-        (IFlowERC1155V5 flow, EvaluableV2 memory evaluable) =
-            deployIFlowERC1155V5(uri);
+        (IFlowERC1155V5 flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
         assumeEtchable(alice, address(flow));
 
         {
