@@ -299,43 +299,36 @@ contract Erc1155FlowTest is FlowERC1155Test {
             vm.stopPrank();
         }
     }
-    
+
     /// Should mint and burn tokens per flow in exchange for another token (e.g. ERC20).
     function testFlowERC1155MintAndBurnTokensPerFlowForERC20Exchange(
-        uint256 amount,
-        uint256 mintAndBurn,
-        uint256 id,
-        address alice,
-        string memory uri,
-address expressionA,
-address expressionB
+        uint256 erc20OutAmmount,
+        uint256 erc20InAmmount,
+        uint256 tokenId,
+        address alice
     ) external {
-        vm.assume(sentinel != amount);
-        vm.assume(sentinel != mintAndBurn);
+        vm.assume(sentinel != erc20OutAmmount);
+        vm.assume(sentinel != erc20InAmmount);
+        vm.assume(sentinel != tokenId);
         vm.assume(address(0) != alice);
-        vm.assume(expressionA != expressionB);
-        console.log("mintAndBurn",mintAndBurn);
-        console.log("id",id);
-        console.log("erc1155OutAmmount",amount);
+        vm.assume(erc20InAmmount > erc20OutAmmount);
 
-        address[] memory expressions = new address[](1);
-        expressions[0] = expressionA;
+        console.log("erc20OutAmmount", erc20OutAmmount);
+        console.log("erc20InAmmount", erc20InAmmount);
+        console.log("tokenId", tokenId);
 
-        (IFlowERC1155V5 flowErc1155, EvaluableV2[] memory evaluables) =
-                        deployIFlowERC1155V5(expressions, expressionB, new uint256[][](1), uri);
-
-        assumeEtchable(alice, address(flowErc1155));
-
+        (IFlowERC1155V5 flow, EvaluableV2 memory evaluable) =
+            deployIFlowERC1155V5({uri: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
 
         {
-            vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-            vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
-
-            vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, amount), 2);
+            vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+            vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
 
             vm.expectCall(
-                address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, flowErc1155, amount), 2
+                address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, flow, erc20InAmmount), 2
             );
+            vm.expectCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmmount), 2);
         }
 
         // Stack mint
@@ -343,21 +336,18 @@ address expressionB
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
 
             erc20Transfers[0] =
-                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flowErc1155), amount: amount});
+                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20InAmmount});
 
             erc20Transfers[1] =
-                ERC20Transfer({token: address(iTokenB), from: address(flowErc1155), to: alice, amount: amount});
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20OutAmmount});
 
             ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
-            mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: mintAndBurn});
-
-            ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
-            burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: 0 ether});
+            mints[0] = ERC1155SupplyChange({account: alice, id: tokenId, amount: erc20InAmmount});
 
             uint256[] memory stack = generateFlowStack(
                 FlowERC1155IOV1(
                     mints,
-                    burns,
+                    new ERC1155SupplyChange[](0),
                     FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
                 )
             );
@@ -366,10 +356,10 @@ address expressionB
 
         {
             vm.startPrank(alice);
-            flowErc1155.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
             vm.stopPrank();
 
-            assertEq(IERC1155(address(flowErc1155)).balanceOf(alice, id), mintAndBurn);
+            assertEq(IERC1155(address(flow)).balanceOf(alice, tokenId), erc20InAmmount);
         }
 
         // Stack burn
@@ -377,33 +367,31 @@ address expressionB
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
 
             erc20Transfers[0] =
-                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flowErc1155), amount: amount});
+                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20InAmmount});
 
             erc20Transfers[1] =
-                ERC20Transfer({token: address(iTokenB), from: address(flowErc1155), to: alice, amount: amount});
-
-            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
-            mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: 0 ether});
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20OutAmmount});
 
             ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
-            burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: mintAndBurn});
+            burns[0] = ERC1155SupplyChange({account: alice, id: tokenId, amount: erc20OutAmmount});
 
             uint256[] memory stack = generateFlowStack(
                 FlowERC1155IOV1(
-                    mints,
+                    new ERC1155SupplyChange[](0),
                     burns,
                     FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
                 )
             );
+
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 
         {
             vm.startPrank(alice);
-            flowErc1155.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
             vm.stopPrank();
 
-            assertEq(IERC20(address(flowErc1155)).balanceOf(alice), 0 ether);
+            assertEq(IERC1155(address(flow)).balanceOf(alice, tokenId), erc20InAmmount - erc20OutAmmount);
         }
     }
 }
