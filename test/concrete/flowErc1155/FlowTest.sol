@@ -304,7 +304,8 @@ contract Erc1155FlowTest is FlowERC1155Test {
         uint256 erc20OutAmmount,
         uint256 erc20InAmmount,
         uint256 tokenId,
-        address alice
+        address alice,
+        string memory uri
     ) external {
         vm.assume(sentinel != erc20OutAmmount);
         vm.assume(sentinel != erc20InAmmount);
@@ -313,7 +314,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(erc20InAmmount > erc20OutAmmount);
 
         (IFlowERC1155V5 flow, EvaluableV2 memory evaluable) =
-            deployIFlowERC1155V5({uri: "https://www.rainprotocol.xyz/nft/"});
+            deployIFlowERC1155V5(uri);
         assumeEtchable(alice, address(flow));
 
         {
