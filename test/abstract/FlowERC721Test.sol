@@ -46,12 +46,13 @@ abstract contract FlowERC721Test is FlowBasicTest {
         expressions[0] = expression;
         uint256[] memory constants = new uint256[](0);
         (IFlowERC721V5 flowErc721, EvaluableV2[] memory evaluables) =
-            deployFlowERC721(expressions, constants.matrixFrom(), name, symbol, baseURI);
+            deployFlowERC721(expressions, address(1), constants.matrixFrom(), name, symbol, baseURI);
         return (flowErc721, evaluables[0]);
     }
 
     function deployFlowERC721(
         address[] memory expressions,
+        address configExpression,
         uint256[][] memory constants,
         string memory name,
         string memory symbol,
@@ -63,26 +64,15 @@ abstract contract FlowERC721Test is FlowBasicTest {
             EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](expressions.length);
 
             for (uint256 i = 0; i < expressions.length; i++) {
-                bytes memory generatedBytecode = abi.encodePacked(vm.addr(i + 1));
-                expressionDeployerDeployExpression2MockCall(
-                    generatedBytecode, constants[i], expressions[i], bytes(hex"0006")
-                );
-
-                flowConfig[i] = EvaluableConfigV3(iDeployer, generatedBytecode, constants[i]);
+                flowConfig[i] = expressionDeployer(i + 1, expressions[i], constants[i]);
             }
 
-            // Initialize the FlowERC20Config struct
+            EvaluableConfigV3 memory evaluableConfig =
+                expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
+
+            // Initialize the FlowERC721Config struct
             FlowERC721ConfigV2 memory flowErc721Config =
-                FlowERC721ConfigV2(name, symbol, baseURI, flowConfig[0], flowConfig);
-
-            for (uint256 i = 0; i < expressions.length; i++) {
-                bytes memory generatedBytecode = abi.encodePacked(vm.addr(i + 1));
-                expressionDeployerDeployExpression2MockCall(
-                    generatedBytecode, constants[i], expressions[i], bytes(hex"0006")
-                );
-
-                flowConfig[i] = EvaluableConfigV3(iDeployer, generatedBytecode, constants[i]);
-            }
+                FlowERC721ConfigV2(name, symbol, baseURI, evaluableConfig, flowConfig);
 
             vm.recordLogs();
             flowErc721 =

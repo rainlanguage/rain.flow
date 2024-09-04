@@ -33,7 +33,8 @@ contract FlowExpressionTest is FlowERC721Test {
 
         uint256[][] memory constants = new uint256[][](expressions.length);
 
-        (, EvaluableV2[] memory evaluables) = deployFlowERC721(expressions, constants, name, symbol, uri);
+        (, EvaluableV2[] memory evaluables) =
+            deployFlowERC721(expressions, expressions[0], constants, name, symbol, uri);
 
         for (uint256 i = 0; i < evaluables.length; i++) {
             assertEq(evaluables[i].expression, expressions[i]);
