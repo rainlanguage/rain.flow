@@ -2,7 +2,6 @@
 pragma solidity =0.8.19;
 
 import {Test, Vm} from "forge-std/Test.sol";
-import "forge-std/console.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC20Upgradeable as IERC20} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
@@ -312,10 +311,6 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(sentinel != tokenId);
         vm.assume(address(0) != alice);
         vm.assume(erc20InAmmount > erc20OutAmmount);
-
-        console.log("erc20OutAmmount", erc20OutAmmount);
-        console.log("erc20InAmmount", erc20InAmmount);
-        console.log("tokenId", tokenId);
 
         (IFlowERC1155V5 flow, EvaluableV2 memory evaluable) =
             deployIFlowERC1155V5({uri: "https://www.rainprotocol.xyz/nft/"});
