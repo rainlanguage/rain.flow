@@ -41,7 +41,7 @@ contract FlowMulticallTest is FlowERC1155Test {
         uint256[] memory constants = new uint256[](0);
 
         (IFlowERC1155V5 flowErc1155, EvaluableV2[] memory evaluables) =
-            deployIFlowERC1155V5(expressions, constants.matrixFrom(constants), uri);
+            deployIFlowERC1155V5(expressions, expressionB, constants.matrixFrom(constants), uri);
 
         assumeEtchable(bob, address(flowErc1155));
 

@@ -21,7 +21,9 @@ contract FlowExpressionTest is FlowERC1155Test {
      * @dev Tests that the addresses of expressions emitted in the event
      *      match the addresses provided by the deployer.
      */
-    function testFlowERC1155ShouldDeployExpression(address[] memory expressions, string memory uri) public {
+    function testFlowERC1155ShouldDeployExpression(address[] memory expressions, string memory uri, address expression)
+        public
+    {
         uint256 length = bound(expressions.length, 1, 10);
         assembly ("memory-safe") {
             mstore(expressions, length)
@@ -29,7 +31,7 @@ contract FlowExpressionTest is FlowERC1155Test {
 
         uint256[][] memory constants = new uint256[][](expressions.length);
 
-        (, EvaluableV2[] memory evaluables) = deployIFlowERC1155V5(expressions, constants, uri);
+        (, EvaluableV2[] memory evaluables) = deployIFlowERC1155V5(expressions, expression, constants, uri);
 
         for (uint256 i = 0; i < evaluables.length; i++) {
             assertEq(evaluables[i].expression, expressions[i]);
