@@ -18,10 +18,12 @@ import {
 import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
+    using Address for address;
 
     function testFlowERC1155FlowERC20ToERC20(
         uint256 erc1155OutAmmount,
@@ -312,6 +314,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(sentinel != tokenId);
         vm.assume(address(0) != alice);
         vm.assume(erc20InAmmount > erc20OutAmmount);
+        vm.assume(!alice.isContract());
 
         (IFlowERC1155V5 flowErc1155, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
         assumeEtchable(alice, address(flowErc1155));
