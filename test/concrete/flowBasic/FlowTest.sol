@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: CAL
-pragma solidity ^0.8.18;
+pragma solidity =0.8.19;
 
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
-import {IFlowV5, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
+import {
+    IFlowV5, FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer
+} from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableConfigV3, SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {
@@ -18,19 +19,6 @@ import {
 
 contract FlowTest is FlowBasicTest {
     using LibEvaluable for EvaluableV2;
-
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
-
-    constructor() {
-        vm.pauseGasMetering();
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
-        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
-
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
-        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
-        vm.resumeGasMetering();
-    }
 
     function testFlowERC721ToERC1155(
         address alice,
@@ -77,8 +65,8 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        uint256[] memory stack = generateTokenTransferStack(erc1155Transfers, erc721Transfers, new ERC20Transfer[](0));
-
+        uint256[] memory stack =
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers));
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(alice);
@@ -112,8 +100,8 @@ contract FlowTest is FlowBasicTest {
             )
         );
 
-        uint256[] memory stack = generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, erc20Transfers);
-
+        uint256[] memory stack =
+            generateFlowStack(FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)));
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(bob);
@@ -171,7 +159,7 @@ contract FlowTest is FlowBasicTest {
         );
 
         uint256[] memory stack =
-            generateTokenTransferStack(erc1155Transfers, new ERC721Transfer[](0), new ERC20Transfer[](0));
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers));
 
         interpreterEval2MockCall(stack, new uint256[](0));
 
@@ -211,7 +199,7 @@ contract FlowTest is FlowBasicTest {
         );
 
         uint256[] memory stack =
-            generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, new ERC20Transfer[](0));
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0)));
 
         interpreterEval2MockCall(stack, new uint256[](0));
 
@@ -241,7 +229,7 @@ contract FlowTest is FlowBasicTest {
         vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, alise, flow, erc20BInAmmount));
 
         uint256[] memory stack =
-            generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+            generateFlowStack(FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0)));
 
         interpreterEval2MockCall(stack, new uint256[](0));
 
@@ -272,7 +260,7 @@ contract FlowTest is FlowBasicTest {
                 ERC20Transfer({token: address(iTokenB), from: address(flow), to: alise, amount: erc20Ammount});
 
             uint256[] memory stack =
-                generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+                generateFlowStack(FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0)));
 
             interpreterEval2MockCall(stack, new uint256[](0));
         }
@@ -290,7 +278,7 @@ contract FlowTest is FlowBasicTest {
             vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
 
             uint256[] memory stack =
-                generateTokenTransferStack(new ERC1155Transfer[](0), new ERC721Transfer[](0), erc20Transfers);
+                generateFlowStack(FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0)));
 
             interpreterEval2MockCall(stack, new uint256[](0));
         }
@@ -324,7 +312,7 @@ contract FlowTest is FlowBasicTest {
                 ERC721Transfer({token: address(iTokenB), from: address(flow), to: alise, id: erc721TokenId});
 
             uint256[] memory stack =
-                generateTokenTransferStack(new ERC1155Transfer[](0), erc721Transfers, new ERC20Transfer[](0));
+                generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0)));
 
             interpreterEval2MockCall(stack, new uint256[](0));
         }
@@ -375,7 +363,7 @@ contract FlowTest is FlowBasicTest {
             });
 
             uint256[] memory stack =
-                generateTokenTransferStack(erc1155Transfers, new ERC721Transfer[](0), new ERC20Transfer[](0));
+                generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers));
 
             interpreterEval2MockCall(stack, new uint256[](0));
         }

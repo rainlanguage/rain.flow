@@ -7,18 +7,35 @@ import {InterpreterMockTest} from "test/abstract/InterpreterMockTest.sol";
 import {IFlowV5} from "src/interface/unstable/IFlowV5.sol";
 import {Flow} from "src/concrete/basic/Flow.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
+import {STUB_EXPRESSION_BYTECODE, REVERTING_MOCK_BYTECODE} from "./TestConstants.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
+import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 
 abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
+    using LibUint256Matrix for uint256[];
+
     CloneFactory internal immutable iCloneFactory;
     IFlowV5 internal immutable iFlowImplementation;
+
+    address internal immutable iTokenA;
+    address internal immutable iTokenB;
+    address internal immutable iTokenC;
 
     constructor() {
         vm.pauseGasMetering();
         iCloneFactory = new CloneFactory();
         iFlowImplementation = new Flow();
+
+        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
+        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
+
+        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
+        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
+
+        iTokenC = address(uint160(uint256(keccak256("tokenC.test"))));
+        vm.etch(address(iTokenC), REVERTING_MOCK_BYTECODE);
+
         vm.resumeGasMetering();
     }
 
@@ -26,16 +43,45 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         (flow, evaluable) = deployFlow(address(0));
     }
 
-    function deployFlow(address expression) internal returns (IFlowV5 flow, EvaluableV2 memory evaluable) {
-        expressionDeployerDeployExpression2MockCall(expression, bytes(hex"0006"));
+    function deployFlow(address expression) internal returns (IFlowV5, EvaluableV2 memory) {
+        address[] memory expressions = new address[](1);
+        expressions[0] = expression;
+        uint256[] memory constants = new uint256[](0);
+        (IFlowV5 flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, constants.matrixFrom());
+        return (flow, evaluables[0]);
+    }
 
-        EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](1);
-        flowConfig[0] = EvaluableConfigV3(iDeployer, STUB_EXPRESSION_BYTECODE, new uint256[](0));
-        vm.recordLogs();
-        flow = IFlowV5(iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowConfig)));
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        Vm.Log memory concreteEvent = findEvent(logs, keccak256("FlowInitialized(address,(address,address,address))"));
-        (, evaluable) = abi.decode(concreteEvent.data, (address, EvaluableV2));
+    function deployFlow(address[] memory expressions, uint256[][] memory constants)
+        internal
+        returns (IFlowV5 flow, EvaluableV2[] memory evaluables)
+    {
+        require(expressions.length == constants.length, "Expressions and constants array lengths must match");
+
+        {
+            EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](expressions.length);
+
+            for (uint256 i = 0; i < expressions.length; i++) {
+                bytes memory generatedBytecode = abi.encodePacked(vm.addr(i + 1));
+                expressionDeployerDeployExpression2MockCall(
+                    generatedBytecode, constants[i], expressions[i], bytes(hex"0006")
+                );
+
+                flowConfig[i] = EvaluableConfigV3(iDeployer, generatedBytecode, constants[i]);
+            }
+
+            vm.recordLogs();
+            flow = IFlowV5(iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowConfig)));
+        }
+
+        {
+            Vm.Log[] memory logs = vm.getRecordedLogs();
+            logs = findEvents(logs, keccak256("FlowInitialized(address,(address,address,address))"));
+            evaluables = new EvaluableV2[](logs.length);
+            for (uint256 i = 0; i < logs.length; i++) {
+                (, EvaluableV2 memory evaluable) = abi.decode(logs[i].data, (address, EvaluableV2));
+                evaluables[i] = evaluable;
+            }
+        }
     }
 
     function assumeEtchable(address account) internal view {

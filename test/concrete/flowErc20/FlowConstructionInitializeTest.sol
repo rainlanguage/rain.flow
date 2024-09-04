@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CAL
-pragma solidity ^0.8.18;
+pragma solidity =0.8.19;
 
 import {Vm} from "forge-std/Test.sol";
 import {FlowERC20ConfigV2} from "src/interface/unstable/IFlowERC20V5.sol";
@@ -19,7 +19,7 @@ contract FlowConstructionInitializeTest is FlowERC20Test {
             FlowERC20ConfigV2("Flow ERC20", "F20", EvaluableConfigV3(iDeployer, bytecode, constants), flowConfig);
 
         vm.recordLogs();
-        iCloneFactory.clone(address(iFlowERC20Implementation), abi.encode(flowERC20ConfigV2));
+        iCloneErc20Factory.clone(address(iFlowERC20Implementation), abi.encode(flowERC20ConfigV2));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature =
@@ -28,7 +28,7 @@ contract FlowConstructionInitializeTest is FlowERC20Test {
         Vm.Log memory concreteEvent = findEvent(logs, eventSignature);
         (address sender, FlowERC20ConfigV2 memory config) = abi.decode(concreteEvent.data, (address, FlowERC20ConfigV2));
 
-        assertEq(sender, address(iCloneFactory), "wrong sender in Initialize event");
+        assertEq(sender, address(iCloneErc20Factory), "wrong sender in Initialize event");
         assertEq(keccak256(abi.encode(flowERC20ConfigV2)), keccak256(abi.encode(config)), "wrong compare Structs");
     }
 }
