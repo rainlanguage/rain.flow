@@ -103,11 +103,7 @@ contract FlowMulticallTest is FlowERC20Test {
             burns[0] = ERC20SupplyChange({account: bob, amount: 10 ether});
 
             uint256[] memory stack = generateFlowStack(
-                FlowERC20IOV1(
-                    mints,
-                    burns,
-                    FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers)
-                )
+                FlowERC20IOV1(mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers))
             );
 
             interpreterEval2MockCall(
