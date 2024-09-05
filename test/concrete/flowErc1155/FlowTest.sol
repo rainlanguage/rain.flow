@@ -35,6 +35,84 @@ contract Erc1155FlowTest is FlowERC1155Test {
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
 
+    function testFlowERC1155SupportsTransferPreflightHook(
+        address alice,
+        uint128 amount,
+        uint128 id,
+        address expressionA,
+        address expressionB,
+        string memory uri
+    ) external {
+        vm.assume(alice != address(0));
+        vm.assume(sentinel != amount);
+        vm.assume(expressionA != expressionB);
+
+        address[] memory expressions = new address[](1);
+        expressions[0] = expressionA;
+
+        (IFlowERC1155V5 flow, EvaluableV2[] memory evaluables) =
+            deployIFlowERC1155V5(expressions, expressionB, new uint256[][](1), uri);
+        assumeEtchable(alice, address(flow));
+
+        {
+            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+            mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
+
+            ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+            burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC1155IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        uint256[][] memory context = LibContextWrapper.buildAndSetContext(
+            LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flow))), amount)
+                .matrixFrom(),
+            new SignedContextV1[](0),
+            address(alice),
+            address(flow)
+        );
+
+        {
+            interpreterEval2ExpectCall(
+                address(flow),
+                LibEncodedDispatch.encode2(
+                    expressionB, FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
+                ),
+                context
+            );
+
+            flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+
+            vm.startPrank(alice);
+            IERC1155(address(flow)).safeTransferFrom(alice, address(flow), id, amount, "");
+            vm.stopPrank();
+        }
+
+        {
+            interpreterEval2RevertCall(
+                address(flow),
+                LibEncodedDispatch.encode2(
+                    expressionB, FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
+                ),
+                context
+            );
+
+            flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+
+            vm.startPrank(alice);
+            vm.expectRevert("REVERT_EVAL2_CALL");
+            IERC1155(address(flow)).transfer(address(flow), amount);
+            vm.stopPrank();
+        }
+    }
+
     function testFlowERC1155FlowERC20ToERC20(
         uint256 erc20OutAmmount,
         uint256 erc20BInAmmount,
