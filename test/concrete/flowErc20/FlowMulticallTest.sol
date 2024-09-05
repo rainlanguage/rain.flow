@@ -46,7 +46,7 @@ contract FlowMulticallTest is FlowERC20Test {
 
         assumeEtchable(bob, address(flow));
 
-        //Flow A
+        // Flow A
         {
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
             erc721Transfers[0] = ERC721Transfer({token: address(iTokenA), from: address(flow), to: bob, id: tokenId});
@@ -87,7 +87,7 @@ contract FlowMulticallTest is FlowERC20Test {
             vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, bob, flow, amount));
         }
 
-        //Flow B
+        // Flow B
         {
             ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](1);
             erc1155Transfers[0] =
@@ -96,10 +96,16 @@ contract FlowMulticallTest is FlowERC20Test {
             ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
             erc721Transfers[0] = ERC721Transfer({token: address(iTokenA), from: bob, to: address(flow), id: tokenId});
 
+            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+            mints[0] = ERC20SupplyChange({account: bob, amount: 20 ether});
+
+            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+            burns[0] = ERC20SupplyChange({account: bob, amount: 10 ether});
+
             uint256[] memory stack = generateFlowStack(
                 FlowERC20IOV1(
-                    new ERC20SupplyChange[](0),
-                    new ERC20SupplyChange[](0),
+                    mints,
+                    burns,
                     FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers)
                 )
             );
