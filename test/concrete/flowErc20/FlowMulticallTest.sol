@@ -26,12 +26,12 @@ contract FlowMulticallTest is FlowERC20Test {
         address expressionA,
         address expressionB,
         address expressionC,
-        string memory name,
-        string memory symbol
+        string memory flowName
     ) public {
         vm.assume(expressionA != expressionB && expressionC != expressionB && expressionC != expressionA);
         vm.assume(sentinel != tokenId);
         vm.assume(sentinel != amount);
+        vm.assume(bob != address(0));
 
         vm.label(bob, "Bob");
         vm.label(expressionA, "expressionA");
@@ -42,7 +42,7 @@ contract FlowMulticallTest is FlowERC20Test {
         expressions[1] = expressionB;
 
         (IFlowERC20V5 flow, EvaluableV2[] memory evaluables) =
-            deployFlowERC20(expressions, expressionC, new uint256[](0).matrixFrom(new uint256[](0)), name, symbol);
+            deployFlowERC20(expressions, expressionC, new uint256[](0).matrixFrom(new uint256[](0)), flowName, flowName);
 
         assumeEtchable(bob, address(flow));
 
@@ -54,12 +54,14 @@ contract FlowMulticallTest is FlowERC20Test {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
             erc20Transfers[0] = ERC20Transfer({token: address(iTokenB), from: bob, to: address(flow), amount: amount});
 
+            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+            mints[0] = ERC20SupplyChange({account: bob, amount: 20 ether});
+
+            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+            burns[0] = ERC20SupplyChange({account: bob, amount: 10 ether});
+
             uint256[] memory stack = generateFlowStack(
-                FlowERC20IOV1(
-                    new ERC20SupplyChange[](0),
-                    new ERC20SupplyChange[](0),
-                    FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0))
-                )
+                FlowERC20IOV1(mints, burns, FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)))
             );
 
             interpreterEval2MockCall(
