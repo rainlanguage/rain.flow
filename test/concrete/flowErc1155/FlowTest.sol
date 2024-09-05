@@ -13,15 +13,27 @@ import {IInterpreterV2, DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interfac
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {
-    IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
+    IFlowERC1155V5,
+    ERC1155SupplyChange,
+    FlowERC1155IOV1,
+    FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
+    FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
+import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
+import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
+import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
 
 contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
+    using Address for address;
+    using LibUint256Matrix for uint256[];
+    using LibUint256Array for uint256[];
 
     function testFlowERC1155FlowERC20ToERC20(
         uint256 erc20OutAmmount,
@@ -257,6 +269,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(sentinel != amount);
         vm.assume(expressionA != expressionB);
         vm.assume(writeToStore.length != 0);
+        vm.assume(!alice.isContract());
 
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
