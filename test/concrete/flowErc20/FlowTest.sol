@@ -273,6 +273,9 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests the flow between ERC20 and ERC721 on the good path.
+     */
     function testFlowERC20FlowERC20ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc20InAmount,
@@ -324,6 +327,9 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests the flow between ERC1155 and ERC1155 on the good path.
+     */
     function testFlowERC20FlowERC1155ToERC1155(
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
@@ -394,6 +400,9 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests the flow between ERC721 and ERC721 on the good path.
+     */
     function testFlowERC20FlowERC721ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
@@ -452,6 +461,9 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests the flow between ERC20 and ERC20 on the good path.
+     */
     function testFlowERC20FlowERC20ToERC20(
         uint256 erc20OutAmmount,
         uint256 erc20BInAmmount,
