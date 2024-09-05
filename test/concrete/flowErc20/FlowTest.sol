@@ -376,12 +376,15 @@ contract Erc20FlowTest is FlowERC20Test {
                 IERC1155.safeTransferFrom.selector, alice, erc20Flow, erc1155BInTokenId, erc1155BInAmmount, ""
             )
         );
+        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
+
+        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
 
         uint256[] memory stack = generateFlowStack(
             FlowERC20IOV1(
-                new ERC20SupplyChange[](0),
-                new ERC20SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
+                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
             )
         );
 
