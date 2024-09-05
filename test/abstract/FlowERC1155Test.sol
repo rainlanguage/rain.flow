@@ -23,21 +23,6 @@ abstract contract FlowERC1155Test is FlowBasicTest {
         vm.resumeGasMetering();
     }
 
-    function expressionDeployer(address expression, uint256[] memory constants, bytes memory bytecode)
-        internal
-        returns (EvaluableConfigV3 memory)
-    {
-        expressionDeployerDeployExpression2MockCall(bytecode, constants, expression, bytes(hex"0006"));
-        return EvaluableConfigV3(iDeployer, bytecode, constants);
-    }
-
-    function expressionDeployer(uint256 key, address expression, uint256[] memory constants)
-        internal
-        returns (EvaluableConfigV3 memory)
-    {
-        return expressionDeployer(expression, constants, abi.encodePacked(vm.addr(key)));
-    }
-
     function deployIFlowERC1155V5(string memory uri)
         internal
         returns (IFlowERC1155V5 flowErc1155, EvaluableV2 memory evaluable)
