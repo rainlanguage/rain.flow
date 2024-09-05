@@ -14,15 +14,25 @@ import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpr
 contract FlowTimeTest is FlowERC20Test {
     using SignContextLib for Vm;
 
-    function testFlowERC20FlowTime(string memory name, string memory symbol, uint256[] memory writeToStore) public {
+    function testFlowERC20FlowTime(
+        string memory name,
+        string memory symbol,
+        uint256[] memory writeToStore,
+        address alice
+    ) public {
+        vm.assume(alice != address(0));
         vm.assume(writeToStore.length != 0);
         (IFlowERC20V5 erc20Flow, EvaluableV2 memory evaluable) = deployFlowERC20(name, symbol);
 
+        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
+
+        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
+
         uint256[] memory stack = generateFlowStack(
             FlowERC20IOV1(
-                new ERC20SupplyChange[](0),
-                new ERC20SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
             )
         );
 
