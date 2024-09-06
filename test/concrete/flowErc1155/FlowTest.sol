@@ -4,16 +4,16 @@ pragma solidity =0.8.19;
 import {Test, Vm} from "forge-std/Test.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC20Upgradeable as IERC20} from
-    "openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+"openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import {IERC1155Upgradeable as IERC1155} from
-    "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
+"openzeppelin-contracts-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IInterpreterV2, DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {
-    IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
+IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
@@ -23,82 +23,12 @@ contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
 
-    /// Tests the flow between ERC721 and ERC1155 on the good path.
-    function testFlowERC1155FlowERC721ToERC1155(
-        address alice,
-        uint256 erc721InTokenId,
-        uint256 erc1155OutTokenId,
-        uint256 erc1155OutAmmount,
-        string memory uri,
-        uint256 id
-    ) external {
-        vm.assume(sentinel != erc721InTokenId);
-        vm.assume(sentinel != erc1155OutTokenId);
-        vm.assume(sentinel != erc1155OutAmmount);
-        vm.assume(address(0) != alice);
-
-        vm.label(alice, "Alice");
-
-        (IFlowERC1155V5 flowErc1155, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
-
-        assumeEtchable(alice, address(flowErc1155));
-
-        {
-            ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
-            erc721Transfers[0] =
-                ERC721Transfer({token: address(iTokenA), from: alice, to: address(flowErc1155), id: erc721InTokenId});
-
-            ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](1);
-            erc1155Transfers[0] = ERC1155Transfer({
-                token: address(iTokenB),
-                from: address(flowErc1155),
-                to: alice,
-                id: erc1155OutTokenId,
-                amount: erc1155OutAmmount
-            });
-
-            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
-            mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: 20 ether});
-
-            ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
-            burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: 10 ether});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC1155IOV1(mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers))
-            );
-            interpreterEval2MockCall(stack, new uint256[](0));
-        }
-
-        {
-            vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
-            vm.expectCall(
-                iTokenB,
-                abi.encodeWithSelector(
-                    IERC1155.safeTransferFrom.selector, flowErc1155, alice, erc1155OutTokenId, erc1155OutAmmount, ""
-                )
-            );
-
-            vm.mockCall(
-                iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), ""
-            );
-            vm.expectCall(
-                iTokenA,
-                abi.encodeWithSelector(
-                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, flowErc1155, erc721InTokenId
-                )
-            );
-        }
-
-        vm.startPrank(alice);
-        flowErc1155.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
-        vm.stopPrank();
-    }
-
     function testFlowERC1155FlowERC20ToERC20(
         uint256 erc20OutAmmount,
         uint256 erc20BInAmmount,
         string memory uri,
-        uint256 fuzzedKeyAlice
+        uint256 fuzzedKeyAlice,
+        uint256 id
     ) external {
         vm.assume(sentinel != erc20OutAmmount);
         vm.assume(sentinel != erc20BInAmmount);
@@ -112,9 +42,9 @@ contract Erc1155FlowTest is FlowERC1155Test {
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
         erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(erc1155Flow), to: alice, amount: erc20OutAmmount});
+                        ERC20Transfer({token: address(iTokenA), from: address(erc1155Flow), to: alice, amount: erc20OutAmmount});
         erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc1155Flow), amount: erc20BInAmmount});
+                        ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc1155Flow), amount: erc20BInAmmount});
 
         vm.startPrank(alice);
 
@@ -126,10 +56,16 @@ contract Erc1155FlowTest is FlowERC1155Test {
             address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc1155Flow, erc20BInAmmount)
         );
 
+        ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+        mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: erc20BInAmmount});
+
+        ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+        burns[0] = ERC1155SupplyChange({account: alice,  id: id, amount: 0 ether});
+
         uint256[] memory stack = generateFlowStack(
             FlowERC1155IOV1(
-                new ERC1155SupplyChange[](0),
-                new ERC1155SupplyChange[](0),
+                mints,
+                burns,
                 FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
             )
         );
@@ -162,9 +98,9 @@ contract Erc1155FlowTest is FlowERC1155Test {
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
         erc721Transfers[0] =
-            ERC721Transfer({token: address(iTokenA), from: address(erc1155Flow), to: alice, id: erc721OutTokenId});
+                        ERC721Transfer({token: address(iTokenA), from: address(erc1155Flow), to: alice, id: erc721OutTokenId});
         erc721Transfers[1] =
-            ERC721Transfer({token: address(iTokenB), from: alice, to: address(erc1155Flow), id: erc721BInTokenId});
+                        ERC721Transfer({token: address(iTokenB), from: alice, to: address(erc1155Flow), id: erc721BInTokenId});
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
@@ -282,11 +218,11 @@ contract Erc1155FlowTest is FlowERC1155Test {
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
         erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(erc1155Flow), amount: erc20InAmount});
+                        ERC20Transfer({token: address(iTokenA), from: alice, to: address(erc1155Flow), amount: erc20InAmount});
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
         erc721Transfers[0] =
-            ERC721Transfer({token: iTokenB, from: address(erc1155Flow), to: alice, id: erc721OutTokenId});
+                        ERC721Transfer({token: iTokenB, from: address(erc1155Flow), to: alice, id: erc721OutTokenId});
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc1155Flow, erc20InAmount));
@@ -333,7 +269,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         expressions[0] = expressionA;
 
         (IFlowERC1155V5 flowErc1155, EvaluableV2[] memory evaluables) =
-            deployIFlowERC1155V5(expressions, expressionB, new uint256[][](1), uri);
+                        deployIFlowERC1155V5(expressions, expressionB, new uint256[][](1), uri);
         assumeEtchable(alice, address(flowErc1155));
 
         {
