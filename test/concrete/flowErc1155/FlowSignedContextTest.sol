@@ -19,6 +19,8 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
     /// Should validate multiple signed contexts
     function testValidateMultipleSignedContexts(
         string memory uri,
+        uint256 id,
+        uint256 amount,
         uint256[] memory context0,
         uint256[] memory context1,
         uint256 fuzzedKeyAlice,
@@ -32,18 +34,26 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
         uint256 bobKey = (fuzzedKeyBob % (SECP256K1_ORDER - 1)) + 1;
 
         SignedContextV1[] memory signedContexts = new SignedContextV1[](2);
+        {
+            address alice = vm.addr(aliceKey);
+            signedContexts[0] = vm.signContext(aliceKey, aliceKey, context0);
+            signedContexts[1] = vm.signContext(aliceKey, aliceKey, context1);
 
-        signedContexts[0] = vm.signContext(aliceKey, aliceKey, context0);
-        signedContexts[1] = vm.signContext(aliceKey, aliceKey, context1);
+            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+            mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
 
-        uint256[] memory stack = generateFlowStack(
-            FlowERC1155IOV1(
-                new ERC1155SupplyChange[](0),
-                new ERC1155SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-        interpreterEval2MockCall(stack, new uint256[](0));
+            ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+            burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC1155IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
         erc1155Flow.flow(evaluable, new uint256[](0), signedContexts);
 
         // With bad signature in second signed context
