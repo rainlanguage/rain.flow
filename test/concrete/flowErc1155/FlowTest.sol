@@ -188,11 +188,15 @@ contract Erc1155FlowTest is FlowERC1155Test {
             )
         );
 
+        ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+        mints[0] = ERC1155SupplyChange({account: alice, id: erc1155BInTokenId, amount: erc1155BInAmmount});
+
+        ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+        burns[0] = ERC1155SupplyChange({account: alice, id: erc1155BInTokenId, amount: 0 ether});
+
         uint256[] memory stack = generateFlowStack(
             FlowERC1155IOV1(
-                new ERC1155SupplyChange[](0),
-                new ERC1155SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
+                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
             )
         );
         interpreterEval2MockCall(stack, new uint256[](0));
@@ -236,6 +240,11 @@ contract Erc1155FlowTest is FlowERC1155Test {
                 bytes4(keccak256("safeTransferFrom(address,address,uint256)")), erc1155Flow, alice, erc721OutTokenId
             )
         );
+        ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+        mints[0] = ERC1155SupplyChange({account: alice, id: erc721OutTokenId, amount: erc20InAmount});
+
+        ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+        burns[0] = ERC1155SupplyChange({account: alice, id: erc721OutTokenId, amount: 0 ether});
 
         uint256[] memory stack = generateFlowStack(
             FlowERC1155IOV1(
