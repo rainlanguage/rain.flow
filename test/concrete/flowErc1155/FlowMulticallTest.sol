@@ -14,9 +14,11 @@ import {FlowERC1155Test} from "../../abstract/FlowERC1155Test.sol";
 import {
     IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract FlowMulticallTest is FlowERC1155Test {
     using LibUint256Matrix for uint256[];
+    using Address for address;
 
     /// Should call multiple flows from same flow contract at once using multicall
     function testFlowErc1155MulticallFlows(
@@ -30,6 +32,8 @@ contract FlowMulticallTest is FlowERC1155Test {
         vm.assume(expressionA != expressionB);
         vm.assume(sentinel != tokenId);
         vm.assume(sentinel != amount);
+        vm.assume(bob != address(0));
+        vm.assume(!bob.isContract());
 
         vm.label(bob, "Bob");
         vm.label(expressionA, "expressionA");
@@ -55,12 +59,14 @@ contract FlowMulticallTest is FlowERC1155Test {
             erc20Transfers[0] =
                 ERC20Transfer({token: address(iTokenB), from: bob, to: address(flowErc1155), amount: amount});
 
+            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+            mints[0] = ERC1155SupplyChange({account: bob, id: tokenId, amount: amount});
+
+            ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+            burns[0] = ERC1155SupplyChange({account: bob, id: tokenId, amount: amount});
+
             uint256[] memory stack = generateFlowStack(
-                FlowERC1155IOV1(
-                    new ERC1155SupplyChange[](0),
-                    new ERC1155SupplyChange[](0),
-                    FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0))
-                )
+                FlowERC1155IOV1(mints, burns, FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)))
             );
 
             interpreterEval2MockCall(
@@ -101,12 +107,14 @@ contract FlowMulticallTest is FlowERC1155Test {
             erc721Transfers[0] =
                 ERC721Transfer({token: address(iTokenA), from: bob, to: address(flowErc1155), id: tokenId});
 
+            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+            mints[0] = ERC1155SupplyChange({account: bob, id: tokenId, amount: amount});
+
+            ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+            burns[0] = ERC1155SupplyChange({account: bob, id: tokenId, amount: amount});
+
             uint256[] memory stack = generateFlowStack(
-                FlowERC1155IOV1(
-                    new ERC1155SupplyChange[](0),
-                    new ERC1155SupplyChange[](0),
-                    FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers)
-                )
+                FlowERC1155IOV1(mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers))
             );
 
             interpreterEval2MockCall(
