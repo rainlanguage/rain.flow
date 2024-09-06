@@ -14,9 +14,11 @@ import {FlowERC1155Test} from "../../abstract/FlowERC1155Test.sol";
 import {
     IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract FlowMulticallTest is FlowERC1155Test {
     using LibUint256Matrix for uint256[];
+    using Address for address;
 
     /// Should call multiple flows from same flow contract at once using multicall
     function testFlowErc1155MulticallFlows(
@@ -31,6 +33,7 @@ contract FlowMulticallTest is FlowERC1155Test {
         vm.assume(sentinel != tokenId);
         vm.assume(sentinel != amount);
         vm.assume(bob != address(0));
+        vm.assume(!bob.isContract());
 
         vm.label(bob, "Bob");
         vm.label(expressionA, "expressionA");
