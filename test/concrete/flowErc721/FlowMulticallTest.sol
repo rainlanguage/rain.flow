@@ -25,12 +25,12 @@ contract FlowMulticallTest is FlowERC721Test {
         uint256 amount,
         address expressionA,
         address expressionB,
-        string memory flow,
         string memory baseURI
     ) public {
         vm.assume(expressionA != expressionB);
         vm.assume(sentinel != tokenId);
         vm.assume(sentinel != amount);
+        vm.assume(bob != address(0));
 
         vm.label(bob, "Bob");
         vm.label(expressionA, "expressionA");
@@ -42,7 +42,7 @@ contract FlowMulticallTest is FlowERC721Test {
         uint256[] memory constants = new uint256[](0);
 
         (IFlowERC721V5 erc721Flow, EvaluableV2[] memory evaluables) =
-            deployFlowERC721(expressions, address(1), constants.matrixFrom(constants), flow, flow, baseURI);
+            deployFlowERC721(expressions, address(1), constants.matrixFrom(constants), "Flow ERC721", "F721", baseURI);
 
         assumeEtchable(bob, address(erc721Flow));
 
@@ -56,12 +56,14 @@ contract FlowMulticallTest is FlowERC721Test {
             erc20Transfers[0] =
                 ERC20Transfer({token: address(iTokenB), from: bob, to: address(erc721Flow), amount: amount});
 
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: bob, id: tokenId});
+
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: bob, id: tokenId});
+
             uint256[] memory stack = generateFlowStack(
-                FlowERC721IOV1(
-                    new ERC721SupplyChange[](0),
-                    new ERC721SupplyChange[](0),
-                    FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0))
-                )
+                FlowERC721IOV1(mints, burns, FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)))
             );
 
             interpreterEval2MockCall(

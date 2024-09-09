@@ -11,10 +11,12 @@ import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {FlowERC721Test} from "../../abstract/FlowERC721Test.sol";
 import {FlowERC721IOV1} from "src/interface/unstable/IFlowERC721V5.sol";
 import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract FlowExpressionTest is FlowERC721Test {
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using Address for address;
 
     /**
      * @dev Tests that the addresses of expressions emitted in the event
@@ -55,6 +57,8 @@ contract FlowExpressionTest is FlowERC721Test {
         uint256 id
     ) public {
         vm.assume(alice != address(0));
+        vm.assume(!alice.isContract());
+
         uint256[][] memory matrixCallerContext =
             fuzzedcallerContext0.matrixFrom(fuzzedcallerContext1, fuzzedcallerContext0);
 
