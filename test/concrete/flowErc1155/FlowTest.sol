@@ -38,6 +38,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmmount);
         vm.assume(address(0) != alice);
+        vm.assume(!alice.isContract());
 
         vm.label(alice, "Alice");
 
