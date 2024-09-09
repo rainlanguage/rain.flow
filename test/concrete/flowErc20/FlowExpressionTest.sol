@@ -50,18 +50,26 @@ contract FlowExpressionTest is FlowERC20Test {
         uint256[] memory fuzzedcallerContext0,
         uint256[] memory fuzzedcallerContext1,
         string memory name,
-        string memory symbol
+        string memory symbol,
+        address alice
     ) public {
+        vm.assume(alice != address(0));
         uint256[][] memory matrixCallerContext =
             fuzzedcallerContext0.matrixFrom(fuzzedcallerContext1, fuzzedcallerContext0);
 
         (IFlowERC20V5 flowErc20, EvaluableV2 memory evaluable) = deployFlowERC20(name, symbol);
 
+        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
+
+        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
+
         {
             uint256[] memory stack = generateFlowStack(
                 FlowERC20IOV1(
-                    new ERC20SupplyChange[](0),
-                    new ERC20SupplyChange[](0),
+                    mints,
+                    burns,
                     FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
                 )
             );
