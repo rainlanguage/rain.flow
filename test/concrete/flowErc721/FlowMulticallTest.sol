@@ -14,9 +14,11 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {Multicall} from "openzeppelin-contracts/contracts/utils/Multicall.sol";
 import {FlowERC721Test} from "../../abstract/FlowERC721Test.sol";
 import {IFlowERC721V5, ERC721SupplyChange, FlowERC721IOV1} from "../../../src/interface/unstable/IFlowERC721V5.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract FlowMulticallTest is FlowERC721Test {
     using LibUint256Matrix for uint256[];
+    using Address for address;
 
     /// Should call multiple flows from same flow contract at once using multicall
     function testFlowErc721MulticallFlows(
@@ -31,6 +33,7 @@ contract FlowMulticallTest is FlowERC721Test {
         vm.assume(sentinel != tokenId);
         vm.assume(sentinel != amount);
         vm.assume(bob != address(0));
+        vm.assume(!bob.isContract());
 
         vm.label(bob, "Bob");
         vm.label(expressionA, "expressionA");
