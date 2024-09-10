@@ -7,9 +7,11 @@ import {
 } from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 contract FlowPreviewTest is FlowBasicTest {
     using LibEvaluable for EvaluableV2;
+    using LibStackGeneration for uint256;
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC1155
@@ -28,14 +30,14 @@ contract FlowPreviewTest is FlowBasicTest {
         vm.assume(sentinel != erc1155InAmmountB);
         vm.label(alice, "alice");
 
-        (IFlowV5 flow,) = deployFlow();
-        assumeEtchable(alice, address(flow));
+        (address flow,) = deployFlow();
+        assumeEtchable(alice, flow);
 
         ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](4);
 
         erc1155Transfers[0] = ERC1155Transfer({
             token: address(iTokenA),
-            from: address(flow),
+            from: flow,
             to: alice,
             id: erc1155OutTokenIdA,
             amount: erc1155OutAmmountA
@@ -43,7 +45,7 @@ contract FlowPreviewTest is FlowBasicTest {
 
         erc1155Transfers[1] = ERC1155Transfer({
             token: address(iTokenB),
-            from: address(flow),
+            from: flow,
             to: alice,
             id: erc1155InTokenIdB,
             amount: erc1155InAmmountB
@@ -52,7 +54,7 @@ contract FlowPreviewTest is FlowBasicTest {
         erc1155Transfers[2] = ERC1155Transfer({
             token: address(iTokenA),
             from: alice,
-            to: address(flow),
+            to: flow,
             id: erc1155OutTokenIdA,
             amount: erc1155OutAmmountA
         });
@@ -60,7 +62,7 @@ contract FlowPreviewTest is FlowBasicTest {
         erc1155Transfers[3] = ERC1155Transfer({
             token: address(iTokenB),
             from: alice,
-            to: address(flow),
+            to: flow,
             id: erc1155InTokenIdB,
             amount: erc1155InAmmountB
         });
@@ -68,10 +70,12 @@ contract FlowPreviewTest is FlowBasicTest {
         FlowTransferV1 memory flowTransfer =
             FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers);
 
-        uint256[] memory stack = generateFlowStack(flowTransfer);
+        uint256[] memory stack = sentinel.generateFlowStack(flowTransfer);
 
         assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+            keccak256(abi.encode(flowTransfer)),
+            keccak256(abi.encode(IFlowV5(flow).stackToFlow(stack))),
+            "wrong compare Structs"
         );
     }
 
@@ -89,22 +93,24 @@ contract FlowPreviewTest is FlowBasicTest {
 
         vm.label(alice, "alice");
 
-        (IFlowV5 flow,) = deployFlow();
-        assumeEtchable(alice, address(flow));
+        (address flow,) = deployFlow();
+        assumeEtchable(alice, flow);
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](4);
-        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: address(flow), to: alice, id: erc721TokenIdA});
-        erc721Transfers[1] = ERC721Transfer({token: iTokenB, from: address(flow), to: alice, id: erc721TokenIdB});
-        erc721Transfers[2] = ERC721Transfer({token: iTokenA, from: alice, to: address(flow), id: erc721TokenIdA});
-        erc721Transfers[3] = ERC721Transfer({token: iTokenB, from: alice, to: address(flow), id: erc721TokenIdB});
+        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: flow, to: alice, id: erc721TokenIdA});
+        erc721Transfers[1] = ERC721Transfer({token: iTokenB, from: flow, to: alice, id: erc721TokenIdB});
+        erc721Transfers[2] = ERC721Transfer({token: iTokenA, from: alice, to: flow, id: erc721TokenIdA});
+        erc721Transfers[3] = ERC721Transfer({token: iTokenB, from: alice, to: flow, id: erc721TokenIdB});
 
         FlowTransferV1 memory flowTransfer =
             FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0));
 
-        uint256[] memory stack = generateFlowStack(flowTransfer);
+        uint256[] memory stack = sentinel.generateFlowStack(flowTransfer);
 
         assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+            keccak256(abi.encode(flowTransfer)),
+            keccak256(abi.encode(IFlowV5(flow).stackToFlow(stack))),
+            "wrong compare Structs"
         );
     }
 
@@ -122,26 +128,24 @@ contract FlowPreviewTest is FlowBasicTest {
 
         vm.label(alice, "alice");
 
-        (IFlowV5 flow,) = deployFlow();
-        assumeEtchable(alice, address(flow));
+        (address flow,) = deployFlow();
+        assumeEtchable(alice, flow);
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](4);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmmountA});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20AmmountB});
-        erc20Transfers[2] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmmountA});
-        erc20Transfers[3] =
-            ERC20Transfer({token: address(iTokenB), from: alice, to: address(flow), amount: erc20AmmountB});
+        erc20Transfers[0] = ERC20Transfer({token: address(iTokenA), from: flow, to: alice, amount: erc20AmmountA});
+        erc20Transfers[1] = ERC20Transfer({token: address(iTokenB), from: flow, to: alice, amount: erc20AmmountB});
+        erc20Transfers[2] = ERC20Transfer({token: address(iTokenA), from: alice, to: flow, amount: erc20AmmountA});
+        erc20Transfers[3] = ERC20Transfer({token: address(iTokenB), from: alice, to: flow, amount: erc20AmmountB});
 
         FlowTransferV1 memory flowTransfer =
             FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0));
 
-        uint256[] memory stack = generateFlowStack(flowTransfer);
+        uint256[] memory stack = sentinel.generateFlowStack(flowTransfer);
 
         assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+            keccak256(abi.encode(flowTransfer)),
+            keccak256(abi.encode(IFlowV5(flow).stackToFlow(stack))),
+            "wrong compare Structs"
         );
     }
 
@@ -162,14 +166,14 @@ contract FlowPreviewTest is FlowBasicTest {
         vm.assume(sentinel != erc1155InAmmount);
         vm.label(alice, "alice");
 
-        (IFlowV5 flow,) = deployFlow();
-        assumeEtchable(alice, address(flow));
+        (address flow,) = deployFlow();
+        assumeEtchable(alice, flow);
 
         ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
 
         erc1155Transfers[0] = ERC1155Transfer({
             token: address(iTokenA),
-            from: address(flow),
+            from: flow,
             to: alice,
             id: erc1155OutTokenId,
             amount: erc1155OutAmmount
@@ -178,17 +182,19 @@ contract FlowPreviewTest is FlowBasicTest {
         erc1155Transfers[1] = ERC1155Transfer({
             token: address(iTokenA),
             from: alice,
-            to: address(flow),
+            to: flow,
             id: erc1155InTokenId,
             amount: erc1155InAmmount
         });
 
         FlowTransferV1 memory flowTransfer =
             FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers);
-        uint256[] memory stack = generateFlowStack(flowTransfer);
+        uint256[] memory stack = sentinel.generateFlowStack(flowTransfer);
 
         assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+            keccak256(abi.encode(flowTransfer)),
+            keccak256(abi.encode(IFlowV5(flow).stackToFlow(stack))),
+            "wrong compare Structs"
         );
     }
 
@@ -206,19 +212,21 @@ contract FlowPreviewTest is FlowBasicTest {
 
         vm.label(alice, "alice");
 
-        (IFlowV5 flow,) = deployFlow();
-        assumeEtchable(alice, address(flow));
+        (address flow,) = deployFlow();
+        assumeEtchable(alice, flow);
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
-        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: address(flow), to: alice, id: erc721TokenOutId});
-        erc721Transfers[1] = ERC721Transfer({token: iTokenA, from: alice, to: address(flow), id: erc721TokenInId});
+        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: flow, to: alice, id: erc721TokenOutId});
+        erc721Transfers[1] = ERC721Transfer({token: iTokenA, from: alice, to: flow, id: erc721TokenInId});
 
         FlowTransferV1 memory flowTransfer =
             FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0));
-        uint256[] memory stack = generateFlowStack(flowTransfer);
+        uint256[] memory stack = sentinel.generateFlowStack(flowTransfer);
 
         assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+            keccak256(abi.encode(flowTransfer)),
+            keccak256(abi.encode(IFlowV5(flow).stackToFlow(stack))),
+            "wrong compare Structs"
         );
     }
 
@@ -236,21 +244,21 @@ contract FlowPreviewTest is FlowBasicTest {
 
         vm.label(alice, "alice");
 
-        (IFlowV5 flow,) = deployFlow();
-        assumeEtchable(alice, address(flow));
+        (address flow,) = deployFlow();
+        assumeEtchable(alice, flow);
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmmountOut});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmmountIn});
+        erc20Transfers[0] = ERC20Transfer({token: address(iTokenA), from: flow, to: alice, amount: erc20AmmountOut});
+        erc20Transfers[1] = ERC20Transfer({token: address(iTokenA), from: alice, to: flow, amount: erc20AmmountIn});
 
         FlowTransferV1 memory flowTransfer =
             FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0));
-        uint256[] memory stack = generateFlowStack(flowTransfer);
+        uint256[] memory stack = sentinel.generateFlowStack(flowTransfer);
 
         assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+            keccak256(abi.encode(flowTransfer)),
+            keccak256(abi.encode(IFlowV5(flow).stackToFlow(stack))),
+            "wrong compare Structs"
         );
     }
 
@@ -258,13 +266,15 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of an empty Flow IO.
      */
     function testFlowBasePreviewEmptyFlowIO() public {
-        (IFlowV5 flow,) = deployFlow();
+        (address flow,) = deployFlow();
 
         FlowTransferV1 memory flowTransfer =
             FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0));
-        uint256[] memory stack = generateFlowStack(flowTransfer);
+        uint256[] memory stack = sentinel.generateFlowStack(flowTransfer);
         assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+            keccak256(abi.encode(flowTransfer)),
+            keccak256(abi.encode(IFlowV5(flow).stackToFlow(stack))),
+            "wrong compare Structs"
         );
     }
 }

@@ -6,8 +6,11 @@ import {Vm} from "forge-std/Test.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
+import {LibLogHelper} from "test/lib/LibLogHelper.sol";
 
 contract FlowConstructionTest is FlowBasicTest {
+    using LibLogHelper for Vm.Log[];
+
     function testFlowConstructionInitialize(address expression, bytes memory bytecode, uint256[] memory constants)
         external
     {
@@ -22,7 +25,7 @@ contract FlowConstructionTest is FlowBasicTest {
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature = keccak256("Initialize(address,(address,bytes,uint256[])[])");
 
-        Vm.Log memory concreteEvent = findEvent(logs, eventSignature);
+        Vm.Log memory concreteEvent = logs.findEvent(eventSignature);
         (address sender, EvaluableConfigV3[] memory config) =
             abi.decode(concreteEvent.data, (address, EvaluableConfigV3[]));
 

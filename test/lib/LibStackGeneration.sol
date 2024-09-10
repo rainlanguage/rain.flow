@@ -9,16 +9,12 @@ import {FlowERC1155IOV1} from "src/interface/unstable/IFlowERC1155V5.sol";
 import {FlowERC721IOV1} from "src/interface/unstable/IFlowERC721V5.sol";
 import {FlowERC20IOV1} from "src/interface/unstable/IFlowERC20V5.sol";
 
-abstract contract FlowUtilsAbstractTest is Test {
-    uint256 internal immutable sentinel;
-
-    constructor() {
-        vm.pauseGasMetering();
-        sentinel = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
-        vm.resumeGasMetering();
-    }
-
-    function generateFlowStack(FlowTransferV1 memory flowTransfer) internal view returns (uint256[] memory stack) {
+library LibStackGeneration {
+    function generateFlowStack(uint256 sentinel, FlowTransferV1 memory flowTransfer)
+        internal
+        pure
+        returns (uint256[] memory stack)
+    {
         uint256 totalItems = 1 + (flowTransfer.erc1155.length * 5) + 1 + (flowTransfer.erc721.length * 4) + 1
             + (flowTransfer.erc20.length * 4);
         stack = new uint256[](totalItems);
@@ -52,8 +48,12 @@ abstract contract FlowUtilsAbstractTest is Test {
         return stack;
     }
 
-    function generateFlowStack(FlowERC1155IOV1 memory flowERC1155IO) internal view returns (uint256[] memory stack) {
-        uint256[] memory transfersStack = generateFlowStack(flowERC1155IO.flow);
+    function generateFlowStack(uint256 sentinel, FlowERC1155IOV1 memory flowERC1155IO)
+        internal
+        pure
+        returns (uint256[] memory stack)
+    {
+        uint256[] memory transfersStack = generateFlowStack(sentinel, flowERC1155IO.flow);
         uint256 totalItems =
             transfersStack.length + 1 + (flowERC1155IO.burns.length * 3) + 1 + (flowERC1155IO.mints.length * 3);
 
@@ -80,8 +80,12 @@ abstract contract FlowUtilsAbstractTest is Test {
         }
     }
 
-    function generateFlowStack(FlowERC721IOV1 memory flowERC721IO) internal view returns (uint256[] memory stack) {
-        uint256[] memory transfersStack = generateFlowStack(flowERC721IO.flow);
+    function generateFlowStack(uint256 sentinel, FlowERC721IOV1 memory flowERC721IO)
+        internal
+        pure
+        returns (uint256[] memory stack)
+    {
+        uint256[] memory transfersStack = generateFlowStack(sentinel, flowERC721IO.flow);
         uint256 totalItems =
             transfersStack.length + 1 + (flowERC721IO.burns.length * 2) + 1 + (flowERC721IO.mints.length * 2);
 
@@ -106,8 +110,12 @@ abstract contract FlowUtilsAbstractTest is Test {
         }
     }
 
-    function generateFlowStack(FlowERC20IOV1 memory flowERC20IO) internal view returns (uint256[] memory stack) {
-        uint256[] memory transfersStack = generateFlowStack(flowERC20IO.flow);
+    function generateFlowStack(uint256 sentinel, FlowERC20IOV1 memory flowERC20IO)
+        internal
+        pure
+        returns (uint256[] memory stack)
+    {
+        uint256[] memory transfersStack = generateFlowStack(sentinel, flowERC20IO.flow);
         uint256 totalItems =
             transfersStack.length + 1 + (flowERC20IO.burns.length * 2) + 1 + (flowERC20IO.mints.length * 2);
 
@@ -129,32 +137,6 @@ abstract contract FlowUtilsAbstractTest is Test {
         for (uint256 i = 0; i < flowERC20IO.mints.length; i++) {
             stack[index++] = uint256(uint160(flowERC20IO.mints[i].account));
             stack[index++] = flowERC20IO.mints[i].amount;
-        }
-    }
-
-    function findEvent(Vm.Log[] memory logs, bytes32 eventSignature) internal pure returns (Vm.Log memory) {
-        Vm.Log[] memory foundLogs = findEvents(logs, eventSignature);
-        require(foundLogs.length >= 1, "Event not found!");
-        return (foundLogs[0]);
-    }
-
-    function findEvents(Vm.Log[] memory logs, bytes32 eventSignature)
-        internal
-        pure
-        returns (Vm.Log[] memory foundLogs)
-    {
-        foundLogs = new Vm.Log[](logs.length);
-        uint256 foundCount = 0;
-
-        for (uint256 i = 0; i < logs.length; i++) {
-            if (logs[i].topics[0] == eventSignature) {
-                foundLogs[foundCount] = logs[i];
-                foundCount++;
-            }
-        }
-
-        assembly ("memory-safe") {
-            mstore(foundLogs, foundCount)
         }
     }
 }

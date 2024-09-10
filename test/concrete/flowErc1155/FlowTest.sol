@@ -16,10 +16,12 @@ import {
 import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
+    using LibStackGeneration for uint256;
 
     function testFlowERC1155FlowERC20ToERC20(
         uint256 erc20OutAmmount,
@@ -53,7 +55,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
             address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc1155Flow, erc20BInAmmount)
         );
 
-        uint256[] memory stack = generateFlowStack(
+        uint256[] memory stack = sentinel.generateFlowStack(
             FlowERC1155IOV1(
                 new ERC1155SupplyChange[](0),
                 new ERC1155SupplyChange[](0),
@@ -109,7 +111,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
             )
         );
 
-        uint256[] memory stack = generateFlowStack(
+        uint256[] memory stack = sentinel.generateFlowStack(
             FlowERC1155IOV1(
                 new ERC1155SupplyChange[](0),
                 new ERC1155SupplyChange[](0),
@@ -177,7 +179,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
             )
         );
 
-        uint256[] memory stack = generateFlowStack(
+        uint256[] memory stack = sentinel.generateFlowStack(
             FlowERC1155IOV1(
                 new ERC1155SupplyChange[](0),
                 new ERC1155SupplyChange[](0),
@@ -226,7 +228,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
             )
         );
 
-        uint256[] memory stack = generateFlowStack(
+        uint256[] memory stack = sentinel.generateFlowStack(
             FlowERC1155IOV1(
                 new ERC1155SupplyChange[](0),
                 new ERC1155SupplyChange[](0),

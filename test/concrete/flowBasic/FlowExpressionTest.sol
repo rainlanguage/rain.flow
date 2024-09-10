@@ -15,11 +15,15 @@ import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
 import {LibContext} from "rain.interpreter.interface/lib/caller/LibContext.sol";
 import {IInterpreterCallerV2} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
+import {LibLogHelper} from "test/lib/LibLogHelper.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
     using LibContextWrapper for uint256[][];
+    using LibLogHelper for Vm.Log[];
+    using LibStackGeneration for uint256;
 
     /**
      * @dev Tests that the addresses of expressions emitted in the event
@@ -51,10 +55,10 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
         uint256[][] memory matrixCallerContext =
             fuzzedcallerContext0.matrixFrom(fuzzedcallerContext1, fuzzedcallerContext0);
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
 
         {
-            uint256[] memory stack = generateFlowStack(
+            uint256[] memory stack = sentinel.generateFlowStack(
                 FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
             );
 
@@ -70,7 +74,7 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
             }
 
             vm.recordLogs();
-            flow.flow(evaluable, fuzzedcallerContext0, signedContext);
+            IFlowV5(flow).flow(evaluable, fuzzedcallerContext0, signedContext);
         }
 
         {
@@ -79,7 +83,7 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
             );
 
             Vm.Log[] memory logs = vm.getRecordedLogs();
-            Vm.Log memory log = findEvent(logs, keccak256("Context(address,uint256[][])"));
+            Vm.Log memory log = logs.findEvent(keccak256("Context(address,uint256[][])"));
             (address sender, uint256[][] memory buildContextOutput) = abi.decode(log.data, (address, uint256[][]));
 
             assertEq(sender, address(this), "wrong sender");

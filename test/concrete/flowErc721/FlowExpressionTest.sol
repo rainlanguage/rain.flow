@@ -11,21 +11,20 @@ import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {FlowERC721Test} from "../../abstract/FlowERC721Test.sol";
 import {FlowERC721IOV1} from "src/interface/unstable/IFlowERC721V5.sol";
 import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
+import {LibLogHelper} from "test/lib/LibLogHelper.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 contract FlowExpressionTest is FlowERC721Test {
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
-
+    using LibStackGeneration for uint256;
+    using LibLogHelper for Vm.Log[];
     /**
      * @dev Tests that the addresses of expressions emitted in the event
      *      match the addresses provided by the deployer.
      */
-    function testFlowERC721ShouldDeployExpression(
-        address[] memory expressions,
-        string memory name,
-        string memory symbol,
-        string memory uri
-    ) public {
+
+    function testFlowERC721ShouldDeployExpression(address[] memory expressions) public {
         uint256 length = bound(expressions.length, 1, 10);
         assembly ("memory-safe") {
             mstore(expressions, length)
@@ -33,8 +32,7 @@ contract FlowExpressionTest is FlowERC721Test {
 
         uint256[][] memory constants = new uint256[][](expressions.length);
 
-        (, EvaluableV2[] memory evaluables) =
-            deployFlowERC721(expressions, expressions[0], constants, name, symbol, uri);
+        (, EvaluableV2[] memory evaluables) = deployFlow(expressions, expressions[0], constants);
 
         for (uint256 i = 0; i < evaluables.length; i++) {
             assertEq(evaluables[i].expression, expressions[i]);
@@ -47,24 +45,15 @@ contract FlowExpressionTest is FlowERC721Test {
     function testFlowERC721ShouldValidateContextFromEvent(
         uint256 fuzzedKeyAlice,
         uint256[] memory fuzzedcallerContext0,
-        uint256[] memory fuzzedcallerContext1,
-        string memory name,
-        string memory symbol,
-        string memory uri
+        uint256[] memory fuzzedcallerContext1
     ) public {
         uint256[][] memory matrixCallerContext =
             fuzzedcallerContext0.matrixFrom(fuzzedcallerContext1, fuzzedcallerContext0);
 
-        (IFlowERC721V5 flowErc721, EvaluableV2 memory evaluable) = deployFlowERC721(name, symbol, uri);
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
 
         {
-            uint256[] memory stack = generateFlowStack(
-                FlowERC721IOV1(
-                    new ERC721SupplyChange[](0),
-                    new ERC721SupplyChange[](0),
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
+            (uint256[] memory stack,) = emptyFlowStack();
 
             interpreterEval2MockCall(stack, new uint256[](0));
         }
@@ -78,15 +67,15 @@ contract FlowExpressionTest is FlowERC721Test {
             }
 
             vm.recordLogs();
-            flowErc721.flow(evaluable, fuzzedcallerContext0, signedContext);
+            abstractFlowCall(flow, evaluable, fuzzedcallerContext0, signedContext);
         }
 
         {
             uint256[][] memory buildContextInput = LibContextWrapper.buildAndSetContext(
-                fuzzedcallerContext0.matrixFrom(), signedContext, address(this), address(flowErc721)
+                fuzzedcallerContext0.matrixFrom(), signedContext, address(this), flow
             );
             Vm.Log[] memory logs = vm.getRecordedLogs();
-            Vm.Log memory log = findEvent(logs, keccak256("Context(address,uint256[][])"));
+            Vm.Log memory log = logs.findEvent(keccak256("Context(address,uint256[][])"));
             (address sender, uint256[][] memory buildContextOutput) = abi.decode(log.data, (address, uint256[][]));
 
             assertEq(sender, address(this), "wrong sender");

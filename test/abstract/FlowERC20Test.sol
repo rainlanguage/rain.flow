@@ -2,7 +2,10 @@
 pragma solidity ^0.8.18;
 
 import {Vm} from "forge-std/Test.sol";
-import {IFlowERC20V5, FlowERC20ConfigV2} from "src/interface/unstable/IFlowERC20V5.sol";
+import {
+    IFlowERC20V5, FlowERC20ConfigV2, FlowERC20IOV1, ERC20SupplyChange
+} from "src/interface/unstable/IFlowERC20V5.sol";
+import {FlowTransferV1} from "src/interface/unstable/IFlowV5.sol";
 import {FlowERC20} from "src/concrete/erc20/FlowERC20.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
@@ -11,73 +14,110 @@ import {STUB_EXPRESSION_BYTECODE} from "./TestConstants.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {LibLogHelper} from "test/lib/LibLogHelper.sol";
+import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 abstract contract FlowERC20Test is FlowBasicTest {
     using LibUint256Matrix for uint256[];
+    using LibLogHelper for Vm.Log[];
+    using LibStackGeneration for uint256;
 
     CloneFactory internal immutable iCloneErc20Factory;
-    IFlowERC20V5 internal immutable iFlowERC20Implementation;
 
     constructor() {
         vm.pauseGasMetering();
         iCloneErc20Factory = new CloneFactory();
-        iFlowERC20Implementation = new FlowERC20();
         vm.resumeGasMetering();
     }
 
-    function deployFlowERC20(string memory name, string memory symbol)
+    function buldConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
         internal
-        returns (IFlowERC20V5 flow, EvaluableV2 memory evaluable)
+        override
+        returns (bytes memory)
     {
-        (flow, evaluable) = deployFlowERC20(address(0), name, symbol);
+        EvaluableConfigV3 memory evaluableConfig =
+            expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
+        // Initialize the FlowERC20Config struct
+        FlowERC20ConfigV2 memory flowErc721Config = FlowERC20ConfigV2({
+            name: "FlowERC20",
+            symbol: "F20",
+            evaluableConfig: evaluableConfig,
+            flowConfig: flowConfig
+        });
+
+        return abi.encode(flowErc721Config);
     }
 
-    function deployFlowERC20(address expression, string memory name, string memory symbol)
-        internal
-        returns (IFlowERC20V5, EvaluableV2 memory)
-    {
-        address[] memory expressions = new address[](1);
-        expressions[0] = expression;
-        uint256[] memory constants = new uint256[](0);
-        (IFlowERC20V5 flow, EvaluableV2[] memory evaluables) =
-            deployFlowERC20(expressions, address(1), constants.matrixFrom(), name, symbol);
-        return (flow, evaluables[0]);
+    function abstractFlowCall(
+        address flowAddress,
+        EvaluableV2 memory evaluable,
+        uint256[] memory callerContext,
+        SignedContextV1[] memory signedContexts
+    ) internal override {
+        IFlowERC20V5(flowAddress).flow(evaluable, callerContext, signedContexts);
     }
 
-    function deployFlowERC20(
-        address[] memory expressions,
-        address configExpression,
-        uint256[][] memory constants,
-        string memory name,
-        string memory symbol
-    ) internal returns (IFlowERC20V5 flow, EvaluableV2[] memory evaluables) {
-        require(expressions.length == constants.length, "Expressions and constants array lengths must match");
+    function abstractStackToFlowCall(address flowAddress, uint256[] memory stack)
+        internal
+        pure
+        returns (bytes32 stackToFlowTransfersHash)
+    {
+        stackToFlowTransfersHash = keccak256(abi.encode(IFlowERC20V5(flowAddress).stackToFlow(stack)));
+    }
 
-        {
-            EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](expressions.length);
+    function emptyFlowStack() internal view override returns (uint256[] memory stack, bytes32 transferHash) {
+        (stack, transferHash) = emptyFlowStack(transferEmpty());
+    }
 
-            for (uint256 i = 0; i < expressions.length; i++) {
-                flowConfig[i] = expressionDeployer(i + 1, expressions[i], constants[i]);
-            }
+    function emptyFlowStack(FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory stack, bytes32 transferHash)
+    {
+        FlowERC20IOV1 memory flowERC20IO =
+            FlowERC20IOV1(new ERC20SupplyChange[](0), new ERC20SupplyChange[](0), transfer);
 
-            EvaluableConfigV3 memory evaluableConfig =
-                expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
+        transferHash = keccak256(abi.encode(flowERC20IO));
 
-            // Initialize the FlowERC20Config struct
-            FlowERC20ConfigV2 memory flowErc20Config = FlowERC20ConfigV2(name, symbol, evaluableConfig, flowConfig);
+        stack = sentinel.generateFlowStack(flowERC20IO);
+    }
 
-            vm.recordLogs();
-            flow = IFlowERC20V5(iCloneFactory.clone(address(iFlowERC20Implementation), abi.encode(flowErc20Config)));
-        }
+    function mintFlowStack(address account, uint256 amount, FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory stack, bytes32 transferHash)
+    {
+        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+        mints[0] = ERC20SupplyChange({account: account, amount: amount});
 
-        {
-            Vm.Log[] memory logs = vm.getRecordedLogs();
-            logs = findEvents(logs, keccak256("FlowInitialized(address,(address,address,address))"));
-            evaluables = new EvaluableV2[](logs.length);
-            for (uint256 i = 0; i < logs.length; i++) {
-                (, EvaluableV2 memory evaluable) = abi.decode(logs[i].data, (address, EvaluableV2));
-                evaluables[i] = evaluable;
-            }
-        }
+        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+        burns[0] = ERC20SupplyChange({account: account, amount: 0 ether});
+
+        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(mints, burns, transfer);
+
+        transferHash = keccak256(abi.encode(flowERC20IO));
+        stack = sentinel.generateFlowStack(flowERC20IO);
+    }
+
+    function mintAndBurnFlowStack(address account, uint256 mint, uint256 burn, FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory stack, bytes32 transferHash)
+    {
+        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+        mints[0] = ERC20SupplyChange({account: account, amount: mint});
+
+        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+        burns[0] = ERC20SupplyChange({account: account, amount: burn});
+
+        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(mints, burns, transfer);
+
+        transferHash = keccak256(abi.encode(flowERC20IO));
+
+        stack = sentinel.generateFlowStack(flowERC20IO);
     }
 }

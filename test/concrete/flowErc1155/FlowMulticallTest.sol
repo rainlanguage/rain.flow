@@ -14,9 +14,11 @@ import {FlowERC1155Test} from "../../abstract/FlowERC1155Test.sol";
 import {
     IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 contract FlowMulticallTest is FlowERC1155Test {
     using LibUint256Matrix for uint256[];
+    using LibStackGeneration for uint256;
 
     /// Should call multiple flows from same flow contract at once using multicall
     function testFlowErc1155MulticallFlows(
@@ -55,7 +57,7 @@ contract FlowMulticallTest is FlowERC1155Test {
             erc20Transfers[0] =
                 ERC20Transfer({token: address(iTokenB), from: bob, to: address(flowErc1155), amount: amount});
 
-            uint256[] memory stack = generateFlowStack(
+            uint256[] memory stack = sentinel.generateFlowStack(
                 FlowERC1155IOV1(
                     new ERC1155SupplyChange[](0),
                     new ERC1155SupplyChange[](0),
@@ -101,7 +103,7 @@ contract FlowMulticallTest is FlowERC1155Test {
             erc721Transfers[0] =
                 ERC721Transfer({token: address(iTokenA), from: bob, to: address(flowErc1155), id: tokenId});
 
-            uint256[] memory stack = generateFlowStack(
+            uint256[] memory stack = sentinel.generateFlowStack(
                 FlowERC1155IOV1(
                     new ERC1155SupplyChange[](0),
                     new ERC1155SupplyChange[](0),

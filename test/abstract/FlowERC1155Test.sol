@@ -9,9 +9,11 @@ import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {FlowERC1155} from "../../src/concrete/erc1155/FlowERC1155.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
+import {LibLogHelper} from "test/lib/LibLogHelper.sol";
 
 abstract contract FlowERC1155Test is FlowBasicTest {
     using LibUint256Matrix for uint256[];
+    using LibLogHelper for Vm.Log[];
 
     CloneFactory internal immutable iCloneErc1155Factory;
     IFlowERC1155V5 internal immutable iFlowErc1155Implementation;
@@ -79,7 +81,7 @@ abstract contract FlowERC1155Test is FlowBasicTest {
 
         {
             Vm.Log[] memory logs = vm.getRecordedLogs();
-            logs = findEvents(logs, keccak256("FlowInitialized(address,(address,address,address))"));
+            logs = logs.findEvents(keccak256("FlowInitialized(address,(address,address,address))"));
             evaluables = new EvaluableV2[](logs.length);
             for (uint256 i = 0; i < logs.length; i++) {
                 (, EvaluableV2 memory evaluable) = abi.decode(logs[i].data, (address, EvaluableV2));

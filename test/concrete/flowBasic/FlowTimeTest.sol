@@ -10,15 +10,19 @@ import {InvalidSignature} from "rain.interpreter.interface/lib/caller/LibContext
 
 import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 contract FlowTimeTest is FlowBasicTest {
+    using LibStackGeneration for uint256;
+
     function testFlowBasicFlowTime(uint256[] memory writeToStore) public {
         vm.assume(writeToStore.length != 0);
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
 
-        uint256[] memory stack =
-            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
+        uint256[] memory stack = sentinel.generateFlowStack(
+            FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+        );
 
         interpreterEval2MockCall(stack, writeToStore);
 
@@ -29,6 +33,6 @@ contract FlowTimeTest is FlowBasicTest {
             abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
         );
 
-        flow.flow(evaluable, writeToStore, new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, writeToStore, new SignedContextV1[](0));
     }
 }
