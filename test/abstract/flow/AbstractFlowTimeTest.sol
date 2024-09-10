@@ -10,10 +10,8 @@ import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 
-
 abstract contract AbstractFlowTimeTest is FlowBasicTest {
-
-    function testFlowTime(uint256[] memory writeToStore) internal {
+    function absTestFlowTime(uint256[] memory writeToStore) internal {
         vm.assume(writeToStore.length != 0);
         (address flow, EvaluableV2 memory evaluable) = deployFlow();
 

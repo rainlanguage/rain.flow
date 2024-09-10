@@ -72,8 +72,8 @@ contract Erc721FlowTest is FlowERC721Test {
 
         {
             uint256[][] memory contextTransferA = LibContextWrapper.buildAndSetContext(
-                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(flow)), tokenIdA)
-                    .matrixFrom(),
+                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(flow)), tokenIdA).matrixFrom(
+                ),
                 new SignedContextV1[](0),
                 address(alice),
                 flow
@@ -97,8 +97,8 @@ contract Erc721FlowTest is FlowERC721Test {
 
         {
             uint256[][] memory contextTransferB = LibContextWrapper.buildAndSetContext(
-                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(flow)), tokenIdB)
-                    .matrixFrom(),
+                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(flow)), tokenIdB).matrixFrom(
+                ),
                 new SignedContextV1[](0),
                 address(alice),
                 flow

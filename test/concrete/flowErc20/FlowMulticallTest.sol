@@ -68,8 +68,10 @@ contract FlowMulticallTest is FlowERC20Test {
         }
 
         bytes[] memory calldatas = new bytes[](2);
-        calldatas[0] = abi.encodeCall(IFlowERC20V5(flow).flow, (evaluables[0], new uint256[](0), new SignedContextV1[](0)));
-        calldatas[1] = abi.encodeCall(IFlowERC20V5(flow).flow, (evaluables[1], new uint256[](0), new SignedContextV1[](0)));
+        calldatas[0] =
+            abi.encodeCall(IFlowERC20V5(flow).flow, (evaluables[0], new uint256[](0), new SignedContextV1[](0)));
+        calldatas[1] =
+            abi.encodeCall(IFlowERC20V5(flow).flow, (evaluables[1], new uint256[](0), new SignedContextV1[](0)));
 
         vm.startPrank(bob);
         Multicall(address(flow)).multicall(calldatas);

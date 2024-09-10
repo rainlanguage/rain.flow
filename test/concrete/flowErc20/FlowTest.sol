@@ -130,7 +130,7 @@ contract Erc20FlowTest is FlowERC20Test {
         // Stack burn
         {
             (uint256[] memory bstack,) = mintAndBurnFlowStack(
-                alice, 0 ether, mintAndBurn, transfersERC20toERC20(flow, alice, erc20InAmount, erc20OutAmount)
+                alice, 0 ether, mintAndBurn, transfersERC20toERC20(alice, flow, erc20InAmount, erc20OutAmount)
             );
 
             interpreterEval2MockCall(bstack, new uint256[](0));

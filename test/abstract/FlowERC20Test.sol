@@ -17,8 +17,10 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {LibLogHelper} from "test/lib/LibLogHelper.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
+import {AbstractFlowTimeTest} from "test/abstract/flow/AbstractFlowTimeTest.sol";
+import {AbstractFlowSignedContextTest} from "test/abstract/flow/AbstractFlowSignedContextTest.sol";
 
-abstract contract FlowERC20Test is FlowBasicTest {
+abstract contract FlowERC20Test is FlowBasicTest, AbstractFlowTimeTest, AbstractFlowSignedContextTest {
     using LibUint256Matrix for uint256[];
     using LibLogHelper for Vm.Log[];
     using LibStackGeneration for uint256;
@@ -27,6 +29,7 @@ abstract contract FlowERC20Test is FlowBasicTest {
 
     constructor() {
         vm.pauseGasMetering();
+        iFlowImplementation = address(new FlowERC20());
         iCloneErc20Factory = new CloneFactory();
         vm.resumeGasMetering();
     }

@@ -16,8 +16,10 @@ import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {LibLogHelper} from "test/lib/LibLogHelper.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
+import {AbstractFlowTimeTest} from "test/abstract/flow/AbstractFlowTimeTest.sol";
+import {AbstractFlowSignedContextTest} from "test/abstract/flow/AbstractFlowSignedContextTest.sol";
 
-abstract contract FlowERC721Test is FlowBasicTest {
+abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTimeTest, AbstractFlowSignedContextTest {
     using LibUint256Matrix for uint256[];
     using LibStackGeneration for uint256;
     using LibLogHelper for Vm.Log[];

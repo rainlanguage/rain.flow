@@ -368,12 +368,11 @@ abstract contract FlowTransferOperation is Test {
         }
     }
 
-    function multiTransferERC721(
-        address addressA,
-        address addressB,
-        uint256 erc721TokenIdA,
-        uint256 erc721TokenIdB
-    ) internal view returns (FlowTransferV1 memory transfer) {
+    function multiTransferERC721(address addressA, address addressB, uint256 erc721TokenIdA, uint256 erc721TokenIdB)
+        internal
+        view
+        returns (FlowTransferV1 memory transfer)
+    {
         {
             vm.assume(sentinel != erc721TokenIdA);
             vm.assume(sentinel != erc721TokenIdB);
@@ -388,10 +387,8 @@ abstract contract FlowTransferOperation is Test {
             erc721Transfers[2] = ERC721Transfer({token: iTokenA, from: addressA, to: addressB, id: erc721TokenIdA});
             erc721Transfers[3] = ERC721Transfer({token: iTokenB, from: addressA, to: addressB, id: erc721TokenIdB});
             transfer = FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0));
-
         }
     }
-
 
     function multiTransferERC1155(
         address addressA,
@@ -411,44 +408,43 @@ abstract contract FlowTransferOperation is Test {
         }
 
         {
-        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](4);
+            ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](4);
 
-        erc1155Transfers[0] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: addressB,
-            to: addressA,
-            id: erc1155OutTokenId,
-            amount: erc1155OutAmount
-        });
+            erc1155Transfers[0] = ERC1155Transfer({
+                token: address(iTokenA),
+                from: addressB,
+                to: addressA,
+                id: erc1155OutTokenId,
+                amount: erc1155OutAmount
+            });
 
-        erc1155Transfers[1] = ERC1155Transfer({
-            token: address(iTokenB),
-            from: addressB,
-            to: addressA,
-            id: erc1155InTokenId,
-            amount: erc1155InAmount
-        });
+            erc1155Transfers[1] = ERC1155Transfer({
+                token: address(iTokenB),
+                from: addressB,
+                to: addressA,
+                id: erc1155InTokenId,
+                amount: erc1155InAmount
+            });
 
-        erc1155Transfers[2] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: addressA,
-            to: addressB,
-            id: erc1155OutTokenId,
-            amount: erc1155OutAmount
-        });
+            erc1155Transfers[2] = ERC1155Transfer({
+                token: address(iTokenA),
+                from: addressA,
+                to: addressB,
+                id: erc1155OutTokenId,
+                amount: erc1155OutAmount
+            });
 
-        erc1155Transfers[3] = ERC1155Transfer({
-            token: address(iTokenB),
-            from: addressA,
-            to:addressB,
-            id: erc1155InTokenId,
-            amount: erc1155InAmount
-        });
+            erc1155Transfers[3] = ERC1155Transfer({
+                token: address(iTokenB),
+                from: addressA,
+                to: addressB,
+                id: erc1155InTokenId,
+                amount: erc1155InAmount
+            });
 
             transfer = FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers);
         }
     }
-
 
     function assumeAddressNotSentinel(address inputAddress) internal view {
         vm.assume(sentinel != uint256(uint160(inputAddress)));

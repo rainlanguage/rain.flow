@@ -18,6 +18,7 @@ abstract contract FlowBasicTest is InterpreterMockTest, FlowTransferOperation {
     using LibUint256Matrix for uint256[];
     using LibLogHelper for Vm.Log[];
     using LibStackGeneration for uint256;
+
     CloneFactory internal immutable iCloneFactory;
     address internal iFlowImplementation;
 
