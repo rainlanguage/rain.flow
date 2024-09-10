@@ -31,9 +31,9 @@ import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncod
 contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
-    using Address for address;
     using LibUint256Matrix for uint256[];
     using LibUint256Array for uint256[];
+    using Address for address;
 
     function testFlowERC1155SupportsTransferPreflightHook(
         address alice,
@@ -46,6 +46,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(alice != address(0));
         vm.assume(sentinel != amount);
         vm.assume(expressionA != expressionB);
+        vm.assume(!alice.isContract());
 
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
@@ -108,7 +109,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
 
             vm.startPrank(alice);
             vm.expectRevert("REVERT_EVAL2_CALL");
-            IERC1155(address(flow)).transfer(address(flow), amount);
+            IERC1155(address(flow)).safeTransferFrom(alice, address(flow), id, amount, "");
             vm.stopPrank();
         }
     }
@@ -126,6 +127,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmmount);
         vm.assume(address(0) != alice);
+        vm.assume(!alice.isContract());
 
         vm.label(alice, "Alice");
 
