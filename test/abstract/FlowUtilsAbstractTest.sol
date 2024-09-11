@@ -47,7 +47,7 @@ abstract contract FlowUtilsAbstractTest is Test {
     function findEvent(Vm.Log[] memory logs, bytes32 eventSignature) internal pure returns (Vm.Log memory) {
         return logs.findEvent(eventSignature);
     }
-    
+
     // A temporary solution for a smooth transition to using libraries.
     function findEvents(Vm.Log[] memory logs, bytes32 eventSignature)
         internal
