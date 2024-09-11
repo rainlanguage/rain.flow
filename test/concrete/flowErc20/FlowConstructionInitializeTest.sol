@@ -19,7 +19,7 @@ contract FlowConstructionInitializeTest is FlowERC20Test {
             FlowERC20ConfigV2("Flow ERC20", "F20", EvaluableConfigV3(iDeployer, bytecode, constants), flowConfig);
 
         vm.recordLogs();
-        iCloneErc20Factory.clone(address(iFlowERC20Implementation), abi.encode(flowERC20ConfigV2));
+        iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowERC20ConfigV2));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature =
@@ -28,7 +28,7 @@ contract FlowConstructionInitializeTest is FlowERC20Test {
         Vm.Log memory concreteEvent = findEvent(logs, eventSignature);
         (address sender, FlowERC20ConfigV2 memory config) = abi.decode(concreteEvent.data, (address, FlowERC20ConfigV2));
 
-        assertEq(sender, address(iCloneErc20Factory), "wrong sender in Initialize event");
+        assertEq(sender, address(iCloneFactory), "wrong sender in Initialize event");
         assertEq(keccak256(abi.encode(flowERC20ConfigV2)), keccak256(abi.encode(config)), "wrong compare Structs");
     }
 }
