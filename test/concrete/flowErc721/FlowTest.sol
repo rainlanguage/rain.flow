@@ -54,15 +54,9 @@ contract Erc721FlowTest is FlowERC721Test {
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
 
-        (IFlowERC721V5 flow, EvaluableV2[] memory evaluables) = deployFlowERC721({
-            expressions: expressions,
-            configExpression: expressionB,
-            constants: new uint256[][](1),
-            name: "FlowERC721",
-            symbol: "F721",
-            baseURI: "https://www.rainprotocol.xyz/nft/"
-        });
-        assumeEtchable(alice, address(flow));
+        (address flow, EvaluableV2[] memory evaluables) =
+            deployFlow({expressions: expressions, configExpression: expressionB, constants: new uint256[][](1)});
+        assumeEtchable(alice, flow);
 
         {
             ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
@@ -81,40 +75,40 @@ contract Erc721FlowTest is FlowERC721Test {
 
         {
             uint256[][] memory contextTransferA = LibContextWrapper.buildAndSetContext(
-                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flow))), tokenIdA)
-                    .matrixFrom(),
+                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(flow)), tokenIdA).matrixFrom(
+                ),
                 new SignedContextV1[](0),
                 address(alice),
-                address(flow)
+                flow
             );
 
             // Expect call token transfer
             interpreterEval2ExpectCall(
-                address(flow),
+                flow,
                 LibEncodedDispatch.encode2(
                     expressionB, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
                 ),
                 contextTransferA
             );
 
-            flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+            IFlowERC721V5(flow).flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
 
             vm.startPrank(alice);
-            IERC721(address(flow)).transferFrom({from: alice, to: address(flow), tokenId: tokenIdA});
+            IERC721(flow).transferFrom({from: alice, to: flow, tokenId: tokenIdA});
             vm.stopPrank();
         }
 
         {
             uint256[][] memory contextTransferB = LibContextWrapper.buildAndSetContext(
-                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flow))), tokenIdB)
-                    .matrixFrom(),
+                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(flow)), tokenIdB).matrixFrom(
+                ),
                 new SignedContextV1[](0),
                 address(alice),
-                address(flow)
+                flow
             );
 
             interpreterEval2RevertCall(
-                address(flow),
+                flow,
                 LibEncodedDispatch.encode2(
                     expressionB, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
                 ),
@@ -123,7 +117,7 @@ contract Erc721FlowTest is FlowERC721Test {
 
             vm.startPrank(alice);
             vm.expectRevert("REVERT_EVAL2_CALL");
-            IERC721(address(flow)).transferFrom({from: alice, to: address(flow), tokenId: tokenIdB});
+            IERC721(flow).transferFrom({from: alice, to: flow, tokenId: tokenIdB});
             vm.stopPrank();
         }
     }
