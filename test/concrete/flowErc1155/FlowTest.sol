@@ -349,6 +349,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(sentinel != amount);
         vm.assume(expressionA != expressionB);
         vm.assume(writeToStore.length != 0);
+        vm.assume(!alice.isContract());
 
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
