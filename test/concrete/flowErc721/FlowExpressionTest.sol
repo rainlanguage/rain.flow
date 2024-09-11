@@ -11,10 +11,12 @@ import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {FlowERC721Test} from "../../abstract/FlowERC721Test.sol";
 import {FlowERC721IOV1} from "src/interface/unstable/IFlowERC721V5.sol";
 import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract FlowExpressionTest is FlowERC721Test {
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using Address for address;
 
     /**
      * @dev Tests that the addresses of expressions emitted in the event
@@ -50,18 +52,28 @@ contract FlowExpressionTest is FlowERC721Test {
         uint256[] memory fuzzedcallerContext1,
         string memory name,
         string memory symbol,
-        string memory uri
+        string memory uri,
+        address alice,
+        uint256 id
     ) public {
+        vm.assume(alice != address(0));
+        vm.assume(!alice.isContract());
+
         uint256[][] memory matrixCallerContext =
             fuzzedcallerContext0.matrixFrom(fuzzedcallerContext1, fuzzedcallerContext0);
 
         (IFlowERC721V5 flowErc721, EvaluableV2 memory evaluable) = deployFlowERC721(name, symbol, uri);
-
         {
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: alice, id: id});
+
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: alice, id: id});
+
             uint256[] memory stack = generateFlowStack(
                 FlowERC721IOV1(
-                    new ERC721SupplyChange[](0),
-                    new ERC721SupplyChange[](0),
+                    mints,
+                    burns,
                     FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
                 )
             );
