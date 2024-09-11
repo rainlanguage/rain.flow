@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import {Vm} from "forge-std/Test.sol";
 import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {InterpreterMockTest} from "test/abstract/InterpreterMockTest.sol";
-import {IFlowV5} from "src/interface/unstable/IFlowV5.sol";
+import {IFlowV5, FlowTransferV1} from "src/interface/unstable/IFlowV5.sol";
 import {Flow} from "src/concrete/basic/Flow.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {STUB_EXPRESSION_BYTECODE, REVERTING_MOCK_BYTECODE} from "./TestConstants.sol";
@@ -12,10 +12,13 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {LibLogHelper} from "test/lib/LibLogHelper.sol";
+import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
     using LibUint256Matrix for uint256[];
     using LibLogHelper for Vm.Log[];
+    using LibStackGeneration for uint256;
 
     CloneFactory internal immutable iCloneFactory;
     address internal iFlowImplementation;
@@ -102,6 +105,26 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
             constants: constants
         });
         return (flow, evaluables);
+    }
+
+    function mintAndBurnFlowStack(
+        address, /*account*/
+        uint256, /*mint*/
+        uint256, /*burn*/
+        uint256, /*id*/
+        FlowTransferV1 memory transfer
+    ) internal view virtual returns (uint256[] memory stack, bytes32 transferHash) {
+        transferHash = keccak256(abi.encode(transfer));
+        stack = sentinel.generateFlowStack(transfer);
+    }
+
+    function abstractFlowCall(
+        address flowAddress,
+        EvaluableV2 memory evaluable,
+        uint256[] memory callerContext,
+        SignedContextV1[] memory signedContexts
+    ) internal virtual {
+        IFlowV5(flowAddress).flow(evaluable, callerContext, signedContexts);
     }
 
     function assumeEtchable(address account) internal view {

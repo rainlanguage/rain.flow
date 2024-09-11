@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: CAL
 pragma solidity ^0.8.18;
 
-import {IFlowERC721V5} from "src/interface/unstable/IFlowERC721V5.sol";
+import {IFlowERC721V5, ERC721SupplyChange, FlowERC721IOV1} from "src/interface/unstable/IFlowERC721V5.sol";
+import {FlowTransferV1} from "src/interface/unstable/IFlowV5.sol";
 import {FlowERC721, FlowERC721ConfigV2} from "src/concrete/erc721/FlowERC721.sol";
 import {IExpressionDeployerV3} from "rain.interpreter.interface/interface/IExpressionDeployerV3.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
@@ -9,9 +10,13 @@ import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.so
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
+import {AbstractFlowTest} from "test/abstract/flow/AbstractFlowTest.sol";
 
-abstract contract FlowERC721Test is FlowBasicTest {
+abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
     using LibUint256Matrix for uint256[];
+    using LibStackGeneration for uint256;
 
     IExpressionDeployerV3 internal immutable iDeployerForEvalHandleTransfer;
 
@@ -79,5 +84,34 @@ abstract contract FlowERC721Test is FlowBasicTest {
         });
 
         return abi.encode(flowErc721Config);
+    }
+
+    function abstractFlowCall(
+        address flowAddress,
+        EvaluableV2 memory evaluable,
+        uint256[] memory callerContext,
+        SignedContextV1[] memory signedContexts
+    ) internal override {
+        IFlowERC721V5(flowAddress).flow(evaluable, callerContext, signedContexts);
+    }
+
+    function mintAndBurnFlowStack(
+        address account,
+        uint256, /*mint*/
+        uint256, /*burn*/
+        uint256 id,
+        FlowTransferV1 memory transfer
+    ) internal view override returns (uint256[] memory stack, bytes32 transferHash) {
+        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+        mints[0] = ERC721SupplyChange({account: account, id: id});
+
+        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+        burns[0] = ERC721SupplyChange({account: account, id: id});
+
+        FlowERC721IOV1 memory flowERC721 = FlowERC721IOV1(mints, burns, transfer);
+
+        transferHash = keccak256(abi.encode(flowERC721));
+
+        stack = sentinel.generateFlowStack(flowERC721);
     }
 }
