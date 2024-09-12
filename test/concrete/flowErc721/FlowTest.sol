@@ -261,6 +261,7 @@ contract Erc721FlowTest is FlowERC721Test {
     ) external {
         vm.assume(sentinel != erc20OutAmmount);
         vm.assume(sentinel != erc20BInAmmount);
+        vm.assume(sentinel != id);
 
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
