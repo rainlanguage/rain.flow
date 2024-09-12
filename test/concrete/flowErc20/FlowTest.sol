@@ -334,8 +334,8 @@ contract Erc20FlowTest is FlowERC20Test {
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount,
-        uint256 erc1155BInTokenId,
-        uint256 erc1155BInAmount,
+        uint256 erc1155InTokenId,
+        uint256 erc1155InAmount,
         string memory flow
     ) external {
         // Ensure the fuzzed key is within the valid range for secp256k1
@@ -344,8 +344,8 @@ contract Erc20FlowTest is FlowERC20Test {
 
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmount);
-        vm.assume(sentinel != erc1155BInTokenId);
-        vm.assume(sentinel != erc1155BInAmount);
+        vm.assume(sentinel != erc1155InTokenId);
+        vm.assume(sentinel != erc1155InAmount);
 
         (IFlowERC20V5 erc20Flow, EvaluableV2 memory evaluable) = deployFlowERC20({name: flow, symbol: flow});
         assumeEtchable(alice, address(erc20Flow));
@@ -363,8 +363,8 @@ contract Erc20FlowTest is FlowERC20Test {
             token: address(iTokenB),
             from: alice,
             to: address(erc20Flow),
-            id: erc1155BInTokenId,
-            amount: erc1155BInAmount
+            id: erc1155InTokenId,
+            amount: erc1155InAmount
         });
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
@@ -379,7 +379,7 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, alice, erc20Flow, erc1155BInTokenId, erc1155BInAmount, ""
+                IERC1155.safeTransferFrom.selector, alice, erc20Flow, erc1155InTokenId, erc1155InAmount, ""
             )
         );
         ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
@@ -406,7 +406,7 @@ contract Erc20FlowTest is FlowERC20Test {
     function testFlowERC20FlowERC721ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
-        uint256 erc721BInTokenId,
+        uint256 erc721InTokenId,
         string memory name,
         string memory symbol
     ) external {
@@ -415,7 +415,7 @@ contract Erc20FlowTest is FlowERC20Test {
         address alice = vm.addr(aliceKey);
 
         vm.assume(sentinel != erc721OutTokenId);
-        vm.assume(sentinel != erc721BInTokenId);
+        vm.assume(sentinel != erc721InTokenId);
 
         (IFlowERC20V5 erc20Flow, EvaluableV2 memory evaluable) = deployFlowERC20(name, symbol);
         assumeEtchable(alice, address(erc20Flow));
@@ -424,7 +424,7 @@ contract Erc20FlowTest is FlowERC20Test {
         erc721Transfers[0] =
             ERC721Transfer({token: address(iTokenA), from: address(erc20Flow), to: alice, id: erc721OutTokenId});
         erc721Transfers[1] =
-            ERC721Transfer({token: address(iTokenB), from: alice, to: address(erc20Flow), id: erc721BInTokenId});
+            ERC721Transfer({token: address(iTokenB), from: alice, to: address(erc20Flow), id: erc721InTokenId});
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
@@ -438,7 +438,7 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, erc20Flow, erc721BInTokenId
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, erc20Flow, erc721InTokenId
             )
         );
 
@@ -466,13 +466,13 @@ contract Erc20FlowTest is FlowERC20Test {
      */
     function testFlowERC20FlowERC20ToERC20(
         uint256 erc20OutAmount,
-        uint256 erc20BInAmount,
+        uint256 erc20InAmount,
         string memory name,
         string memory symbol,
         uint256 fuzzedKeyAlice
     ) external {
         vm.assume(sentinel != erc20OutAmount);
-        vm.assume(sentinel != erc20BInAmount);
+        vm.assume(sentinel != erc20InAmount);
 
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
@@ -485,7 +485,7 @@ contract Erc20FlowTest is FlowERC20Test {
         erc20Transfers[0] =
             ERC20Transfer({token: address(iTokenA), from: address(erc20Flow), to: alice, amount: erc20OutAmount});
         erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc20Flow), amount: erc20BInAmount});
+            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc20Flow), amount: erc20InAmount});
 
         vm.startPrank(alice);
 
@@ -494,7 +494,7 @@ contract Erc20FlowTest is FlowERC20Test {
 
         vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(
-            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc20Flow, erc20BInAmount)
+            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc20Flow, erc20InAmount)
         );
 
         ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);

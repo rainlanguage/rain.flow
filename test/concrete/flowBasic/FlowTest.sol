@@ -113,13 +113,13 @@ contract FlowTest is FlowBasicTest {
         address alice,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount,
-        uint256 erc1155BInTokenId,
-        uint256 erc1155BInAmount
+        uint256 erc1155InTokenId,
+        uint256 erc1155InAmount
     ) external {
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmount);
-        vm.assume(sentinel != erc1155BInTokenId);
-        vm.assume(sentinel != erc1155BInAmount);
+        vm.assume(sentinel != erc1155InTokenId);
+        vm.assume(sentinel != erc1155InAmount);
         vm.label(alice, "alice");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
@@ -138,8 +138,8 @@ contract FlowTest is FlowBasicTest {
             token: address(iTokenB),
             from: alice,
             to: address(flow),
-            id: erc1155BInTokenId,
-            amount: erc1155BInAmount
+            id: erc1155InTokenId,
+            amount: erc1155InAmount
         });
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
@@ -154,7 +154,7 @@ contract FlowTest is FlowBasicTest {
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, alice, flow, erc1155BInTokenId, erc1155BInAmount, ""
+                IERC1155.safeTransferFrom.selector, alice, flow, erc1155InTokenId, erc1155InAmount, ""
             )
         );
 
@@ -168,9 +168,9 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
-    function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721BInTokenId) external {
+    function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721InTokenId) external {
         vm.assume(sentinel != erc721OutTokenId);
-        vm.assume(sentinel != erc721BInTokenId);
+        vm.assume(sentinel != erc721InTokenId);
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
@@ -180,7 +180,7 @@ contract FlowTest is FlowBasicTest {
         erc721Transfers[0] =
             ERC721Transfer({token: address(iTokenA), from: address(flow), to: bob, id: erc721OutTokenId});
         erc721Transfers[1] =
-            ERC721Transfer({token: address(iTokenB), from: bob, to: address(flow), id: erc721BInTokenId});
+            ERC721Transfer({token: address(iTokenB), from: bob, to: address(flow), id: erc721InTokenId});
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
@@ -194,7 +194,7 @@ contract FlowTest is FlowBasicTest {
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, flow, erc721BInTokenId
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, flow, erc721InTokenId
             )
         );
 
@@ -208,9 +208,9 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
-    function testFlowERC20ToERC20(address alise, uint256 erc20OutAmount, uint256 erc20BInAmount) external {
+    function testFlowERC20ToERC20(address alise, uint256 erc20OutAmount, uint256 erc20InAmount) external {
         vm.assume(sentinel != erc20OutAmount);
-        vm.assume(sentinel != erc20BInAmount);
+        vm.assume(sentinel != erc20InAmount);
         vm.label(alise, "Alise");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
@@ -220,13 +220,13 @@ contract FlowTest is FlowBasicTest {
         erc20Transfers[0] =
             ERC20Transfer({token: address(iTokenA), from: address(flow), to: alise, amount: erc20OutAmount});
         erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: alise, to: address(flow), amount: erc20BInAmount});
+            ERC20Transfer({token: address(iTokenB), from: alise, to: address(flow), amount: erc20InAmount});
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
         vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transfer.selector, alise, erc20OutAmount));
 
         vm.mockCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-        vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, alise, flow, erc20BInAmount));
+        vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, alise, flow, erc20InAmount));
 
         uint256[] memory stack =
             generateFlowStack(FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0)));
@@ -328,14 +328,14 @@ contract FlowTest is FlowBasicTest {
         address bob,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount,
-        uint256 erc1155BInTokenId,
-        uint256 erc1155BInAmount
+        uint256 erc1155InTokenId,
+        uint256 erc1155InAmount
     ) external {
         vm.assume(bob != alise);
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmount);
-        vm.assume(sentinel != erc1155BInTokenId);
-        vm.assume(sentinel != erc1155BInAmount);
+        vm.assume(sentinel != erc1155InTokenId);
+        vm.assume(sentinel != erc1155InAmount);
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
@@ -358,8 +358,8 @@ contract FlowTest is FlowBasicTest {
                 token: address(iTokenB),
                 from: address(flow),
                 to: alise,
-                id: erc1155BInTokenId,
-                amount: erc1155BInAmount
+                id: erc1155InTokenId,
+                amount: erc1155InAmount
             });
 
             uint256[] memory stack =
