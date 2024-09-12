@@ -162,13 +162,14 @@ contract Erc721FlowTest is FlowERC721Test {
                 bytes4(keccak256("safeTransferFrom(address,address,uint256)")), erc721Flow, alice, erc721OutTokenId
             )
         );
+        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+        mints[0] = ERC721SupplyChange({account: alice, id: erc721OutTokenId});
+
+        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+        burns[0] = ERC721SupplyChange({account: alice, id: erc721OutTokenId});
 
         uint256[] memory stack = generateFlowStack(
-            FlowERC721IOV1(
-                new ERC721SupplyChange[](0),
-                new ERC721SupplyChange[](0),
-                FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0))
-            )
+            FlowERC721IOV1(mints, burns, FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)))
         );
         interpreterEval2MockCall(stack, new uint256[](0));
 
@@ -178,22 +179,25 @@ contract Erc721FlowTest is FlowERC721Test {
     }
 
     function testFlowERC721lowERC1155ToERC1155(
-        address alice,
+        uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmmount,
         uint256 erc1155BInTokenId,
         uint256 erc1155BInAmmount,
-        string memory name,
-        string memory symbol,
         string memory baseURI
     ) external {
+        // Ensure the fuzzed key is within the valid range for secp256k1
+        uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
+        address alice = vm.addr(aliceKey);
+
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmmount);
         vm.assume(sentinel != erc1155BInTokenId);
         vm.assume(sentinel != erc1155BInAmmount);
+        vm.assume(alice != address(0));
 
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
-            deployFlowERC721({name: name, symbol: symbol, baseURI: baseURI});
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
         assumeEtchable(alice, address(erc721Flow));
 
         ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
@@ -228,12 +232,15 @@ contract Erc721FlowTest is FlowERC721Test {
                 IERC1155.safeTransferFrom.selector, alice, erc721Flow, erc1155BInTokenId, erc1155BInAmmount, ""
             )
         );
+        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+        mints[0] = ERC721SupplyChange({account: alice, id: erc1155OutTokenId});
+
+        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+        burns[0] = ERC721SupplyChange({account: alice, id: erc1155OutTokenId});
 
         uint256[] memory stack = generateFlowStack(
             FlowERC721IOV1(
-                new ERC721SupplyChange[](0),
-                new ERC721SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
+                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
             )
         );
         interpreterEval2MockCall(stack, new uint256[](0));
@@ -247,9 +254,8 @@ contract Erc721FlowTest is FlowERC721Test {
         uint256 erc20OutAmmount,
         uint256 erc20BInAmmount,
         uint256 fuzzedKeyAlice,
-        string memory name,
-        string memory symbol,
-        string memory baseURI
+        string memory baseURI,
+        uint256 id
     ) external {
         vm.assume(sentinel != erc20OutAmmount);
         vm.assume(sentinel != erc20BInAmmount);
@@ -259,7 +265,7 @@ contract Erc721FlowTest is FlowERC721Test {
         address alice = vm.addr(aliceKey);
 
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
-            deployFlowERC721({name: name, symbol: symbol, baseURI: baseURI});
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
         assumeEtchable(alice, address(erc721Flow));
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
@@ -277,17 +283,21 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.expectCall(
             address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc721Flow, erc20BInAmmount)
         );
+        {
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: alice, id: id});
 
-        uint256[] memory stack = generateFlowStack(
-            FlowERC721IOV1(
-                new ERC721SupplyChange[](0),
-                new ERC721SupplyChange[](0),
-                FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: alice, id: id});
 
-        interpreterEval2MockCall(stack, new uint256[](0));
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(
+                    mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
 
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
         SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
         signedContexts1[0] = vm.signContext(aliceKey, aliceKey, new uint256[](0));
         signedContexts1[1] = vm.signContext(aliceKey, aliceKey, new uint256[](0));
@@ -300,9 +310,8 @@ contract Erc721FlowTest is FlowERC721Test {
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
         uint256 erc721BInTokenId,
-        string memory name,
-        string memory symbol,
-        string memory baseURI
+        string memory baseURI,
+        uint256 id
     ) external {
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
@@ -312,7 +321,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.assume(sentinel != erc721BInTokenId);
 
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
-            deployFlowERC721({name: name, symbol: symbol, baseURI: baseURI});
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
         assumeEtchable(alice, address(erc721Flow));
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
@@ -336,12 +345,15 @@ contract Erc721FlowTest is FlowERC721Test {
                 bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, erc721Flow, erc721BInTokenId
             )
         );
+        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+        mints[0] = ERC721SupplyChange({account: alice, id: id});
+
+        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+        burns[0] = ERC721SupplyChange({account: alice, id: id});
 
         uint256[] memory stack = generateFlowStack(
             FlowERC721IOV1(
-                new ERC721SupplyChange[](0),
-                new ERC721SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
+                mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
             )
         );
 
