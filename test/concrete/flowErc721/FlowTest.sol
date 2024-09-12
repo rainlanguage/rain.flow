@@ -27,11 +27,15 @@ import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncod
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
+import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract Erc721FlowTest is FlowERC721Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using Address for address;
 
     /**
      * @notice Tests the support for the transferPreflight hook.
@@ -48,6 +52,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.assume(sentinel != tokenIdB);
         vm.assume(tokenIdA != tokenIdB);
         vm.assume(expressionA != expressionB);
+        vm.assume(!alice.isContract());
 
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
