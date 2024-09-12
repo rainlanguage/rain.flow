@@ -5,7 +5,6 @@ import {Vm} from "forge-std/Test.sol";
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {FlowERC721Test} from "test/abstract/FlowERC721Test.sol";
-
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
@@ -16,22 +15,24 @@ import {
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
 } from "../../../src/interface/unstable/IFlowERC721V5.sol";
-
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
+import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract Erc721FlowTest is FlowERC721Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using Address for address;
 
     /**
      * @notice Tests the support for the transferPreflight hook.
@@ -48,6 +49,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.assume(sentinel != tokenIdB);
         vm.assume(tokenIdA != tokenIdB);
         vm.assume(expressionA != expressionB);
+        vm.assume(!alice.isContract());
 
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
@@ -259,6 +261,7 @@ contract Erc721FlowTest is FlowERC721Test {
     ) external {
         vm.assume(sentinel != erc20OutAmmount);
         vm.assume(sentinel != erc20BInAmmount);
+        vm.assume(sentinel != id);
 
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
@@ -362,5 +365,56 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.startPrank(alice);
         erc721Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
+    }
+
+    /// Should utilize context in HANDLE_TRANSFER entrypoint
+    function testFlowERC721UtilizeContextInHandleTransferEntrypoint(
+        address alice,
+        address expressionA,
+        address expressionB,
+        uint256[] memory writeToStore,
+        string memory baseURI,
+        uint256 tokenId
+    ) external {
+        vm.assume(alice != address(0));
+        vm.assume(expressionA != expressionB);
+        vm.assume(writeToStore.length != 0);
+
+        address[] memory expressions = new address[](1);
+        expressions[0] = expressionA;
+
+        (IFlowERC721V5 flowErc721, EvaluableV2[] memory evaluables) =
+            deployFlowERC721(expressions, expressionB, new uint256[][](1), "FlowErc721", "FErc721", baseURI);
+        assumeEtchable(alice, address(flowErc721));
+
+        {
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: alice, id: tokenId});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(
+                    mints,
+                    new ERC721SupplyChange[](0),
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+            flowErc721.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+        }
+
+        {
+            interpreterEval2MockCall(new uint256[](0), writeToStore);
+            vm.mockCall(address(iStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector), "");
+            vm.expectCall(
+                address(iStore),
+                abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
+            );
+        }
+
+        {
+            vm.startPrank(alice);
+            IERC721(address(flowErc721)).transferFrom({from: alice, to: address(flowErc721), tokenId: tokenId});
+            vm.stopPrank();
+        }
     }
 }
