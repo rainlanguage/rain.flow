@@ -283,7 +283,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         mints[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: amount});
 
         ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
-        burns[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: 0 ether});
+        burns[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: amount});
 
         uint256[] memory stack = generateFlowStack(
             FlowERC1155IOV1(
