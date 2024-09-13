@@ -24,6 +24,8 @@ contract FlowTimeTest is FlowUtilsAbstractTest, FlowERC1155Test {
     {
         vm.assume(alice != address(0));
         vm.assume(amount != 0);
+        vm.assume(sentinel != amount);
+        vm.assume(sentinel != id);
         vm.assume(writeToStore.length != 0);
         vm.assume(!alice.isContract());
 
