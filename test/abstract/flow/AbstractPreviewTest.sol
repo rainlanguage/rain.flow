@@ -101,4 +101,25 @@ contract AbstractPreviewTest is FlowBasicTest {
 
         assertEq(transferHash, abstractStackToFlowCall(flow, stack), "wrong compare Structs");
     }
+
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC721
+     *      using single-element arrays.
+     */
+    function flowPreviewDefinedFlowIOForERC721SingleElementArrays(
+        address alice,
+        uint256 erc721TokenInId,
+        uint256 erc721TokenOutId
+    ) internal {
+        vm.label(alice, "alice");
+
+        (address flow,) = deployFlowWithConfig();
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, onlyTransferERC721ToERC721(alice, flow, erc721TokenInId, erc721TokenOutId)
+        );
+
+        assertEq(transferHash, abstractStackToFlowCall(flow, stack), "wrong compare Structs");
+    }
 }
