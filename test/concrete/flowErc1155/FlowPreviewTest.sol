@@ -48,6 +48,7 @@ contract FlowPreviewTest is FlowERC1155Test {
     function testFlowERC1155PreviewEmptyFlowIO(string memory uri, address alice, uint256 amount) public {
         (IFlowERC1155V5 flow,) = deployIFlowERC1155V5({uri: uri});
         assumeEtchable(alice, address(flow));
+        vm.assume(sentinel != amount);
 
         ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](2);
         mints[0] = ERC1155SupplyChange({account: alice, id: 1, amount: amount});
