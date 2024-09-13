@@ -183,9 +183,9 @@ contract Erc721FlowTest is FlowERC721Test {
     function testFlowERC721lowERC1155ToERC1155(
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
-        uint256 erc1155OutAmmount,
-        uint256 erc1155BInTokenId,
-        uint256 erc1155BInAmmount,
+        uint256 erc1155OutAmount,
+        uint256 erc1155InTokenId,
+        uint256 erc1155InAmount,
         string memory baseURI
     ) external {
         // Ensure the fuzzed key is within the valid range for secp256k1
@@ -193,9 +193,9 @@ contract Erc721FlowTest is FlowERC721Test {
         address alice = vm.addr(aliceKey);
 
         vm.assume(sentinel != erc1155OutTokenId);
-        vm.assume(sentinel != erc1155OutAmmount);
-        vm.assume(sentinel != erc1155BInTokenId);
-        vm.assume(sentinel != erc1155BInAmmount);
+        vm.assume(sentinel != erc1155OutAmount);
+        vm.assume(sentinel != erc1155InTokenId);
+        vm.assume(sentinel != erc1155InAmount);
         vm.assume(alice != address(0));
 
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
@@ -208,22 +208,22 @@ contract Erc721FlowTest is FlowERC721Test {
             from: address(erc721Flow),
             to: alice,
             id: erc1155OutTokenId,
-            amount: erc1155OutAmmount
+            amount: erc1155OutAmount
         });
 
         erc1155Transfers[1] = ERC1155Transfer({
             token: address(iTokenB),
             from: alice,
             to: address(erc721Flow),
-            id: erc1155BInTokenId,
-            amount: erc1155BInAmmount
+            id: erc1155InTokenId,
+            amount: erc1155InAmount
         });
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
         vm.expectCall(
             iTokenA,
             abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, erc721Flow, alice, erc1155OutTokenId, erc1155OutAmmount, ""
+                IERC1155.safeTransferFrom.selector, erc721Flow, alice, erc1155OutTokenId, erc1155OutAmount, ""
             )
         );
 
@@ -231,7 +231,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, alice, erc721Flow, erc1155BInTokenId, erc1155BInAmmount, ""
+                IERC1155.safeTransferFrom.selector, alice, erc721Flow, erc1155InTokenId, erc1155InAmount, ""
             )
         );
         ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
@@ -253,14 +253,14 @@ contract Erc721FlowTest is FlowERC721Test {
     }
 
     function testFlowERC721lowERC20ToERC20(
-        uint256 erc20OutAmmount,
-        uint256 erc20BInAmmount,
+        uint256 erc20OutAmount,
+        uint256 erc20InAmount,
         uint256 fuzzedKeyAlice,
         string memory baseURI,
         uint256 id
     ) external {
-        vm.assume(sentinel != erc20OutAmmount);
-        vm.assume(sentinel != erc20BInAmmount);
+        vm.assume(sentinel != erc20OutAmount);
+        vm.assume(sentinel != erc20InAmount);
         vm.assume(sentinel != id);
 
         // Ensure the fuzzed key is within the valid range for secp256k1
@@ -273,18 +273,18 @@ contract Erc721FlowTest is FlowERC721Test {
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
         erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(erc721Flow), to: alice, amount: erc20OutAmmount});
+            ERC20Transfer({token: address(iTokenA), from: address(erc721Flow), to: alice, amount: erc20OutAmount});
         erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc721Flow), amount: erc20BInAmmount});
+            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc721Flow), amount: erc20InAmount});
 
         vm.startPrank(alice);
 
         vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
-        vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmmount));
+        vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmount));
 
         vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(
-            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc721Flow, erc20BInAmmount)
+            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc721Flow, erc20InAmount)
         );
         {
             ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
@@ -312,7 +312,7 @@ contract Erc721FlowTest is FlowERC721Test {
     function testFlowERC721FlowERC721ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
-        uint256 erc721BInTokenId,
+        uint256 erc721InTokenId,
         string memory baseURI,
         uint256 id
     ) external {
@@ -321,7 +321,7 @@ contract Erc721FlowTest is FlowERC721Test {
         address alice = vm.addr(aliceKey);
 
         vm.assume(sentinel != erc721OutTokenId);
-        vm.assume(sentinel != erc721BInTokenId);
+        vm.assume(sentinel != erc721InTokenId);
 
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
             deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
@@ -331,7 +331,7 @@ contract Erc721FlowTest is FlowERC721Test {
         erc721Transfers[0] =
             ERC721Transfer({token: address(iTokenA), from: address(erc721Flow), to: alice, id: erc721OutTokenId});
         erc721Transfers[1] =
-            ERC721Transfer({token: address(iTokenB), from: alice, to: address(erc721Flow), id: erc721BInTokenId});
+            ERC721Transfer({token: address(iTokenB), from: alice, to: address(erc721Flow), id: erc721InTokenId});
 
         vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
         vm.expectCall(
@@ -345,7 +345,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.expectCall(
             iTokenB,
             abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, erc721Flow, erc721BInTokenId
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, erc721Flow, erc721InTokenId
             )
         );
         ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
