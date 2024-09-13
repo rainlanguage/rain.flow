@@ -32,6 +32,18 @@ contract FlowPreviewTest is FlowERC1155Test {
         flowPreviewDefinedFlowIOForERC721MultiElementArrays(alice, erc721TokenIdA, erc721TokenIdB);
     }
 
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC20
+     *      using multi-element arrays.
+     */
+    function testFlowERC1155PreviewDefinedFlowIOForERC20MultiElementArrays(
+        address alice,
+        uint256 erc20AmountA,
+        uint256 erc20AmountB
+    ) external {
+        flowPreviewDefinedFlowIOForERC20MultiElementArrays(alice, erc20AmountA, erc20AmountB);
+    }
+
     /// Should preview empty flow io
     function testFlowERC1155PreviewEmptyFlowIO(string memory uri, address alice, uint256 amount) public {
         (IFlowERC1155V5 flow,) = deployIFlowERC1155V5({uri: uri});
