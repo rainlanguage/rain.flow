@@ -47,7 +47,8 @@ abstract contract FlowTransferOperation is Test {
         uint256 erc1155OutAmount,
         uint256 erc1155OutTokenId
     ) internal returns (FlowTransferV1 memory transfer) {
-        transfer = createTransferRC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
+        transfer =
+            createTransferRC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
         mockTransferRC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
     }
 
