@@ -8,6 +8,18 @@ import {
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 
 contract FlowPreviewTest is FlowERC1155Test {
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC1155
+     *      using multi-element arrays.
+     */
+    function testFlowERC1155PreviewDefinedFlowIOForERC1155MultiElementArrays(
+        address alice,
+        uint256 erc1155Amount,
+        uint256 erc1155TokenId
+    ) external {
+        flowPreviewDefinedFlowIOForERC1155MultiElementArrays(alice, erc1155Amount, erc1155TokenId);
+    }
+
     /// Should preview empty flow io
     function testFlowERC1155PreviewEmptyFlowIO(string memory uri, address alice, uint256 amount) public {
         (IFlowERC1155V5 flow,) = deployIFlowERC1155V5({uri: uri});

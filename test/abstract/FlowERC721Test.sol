@@ -13,8 +13,9 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 import {AbstractFlowTest} from "test/abstract/flow/AbstractFlowTest.sol";
+import {AbstractPreviewTest} from "test/abstract/flow/AbstractPreviewTest.sol";
 
-abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
+abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest, AbstractPreviewTest {
     using LibUint256Matrix for uint256[];
     using LibStackGeneration for uint256;
 
@@ -93,6 +94,15 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
         SignedContextV1[] memory signedContexts
     ) internal override {
         IFlowERC721V5(flowAddress).flow(evaluable, callerContext, signedContexts);
+    }
+
+    function abstractStackToFlowCall(address flowAddress, uint256[] memory stack)
+        internal
+        pure
+        override
+        returns (bytes32 stackToFlowTransfersHash)
+    {
+        stackToFlowTransfersHash = keccak256(abi.encode(IFlowERC721V5(flowAddress).stackToFlow(stack)));
     }
 
     function mintAndBurnFlowStack(

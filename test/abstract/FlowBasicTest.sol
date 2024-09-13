@@ -129,6 +129,15 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         IFlowV5(flowAddress).flow(evaluable, callerContext, signedContexts);
     }
 
+    function abstractStackToFlowCall(address flowAddress, uint256[] memory stack)
+        internal
+        pure
+        virtual
+        returns (bytes32 stackToFlowTransfersHash)
+    {
+        stackToFlowTransfersHash = keccak256(abi.encode(IFlowV5(flowAddress).stackToFlow(stack)));
+    }
+
     function assumeEtchable(address account) internal view {
         assumeEtchable(account, address(0));
     }
