@@ -53,45 +53,10 @@ contract FlowPreviewTest is AbstractPreviewTest {
      */
     function testFlowBasePreviewDefinedFlowIOForERC1155SingleElementArrays(
         address alice,
-        uint256 erc1155OutTokenId,
-        uint256 erc1155OutAmount,
-        uint256 erc1155InTokenId,
-        uint256 erc1155InAmount
+        uint256 erc1155TokenId,
+        uint256 erc1155Amount
     ) external {
-        vm.assume(sentinel != erc1155OutTokenId);
-        vm.assume(sentinel != erc1155OutAmount);
-        vm.assume(sentinel != erc1155InTokenId);
-        vm.assume(sentinel != erc1155InAmount);
-        vm.label(alice, "alice");
-
-        (IFlowV5 flow,) = deployFlow();
-        assumeEtchable(alice, address(flow));
-
-        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
-
-        erc1155Transfers[0] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: address(flow),
-            to: alice,
-            id: erc1155OutTokenId,
-            amount: erc1155OutAmount
-        });
-
-        erc1155Transfers[1] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: alice,
-            to: address(flow),
-            id: erc1155InTokenId,
-            amount: erc1155InAmount
-        });
-
-        FlowTransferV1 memory flowTransfer =
-            FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers);
-        uint256[] memory stack = generateFlowStack(flowTransfer);
-
-        assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        flowPreviewDefinedFlowIOForERC1155SingleElementArrays(alice, erc1155Amount, erc1155TokenId);
     }
 
     /**
