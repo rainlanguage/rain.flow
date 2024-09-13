@@ -27,6 +27,9 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
         uint256 fuzzedKeyBob
     ) public {
         vm.assume(fuzzedKeyBob != fuzzedKeyAlice);
+        vm.assume(sentinel != amount);
+        vm.assume(sentinel != id);
+
         (IFlowERC1155V5 erc1155Flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
 
         // Ensure the fuzzed key is within the valid range for secp256k1
@@ -84,6 +87,9 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC1155Test {
         uint256 amount
     ) public {
         vm.assume(fuzzedKeyBob != fuzzedKeyAlice);
+        vm.assume(sentinel != amount);
+        vm.assume(sentinel != id);
+
         (IFlowERC1155V5 erc1155Flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
 
         // Ensure the fuzzed key is within the valid range for secp256k1
