@@ -328,6 +328,7 @@ contract Erc721FlowTest is FlowERC721Test {
 
         vm.assume(sentinel != erc721OutTokenId);
         vm.assume(sentinel != erc721InTokenId);
+        vm.assume(sentinel != id);
 
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
             deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
@@ -385,6 +386,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.assume(alice != address(0));
         vm.assume(expressionA != expressionB);
         vm.assume(writeToStore.length != 0);
+        vm.assume(sentinel != tokenId);
 
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
