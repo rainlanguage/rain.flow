@@ -13,20 +13,31 @@ import {FlowERC1155Test} from "../../abstract/FlowERC1155Test.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract FlowTimeTest is FlowUtilsAbstractTest, FlowERC1155Test {
     using SignContextLib for Vm;
+    using Address for address;
 
-    function testFlowTime(string memory uri, uint256[] memory writeToStore) public {
+    function testFlowTime(string memory uri, uint256[] memory writeToStore, uint256 id, uint256 amount, address alice)
+        public
+    {
+        vm.assume(alice != address(0));
+        vm.assume(amount != 0);
         vm.assume(writeToStore.length != 0);
+        vm.assume(!alice.isContract());
 
         (IFlowERC1155V5 erc1155Flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
 
+        ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
+        mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
+
+        ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
+        burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
+
         uint256[] memory stack = generateFlowStack(
             FlowERC1155IOV1(
-                new ERC1155SupplyChange[](0),
-                new ERC1155SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
             )
         );
 
