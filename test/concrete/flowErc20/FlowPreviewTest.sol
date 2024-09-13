@@ -76,41 +76,11 @@ contract FlowPreviewTest is FlowERC20Test {
      *      using single-element arrays.
      */
     function testFlowERC20PreviewDefinedFlowIOForERC20SingleElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
         uint256 erc20AmountIn,
         uint256 erc20AmountOut
     ) external {
-        vm.assume(sentinel != erc20AmountIn);
-        vm.assume(sentinel != erc20AmountOut);
-
-        vm.label(alice, "alice");
-
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
-        assumeEtchable(alice, address(flow));
-
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmountOut});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmountIn});
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
-        );
-
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        flowPreviewDefinedFlowIOForERC20SingleElementArrays(alice, erc20AmountIn, erc20AmountOut);
     }
 
     /**
