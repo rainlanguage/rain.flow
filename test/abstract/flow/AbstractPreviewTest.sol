@@ -143,6 +143,4 @@ contract AbstractPreviewTest is FlowBasicTest {
 
         assertEq(transferHash, abstractStackToFlowCall(flow, stack), "wrong compare Structs");
     }
-
-
 }
