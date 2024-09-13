@@ -21,44 +21,61 @@ contract FlowSignedContextTest is FlowERC721Test {
         uint256[] memory context0,
         uint256[] memory context1,
         uint256 fuzzedKeyAlice,
-        uint256 fuzzedKeyBob
+        uint256 fuzzedKeyBob,
+        uint256 id
     ) public {
         vm.assume(fuzzedKeyBob != fuzzedKeyAlice);
+        vm.assume(sentinel != id);
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
             deployFlowERC721({name: name, symbol: symbol, baseURI: baseURI});
 
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         uint256 bobKey = (fuzzedKeyBob % (SECP256K1_ORDER - 1)) + 1;
+        address alice = vm.addr(aliceKey);
 
         SignedContextV1[] memory signedContexts = new SignedContextV1[](2);
 
         signedContexts[0] = vm.signContext(aliceKey, aliceKey, context0);
         signedContexts[1] = vm.signContext(aliceKey, aliceKey, context1);
+        {
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: alice, id: id});
 
-        uint256[] memory stack = generateFlowStack(
-            FlowERC721IOV1(
-                new ERC721SupplyChange[](0),
-                new ERC721SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-        interpreterEval2MockCall(stack, new uint256[](0));
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: alice, id: id});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
         erc721Flow.flow(evaluable, new uint256[](0), signedContexts);
 
         // With bad signature in second signed context
         SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
         signedContexts1[0] = vm.signContext(aliceKey, aliceKey, context0);
         signedContexts1[1] = vm.signContext(aliceKey, bobKey, context1);
+        {
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: alice, id: id});
 
-        uint256[] memory stack1 = generateFlowStack(
-            FlowERC721IOV1(
-                new ERC721SupplyChange[](0),
-                new ERC721SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-        interpreterEval2MockCall(stack1, new uint256[](0));
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: alice, id: id});
+
+            uint256[] memory stack1 = generateFlowStack(
+                FlowERC721IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack1, new uint256[](0));
+        }
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 1));
         erc721Flow.flow(evaluable, new uint256[](0), signedContexts1);
@@ -71,41 +88,58 @@ contract FlowSignedContextTest is FlowERC721Test {
         string memory baseURI,
         uint256[] memory context0,
         uint256 fuzzedKeyAlice,
-        uint256 fuzzedKeyBob
+        uint256 fuzzedKeyBob,
+        uint256 id
     ) public {
         vm.assume(fuzzedKeyBob != fuzzedKeyAlice);
+        vm.assume(sentinel != id);
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
             deployFlowERC721({name: name, symbol: symbol, baseURI: baseURI});
 
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         uint256 bobKey = (fuzzedKeyBob % (SECP256K1_ORDER - 1)) + 1;
+        address alice = vm.addr(aliceKey);
 
         SignedContextV1[] memory signedContext = new SignedContextV1[](1);
         signedContext[0] = vm.signContext(aliceKey, aliceKey, context0);
+        {
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: alice, id: id});
 
-        uint256[] memory stack = generateFlowStack(
-            FlowERC721IOV1(
-                new ERC721SupplyChange[](0),
-                new ERC721SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-        interpreterEval2MockCall(stack, new uint256[](0));
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: alice, id: id});
+            uint256[] memory stack = generateFlowStack(
+                FlowERC721IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
         erc721Flow.flow(evaluable, new uint256[](0), signedContext);
 
         // With bad signature in second signed context
         SignedContextV1[] memory signedContext1 = new SignedContextV1[](1);
         signedContext1[0] = vm.signContext(aliceKey, bobKey, context0);
 
-        uint256[] memory stack1 = generateFlowStack(
-            FlowERC721IOV1(
-                new ERC721SupplyChange[](0),
-                new ERC721SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-        interpreterEval2MockCall(stack1, new uint256[](0));
+        {
+            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+            mints[0] = ERC721SupplyChange({account: alice, id: id});
+
+            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
+            burns[0] = ERC721SupplyChange({account: alice, id: id});
+
+            uint256[] memory stack1 = generateFlowStack(
+                FlowERC721IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack1, new uint256[](0));
+        }
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 0));
         erc721Flow.flow(evaluable, new uint256[](0), signedContext1);
