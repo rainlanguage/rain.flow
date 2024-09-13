@@ -28,41 +28,11 @@ contract FlowPreviewTest is FlowERC20Test {
      *      using multi-element arrays.
      */
     function testFlowERC20PreviewDefinedFlowIOForERC721MultiElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
         uint256 erc721TokenIdA,
         uint256 erc721TokenIdB
     ) external {
-        vm.assume(sentinel != erc721TokenIdA);
-        vm.assume(sentinel != erc721TokenIdB);
-
-        vm.label(alice, "alice");
-
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
-        assumeEtchable(alice, address(flow));
-
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](4);
-        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: address(flow), to: alice, id: erc721TokenIdA});
-        erc721Transfers[1] = ERC721Transfer({token: iTokenB, from: address(flow), to: alice, id: erc721TokenIdB});
-        erc721Transfers[2] = ERC721Transfer({token: iTokenA, from: alice, to: address(flow), id: erc721TokenIdA});
-        erc721Transfers[3] = ERC721Transfer({token: iTokenB, from: alice, to: address(flow), id: erc721TokenIdB});
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
-        );
-
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        flowPreviewDefinedFlowIOForERC721MultiElementArrays(alice, erc721TokenIdA, erc721TokenIdB);
     }
 
     /**
