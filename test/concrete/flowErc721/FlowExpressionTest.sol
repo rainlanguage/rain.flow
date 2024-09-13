@@ -58,6 +58,7 @@ contract FlowExpressionTest is FlowERC721Test {
     ) public {
         vm.assume(alice != address(0));
         vm.assume(!alice.isContract());
+        vm.assume(sentinel != id);
 
         uint256[][] memory matrixCallerContext =
             fuzzedcallerContext0.matrixFrom(fuzzedcallerContext1, fuzzedcallerContext0);
