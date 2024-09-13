@@ -11,9 +11,16 @@ import {STUB_EXPRESSION_BYTECODE, REVERTING_MOCK_BYTECODE} from "./TestConstants
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
+import {LibLogHelper} from "test/lib/LibLogHelper.sol";
+import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
     using LibUint256Matrix for uint256[];
+    using LibLogHelper for Vm.Log[];
+    using LibStackGeneration for uint256;
+    using Address for address;
 
     CloneFactory internal immutable iCloneFactory;
     IFlowV5 internal immutable iFlowImplementation;
@@ -100,6 +107,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         vm.assume(account != address(vm));
         vm.assume(sentinel != uint256(uint160(account)));
         vm.assume(account != address(expression));
+        vm.assume(!account.isContract());
         // The console.
         vm.assume(account != address(0x000000000000000000636F6e736F6c652e6c6f67));
     }
