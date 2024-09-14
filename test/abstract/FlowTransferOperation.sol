@@ -48,11 +48,11 @@ abstract contract FlowTransferOperation is Test {
         uint256 erc1155OutTokenId
     ) internal returns (FlowTransferV1 memory transfer) {
         transfer =
-            createTransferRC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
-        mockTransferRC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
+            createTransferERC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
+        mockTransferERC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
     }
 
-    function createTransferRC721ToERC1155(
+    function createTransferERC721ToERC1155(
         address addressA,
         address addressB,
         uint256 erc721InTokenId,
@@ -83,7 +83,7 @@ abstract contract FlowTransferOperation is Test {
         return FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers);
     }
 
-    function mockTransferRC721ToERC1155(
+    function mockTransferERC721ToERC1155(
         address addressA,
         address addressB,
         uint256 erc721InTokenId,
