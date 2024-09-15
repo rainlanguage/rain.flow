@@ -25,24 +25,10 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
     CloneFactory internal immutable iCloneFactory;
     IFlowV5 internal immutable iFlowImplementation;
 
-    address internal immutable iTokenA;
-    address internal immutable iTokenB;
-    address internal immutable iTokenC;
-
     constructor() {
         vm.pauseGasMetering();
         iCloneFactory = new CloneFactory();
         iFlowImplementation = new Flow();
-
-        iTokenA = address(uint160(uint256(keccak256("tokenA.test"))));
-        vm.etch(address(iTokenA), REVERTING_MOCK_BYTECODE);
-
-        iTokenB = address(uint160(uint256(keccak256("tokenB.test"))));
-        vm.etch(address(iTokenB), REVERTING_MOCK_BYTECODE);
-
-        iTokenC = address(uint160(uint256(keccak256("tokenC.test"))));
-        vm.etch(address(iTokenC), REVERTING_MOCK_BYTECODE);
-
         vm.resumeGasMetering();
     }
 

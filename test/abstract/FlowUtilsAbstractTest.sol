@@ -10,18 +10,11 @@ import {FlowERC721IOV1} from "src/interface/unstable/IFlowERC721V5.sol";
 import {FlowERC20IOV1} from "src/interface/unstable/IFlowERC20V5.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 import {LibLogHelper} from "test/lib/LibLogHelper.sol";
+import {FlowTransferOperation} from "test/abstract/FlowTransferOperation.sol";
 
-abstract contract FlowUtilsAbstractTest is Test {
+abstract contract FlowUtilsAbstractTest is FlowTransferOperation {
     using LibStackGeneration for uint256;
     using LibLogHelper for Vm.Log[];
-
-    uint256 internal immutable sentinel;
-
-    constructor() {
-        vm.pauseGasMetering();
-        sentinel = Sentinel.unwrap(RAIN_FLOW_SENTINEL);
-        vm.resumeGasMetering();
-    }
 
     // A temporary solution for a smooth transition to using libraries.
     function generateFlowStack(FlowTransferV1 memory flowTransfer) internal view returns (uint256[] memory stack) {
