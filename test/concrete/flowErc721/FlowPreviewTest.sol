@@ -15,14 +15,14 @@ contract FlowPreviewTest is FlowERC721Test {
         string memory baseURI,
         address alice,
         uint256 erc1155OutTokenIdA,
-        uint256 erc1155OutAmmountA,
+        uint256 erc1155OutAmountA,
         uint256 erc1155InTokenIdB,
-        uint256 erc1155InAmmountB
+        uint256 erc1155InAmountB
     ) external {
         vm.assume(sentinel != erc1155OutTokenIdA);
-        vm.assume(sentinel != erc1155OutAmmountA);
+        vm.assume(sentinel != erc1155OutAmountA);
         vm.assume(sentinel != erc1155InTokenIdB);
-        vm.assume(sentinel != erc1155InAmmountB);
+        vm.assume(sentinel != erc1155InAmountB);
         vm.label(alice, "alice");
 
         (IFlowERC721V5 flow,) = deployFlowERC721({name: symbol, symbol: symbol, baseURI: baseURI});
@@ -34,7 +34,7 @@ contract FlowPreviewTest is FlowERC721Test {
             from: address(flow),
             to: alice,
             id: erc1155OutTokenIdA,
-            amount: erc1155OutAmmountA
+            amount: erc1155OutAmountA
         });
 
         erc1155Transfers[1] = ERC1155Transfer({
@@ -42,7 +42,7 @@ contract FlowPreviewTest is FlowERC721Test {
             from: address(flow),
             to: alice,
             id: erc1155InTokenIdB,
-            amount: erc1155InAmmountB
+            amount: erc1155InAmountB
         });
 
         erc1155Transfers[2] = ERC1155Transfer({
@@ -50,7 +50,7 @@ contract FlowPreviewTest is FlowERC721Test {
             from: alice,
             to: address(flow),
             id: erc1155OutTokenIdA,
-            amount: erc1155OutAmmountA
+            amount: erc1155OutAmountA
         });
 
         erc1155Transfers[3] = ERC1155Transfer({
@@ -58,7 +58,7 @@ contract FlowPreviewTest is FlowERC721Test {
             from: alice,
             to: address(flow),
             id: erc1155InTokenIdB,
-            amount: erc1155InAmmountB
+            amount: erc1155InAmountB
         });
 
         ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
@@ -130,11 +130,11 @@ contract FlowPreviewTest is FlowERC721Test {
         string memory symbol,
         string memory baseURI,
         address alice,
-        uint256 erc20AmmountA,
-        uint256 erc20AmmountB
+        uint256 erc20AmountA,
+        uint256 erc20AmountB
     ) external {
-        vm.assume(sentinel != erc20AmmountA);
-        vm.assume(sentinel != erc20AmmountB);
+        vm.assume(sentinel != erc20AmountA);
+        vm.assume(sentinel != erc20AmountB);
 
         vm.label(alice, "alice");
 
@@ -143,13 +143,13 @@ contract FlowPreviewTest is FlowERC721Test {
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](4);
         erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmmountA});
+            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmountA});
         erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20AmmountB});
+            ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20AmountB});
         erc20Transfers[2] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmmountA});
+            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmountA});
         erc20Transfers[3] =
-            ERC20Transfer({token: address(iTokenB), from: alice, to: address(flow), amount: erc20AmmountB});
+            ERC20Transfer({token: address(iTokenB), from: alice, to: address(flow), amount: erc20AmountB});
 
         ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
         mints[0] = ERC721SupplyChange({account: alice, id: 1});
@@ -178,14 +178,14 @@ contract FlowPreviewTest is FlowERC721Test {
         string memory baseURI,
         address alice,
         uint256 erc1155OutTokenId,
-        uint256 erc1155OutAmmount,
+        uint256 erc1155OutAmount,
         uint256 erc1155InTokenId,
-        uint256 erc1155InAmmount
+        uint256 erc1155InAmount
     ) external {
         vm.assume(sentinel != erc1155OutTokenId);
-        vm.assume(sentinel != erc1155OutAmmount);
+        vm.assume(sentinel != erc1155OutAmount);
         vm.assume(sentinel != erc1155InTokenId);
-        vm.assume(sentinel != erc1155InAmmount);
+        vm.assume(sentinel != erc1155InAmount);
         vm.label(alice, "alice");
 
         (IFlowERC721V5 flow,) = deployFlowERC721({name: symbol, symbol: symbol, baseURI: baseURI});
@@ -198,7 +198,7 @@ contract FlowPreviewTest is FlowERC721Test {
             from: address(flow),
             to: alice,
             id: erc1155OutTokenId,
-            amount: erc1155OutAmmount
+            amount: erc1155OutAmount
         });
 
         erc1155Transfers[1] = ERC1155Transfer({
@@ -206,7 +206,7 @@ contract FlowPreviewTest is FlowERC721Test {
             from: alice,
             to: address(flow),
             id: erc1155InTokenId,
-            amount: erc1155InAmmount
+            amount: erc1155InAmount
         });
 
         ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
@@ -276,11 +276,11 @@ contract FlowPreviewTest is FlowERC721Test {
         string memory symbol,
         string memory baseURI,
         address alice,
-        uint256 erc20AmmountIn,
-        uint256 erc20AmmountOut
+        uint256 erc20AmountIn,
+        uint256 erc20AmountOut
     ) external {
-        vm.assume(sentinel != erc20AmmountIn);
-        vm.assume(sentinel != erc20AmmountOut);
+        vm.assume(sentinel != erc20AmountIn);
+        vm.assume(sentinel != erc20AmountOut);
 
         vm.label(alice, "alice");
 
@@ -289,9 +289,9 @@ contract FlowPreviewTest is FlowERC721Test {
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
         erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmmountOut});
+            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmountOut});
         erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmmountIn});
+            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmountIn});
 
         ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
         mints[0] = ERC721SupplyChange({account: alice, id: 1});
