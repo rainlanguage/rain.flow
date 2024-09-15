@@ -138,7 +138,7 @@ contract AbstractPreviewTest is FlowBasicTest {
         assumeEtchable(alice, flow);
 
         (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
-            alice, 20 ether, 10 ether, 5, onlyTransfersERC20toERC20(alice, flow, erc20AmountIn, erc20AmountOut)
+            alice, 20 ether, 10 ether, 5, createTransfersERC20toERC20(alice, flow, erc20AmountIn, erc20AmountOut)
         );
 
         assertEq(transferHash, abstractStackToFlowCall(flow, stack), "wrong compare Structs");
