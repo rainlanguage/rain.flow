@@ -47,11 +47,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         return expressionDeployer(expression, constants, abi.encodePacked(vm.addr(key)));
     }
 
-    function buldConfig(address, /*configExpression*/ EvaluableConfigV3[] memory flowConfig)
-        internal
-        virtual
-        returns (bytes memory)
-    {
+    function buldConfig(address, EvaluableConfigV3[] memory flowConfig) internal virtual returns (bytes memory) {
         return abi.encode(flowConfig);
     }
 
@@ -83,7 +79,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         }
     }
 
-    function deployFlowWithConfig() internal returns (address, EvaluableV2 memory) {
+    function deployFlow() internal returns (address, EvaluableV2 memory) {
         address[] memory expressions = new address[](1);
         expressions[0] = address(uint160(uint256(keccak256("expression"))));
         (address flow, EvaluableV2[] memory evaluables) =
@@ -91,11 +87,11 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         return (flow, evaluables[0]);
     }
 
-    // A temporary solution.
-    function deployFlow() internal returns (IFlowV5, EvaluableV2 memory) {
-        (address flowAddress, EvaluableV2 memory evaluable) = deployFlowWithConfig();
-        return (IFlowV5(flowAddress), evaluable);
-    }
+    // // A temporary solution.
+    // function deployFlow() internal returns (IFlowV5, EvaluableV2 memory) {
+    //     (address flowAddress, EvaluableV2 memory evaluable) = deployFlowWithConfig();
+    //     return (IFlowV5(flowAddress), evaluable);
+    // }
 
     function deployFlow(address[] memory expressions, uint256[][] memory constants)
         internal

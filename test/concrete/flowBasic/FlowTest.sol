@@ -32,7 +32,7 @@ contract FlowTest is FlowBasicTest {
 
         vm.label(alice, "Alice");
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
 
         assumeEtchable(alice, address(flow));
 
@@ -70,7 +70,7 @@ contract FlowTest is FlowBasicTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(alice);
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -79,7 +79,7 @@ contract FlowTest is FlowBasicTest {
         vm.assume(sentinel != erc721OutTokenId);
         vm.label(bob, "Bob");
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(bob, address(flow));
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
@@ -105,7 +105,7 @@ contract FlowTest is FlowBasicTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(bob);
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -122,7 +122,7 @@ contract FlowTest is FlowBasicTest {
         vm.assume(sentinel != erc1155InAmount);
         vm.label(alice, "alice");
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alice, address(flow));
 
         ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
@@ -164,7 +164,7 @@ contract FlowTest is FlowBasicTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(alice);
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -173,7 +173,7 @@ contract FlowTest is FlowBasicTest {
         vm.assume(sentinel != erc721InTokenId);
         vm.label(bob, "Bob");
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(bob, address(flow));
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
@@ -204,7 +204,7 @@ contract FlowTest is FlowBasicTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(bob);
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -213,7 +213,7 @@ contract FlowTest is FlowBasicTest {
         vm.assume(sentinel != erc20InAmount);
         vm.label(alise, "Alise");
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alise, address(flow));
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
@@ -234,7 +234,7 @@ contract FlowTest is FlowBasicTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(alise);
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -248,7 +248,7 @@ contract FlowTest is FlowBasicTest {
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alise, address(flow));
         assumeEtchable(bob, address(flow));
 
@@ -267,7 +267,7 @@ contract FlowTest is FlowBasicTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
 
         {
@@ -285,7 +285,7 @@ contract FlowTest is FlowBasicTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -300,7 +300,7 @@ contract FlowTest is FlowBasicTest {
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alise, address(flow));
         assumeEtchable(bob, address(flow));
 
@@ -319,7 +319,7 @@ contract FlowTest is FlowBasicTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC721Flow.selector));
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -339,7 +339,7 @@ contract FlowTest is FlowBasicTest {
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
 
         assumeEtchable(alise, address(flow));
         assumeEtchable(bob, address(flow));
@@ -370,7 +370,7 @@ contract FlowTest is FlowBasicTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC1155Flow.selector));
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
