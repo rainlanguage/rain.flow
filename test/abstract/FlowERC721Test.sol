@@ -59,9 +59,9 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory, /*name*/
-        string memory, /*symbol*/
-        string memory /*baseURI*/
+        string memory,
+        string memory,
+        string memory
     ) internal returns (IFlowERC721V5, EvaluableV2[] memory) {
         (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
         return (IFlowERC721V5(flow), evaluables);

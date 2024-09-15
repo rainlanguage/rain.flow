@@ -40,7 +40,7 @@ abstract contract FlowERC1155Test is FlowBasicTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory /*uri*/
+        string memory
     ) internal returns (IFlowERC1155V5, EvaluableV2[] memory) {
         (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
         return (IFlowERC1155V5(flow), evaluables);
