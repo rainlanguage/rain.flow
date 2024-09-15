@@ -21,7 +21,7 @@ contract AbstractPreviewTest is FlowBasicTest {
     ) internal {
         vm.label(alice, "alice");
 
-        (address flow,) = deployFlowWithConfig();
+        (address flow,) = deployFlow();
         assumeEtchable(alice, flow);
         {
             (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(

@@ -18,7 +18,7 @@ contract AbstractFlowTest is FlowBasicTest {
         vm.assume(address(0) != alice);
         vm.label(alice, "Alice");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlowWithConfig();
+        (address flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alice, flow);
 
         {
