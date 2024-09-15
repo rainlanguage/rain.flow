@@ -27,7 +27,7 @@ contract AbstractFlowTest is FlowBasicTest {
                 20 ether,
                 10 ether,
                 5,
-                transferRC721ToERC1155(alice, flow, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId)
+                transferERC721ToERC1155(alice, flow, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId)
             );
             interpreterEval2MockCall(stack, new uint256[](0));
         }
