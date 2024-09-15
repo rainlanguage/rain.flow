@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CAL
-pragma solidity = 0.8.19;
+pragma solidity ^0.8.19;
 
 import {Test, Vm} from "forge-std/Test.sol";
 import {
@@ -44,24 +44,25 @@ abstract contract FlowTransferOperation is Test {
         address addressA,
         address addressB,
         uint256 erc721InTokenId,
-        uint256 erc1155OutAmmount,
+        uint256 erc1155OutAmount,
         uint256 erc1155OutTokenId
     ) internal returns (FlowTransferV1 memory transfer) {
-        transfer = onlyTransferRC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmmount, erc1155OutTokenId);
-        mockTransferRC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmmount, erc1155OutTokenId);
+        transfer =
+            createTransferERC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
+        mockTransferERC721ToERC1155(addressA, addressB, erc721InTokenId, erc1155OutAmount, erc1155OutTokenId);
     }
 
-    function onlyTransferRC721ToERC1155(
+    function createTransferERC721ToERC1155(
         address addressA,
         address addressB,
         uint256 erc721InTokenId,
-        uint256 erc1155OutAmmount,
+        uint256 erc1155OutAmount,
         uint256 erc1155OutTokenId
     ) internal view returns (FlowTransferV1 memory) {
         {
             vm.assume(sentinel != erc721InTokenId);
             vm.assume(sentinel != erc1155OutTokenId);
-            vm.assume(sentinel != erc1155OutAmmount);
+            vm.assume(sentinel != erc1155OutAmount);
             assumeAddressNotSentinel(addressA);
             assumeAddressNotSentinel(addressB);
         }
@@ -76,17 +77,17 @@ abstract contract FlowTransferOperation is Test {
             from: addressB,
             to: addressA,
             id: erc1155OutTokenId,
-            amount: erc1155OutAmmount
+            amount: erc1155OutAmount
         });
 
         return FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers);
     }
 
-    function mockTransferRC721ToERC1155(
+    function mockTransferERC721ToERC1155(
         address addressA,
         address addressB,
         uint256 erc721InTokenId,
-        uint256 erc1155OutAmmount,
+        uint256 erc1155OutAmount,
         uint256 erc1155OutTokenId
     ) internal {
         vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
@@ -101,7 +102,7 @@ abstract contract FlowTransferOperation is Test {
         vm.expectCall(
             iTokenC,
             abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, addressB, addressA, erc1155OutTokenId, erc1155OutAmmount, ""
+                IERC1155.safeTransferFrom.selector, addressB, addressA, erc1155OutTokenId, erc1155OutAmount, ""
             )
         );
     }
@@ -110,11 +111,11 @@ abstract contract FlowTransferOperation is Test {
         internal
         returns (FlowTransferV1 memory transfer)
     {
-        transfer = onlyTransferERC20ToERC721(addressA, addressB, erc20InAmount, erc721OutTokenId);
+        transfer = createTransferERC20ToERC721(addressA, addressB, erc20InAmount, erc721OutTokenId);
         mockTransferERC20ToERC721(addressA, addressB, erc20InAmount, erc721OutTokenId);
     }
 
-    function onlyTransferERC20ToERC721(
+    function createTransferERC20ToERC721(
         address addressA,
         address addressB,
         uint256 erc20InAmount,
@@ -163,11 +164,11 @@ abstract contract FlowTransferOperation is Test {
         uint256 erc721InTokenId,
         uint256 erc721OutTokenId
     ) internal returns (FlowTransferV1 memory transfer) {
-        transfer = onlyTransferERC721ToERC721(addressA, addressB, erc721InTokenId, erc721OutTokenId);
+        transfer = createTransferERC721ToERC721(addressA, addressB, erc721InTokenId, erc721OutTokenId);
         mockTransferERC721ToERC721(addressA, addressB, erc721InTokenId, erc721OutTokenId);
     }
 
-    function onlyTransferERC721ToERC721(
+    function createTransferERC721ToERC721(
         address addressA,
         address addressB,
         uint256 erc721InTokenId,
@@ -213,23 +214,23 @@ abstract contract FlowTransferOperation is Test {
         );
     }
 
-    function transfersERC20toERC20(address addressA, address addressB, uint256 erc20BInAmmount, uint256 erc20OutAmmount)
+    function transfersERC20toERC20(address addressA, address addressB, uint256 erc20BInAmount, uint256 erc20OutAmount)
         internal
         returns (FlowTransferV1 memory transfer)
     {
-        transfer = onlyTransfersERC20toERC20(addressA, addressB, erc20BInAmmount, erc20OutAmmount);
-        mockTransfersERC20toERC20(addressA, addressB, erc20BInAmmount, erc20OutAmmount);
+        transfer = createTransfersERC20toERC20(addressA, addressB, erc20BInAmount, erc20OutAmount);
+        mockTransfersERC20toERC20(addressA, addressB, erc20BInAmount, erc20OutAmount);
     }
 
-    function onlyTransfersERC20toERC20(
+    function createTransfersERC20toERC20(
         address addressA,
         address addressB,
-        uint256 erc20BInAmmount,
-        uint256 erc20OutAmmount
+        uint256 erc20BInAmount,
+        uint256 erc20OutAmount
     ) internal view returns (FlowTransferV1 memory transfer) {
         {
-            vm.assume(sentinel != erc20BInAmmount);
-            vm.assume(sentinel != erc20OutAmmount);
+            vm.assume(sentinel != erc20BInAmount);
+            vm.assume(sentinel != erc20OutAmount);
             assumeAddressNotSentinel(addressA);
             assumeAddressNotSentinel(addressB);
         }
@@ -237,9 +238,9 @@ abstract contract FlowTransferOperation is Test {
         {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
             erc20Transfers[0] =
-                ERC20Transfer({token: address(iTokenA), from: addressA, to: addressB, amount: erc20BInAmmount});
+                ERC20Transfer({token: address(iTokenA), from: addressA, to: addressB, amount: erc20BInAmount});
             erc20Transfers[1] =
-                ERC20Transfer({token: address(iTokenB), from: addressB, to: addressA, amount: erc20OutAmmount});
+                ERC20Transfer({token: address(iTokenB), from: addressB, to: addressA, amount: erc20OutAmount});
             transfer = FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0));
         }
     }
@@ -247,16 +248,16 @@ abstract contract FlowTransferOperation is Test {
     function mockTransfersERC20toERC20(
         address addressA,
         address addressB,
-        uint256 erc20BInAmmount,
-        uint256 erc20OutAmmount
+        uint256 erc20BInAmount,
+        uint256 erc20OutAmount
     ) internal {
         vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(
-            address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector, addressA, addressB, erc20BInAmmount)
+            address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector, addressA, addressB, erc20BInAmount)
         );
 
         vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
-        vm.expectCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector, addressA, erc20OutAmmount));
+        vm.expectCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector, addressA, erc20OutAmount));
     }
 
     function transferERC1155ToERC1155(
@@ -267,7 +268,7 @@ abstract contract FlowTransferOperation is Test {
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount
     ) internal returns (FlowTransferV1 memory transfer) {
-        transfer = onlyTransferERC1155ToERC1155(
+        transfer = createTransferERC1155ToERC1155(
             addressA, addressB, erc1155BInTokenId, erc1155BInAmount, erc1155OutTokenId, erc1155OutAmount
         );
         MockTransferERC1155ToERC1155(
@@ -275,7 +276,7 @@ abstract contract FlowTransferOperation is Test {
         );
     }
 
-    function onlyTransferERC1155ToERC1155(
+    function createTransferERC1155ToERC1155(
         address addressA,
         address addressB,
         uint256 erc1155BInTokenId,
