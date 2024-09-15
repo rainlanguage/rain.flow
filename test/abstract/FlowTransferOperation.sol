@@ -40,7 +40,7 @@ abstract contract FlowTransferOperation is Test {
         return FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0));
     }
 
-    function transferRC721ToERC1155(
+    function transferERC721ToERC1155(
         address addressA,
         address addressB,
         uint256 erc721InTokenId,
