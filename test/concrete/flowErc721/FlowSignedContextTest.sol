@@ -25,6 +25,7 @@ contract FlowSignedContextTest is FlowERC721Test {
         uint256 id
     ) public {
         vm.assume(fuzzedKeyBob != fuzzedKeyAlice);
+        vm.assume(sentinel != id);
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
             deployFlowERC721({name: name, symbol: symbol, baseURI: baseURI});
 
@@ -91,6 +92,7 @@ contract FlowSignedContextTest is FlowERC721Test {
         uint256 id
     ) public {
         vm.assume(fuzzedKeyBob != fuzzedKeyAlice);
+        vm.assume(sentinel != id);
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
             deployFlowERC721({name: name, symbol: symbol, baseURI: baseURI});
 

@@ -25,6 +25,7 @@ contract FlowTimeTest is FlowERC721Test {
     ) public {
         vm.assume(writeToStore.length != 0);
         vm.assume(alice != address(0));
+        vm.assume(sentinel != id);
         vm.assume(!alice.isContract());
 
         (IFlowERC721V5 erc1155Flow, EvaluableV2 memory evaluable) = deployFlowERC721(name, symbol, uri);
