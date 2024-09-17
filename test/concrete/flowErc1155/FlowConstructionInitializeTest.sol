@@ -12,7 +12,8 @@ contract FlowConstructionInitializeTest is FlowERC1155Test {
     function testFlowConstructionInitializeERC1155(
         address expression,
         bytes memory bytecode,
-        uint256[] memory constants
+        uint256[] memory constants,
+        string memory uri
     ) external {
         expressionDeployerDeployExpression2MockCall(expression, bytes(hex"0007"));
 
@@ -20,7 +21,7 @@ contract FlowConstructionInitializeTest is FlowERC1155Test {
         flowConfig[0] = EvaluableConfigV3(iDeployer, bytecode, constants);
 
         FlowERC1155ConfigV3 memory flowERC1155ConfigV3 =
-            FlowERC1155ConfigV3("uri", EvaluableConfigV3(iDeployer, bytecode, constants), flowConfig);
+            FlowERC1155ConfigV3(uri, EvaluableConfigV3(iDeployer, bytecode, constants), flowConfig);
 
         vm.recordLogs();
         iCloneErc1155Factory.clone(address(iFlowErc1155Implementation), abi.encode(flowERC1155ConfigV3));
