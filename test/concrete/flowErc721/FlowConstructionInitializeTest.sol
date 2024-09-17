@@ -7,7 +7,6 @@ import {FlowERC721ConfigV2} from "src/interface/unstable/IFlowERC721V5.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {IExpressionDeployerV3} from "rain.interpreter.interface/interface/IExpressionDeployerV3.sol";
 import {FlowERC721Test} from "test/abstract/FlowERC721Test.sol";
-import {InsufficientTokenURIOutputs} from "src/error/ErrFlow.sol";
 
 contract FlowConstructionInitializeTest is FlowERC721Test {
     function testFlowConstructionInitializeERC721(address expression, bytes memory bytecode, uint256[] memory constants)
