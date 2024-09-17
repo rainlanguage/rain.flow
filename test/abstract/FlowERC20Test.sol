@@ -77,7 +77,7 @@ abstract contract FlowERC20Test is FlowBasicTest, AbstractFlowTest {
         address account,
         uint256 mint,
         uint256 burn,
-        uint256, /*id*/
+        uint256,
         FlowTransferV1 memory transfer
     ) internal view override returns (uint256[] memory stack, bytes32 transferHash) {
         ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);

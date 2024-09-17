@@ -95,13 +95,12 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
         IFlowERC721V5(flowAddress).flow(evaluable, callerContext, signedContexts);
     }
 
-    function mintAndBurnFlowStack(
-        address account,
-        uint256, /*mint*/
-        uint256, /*burn*/
-        uint256 id,
-        FlowTransferV1 memory transfer
-    ) internal view override returns (uint256[] memory stack, bytes32 transferHash) {
+    function mintAndBurnFlowStack(address account, uint256, uint256, uint256 id, FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory stack, bytes32 transferHash)
+    {
         ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
         mints[0] = ERC721SupplyChange({account: account, id: id});
 
