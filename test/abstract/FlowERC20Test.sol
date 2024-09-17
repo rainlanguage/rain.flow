@@ -48,7 +48,7 @@ abstract contract FlowERC20Test is FlowBasicTest {
         return (IFlowERC20V5(flow), evaluables);
     }
 
-    function buldConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
+    function buildConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
         internal
         override
         returns (bytes memory)

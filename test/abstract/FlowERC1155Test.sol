@@ -46,7 +46,7 @@ abstract contract FlowERC1155Test is FlowBasicTest {
         return (IFlowERC1155V5(flow), evaluables);
     }
 
-    function buldConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
+    function buildConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
         internal
         override
         returns (bytes memory)

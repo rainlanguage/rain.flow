@@ -62,7 +62,7 @@ abstract contract FlowERC721Test is FlowBasicTest {
         return (IFlowERC721V5(flow), evaluables);
     }
 
-    function buldConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
+    function buildConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
         internal
         override
         returns (bytes memory)

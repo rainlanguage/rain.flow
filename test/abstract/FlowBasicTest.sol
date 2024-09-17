@@ -47,7 +47,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         return expressionDeployer(expression, constants, abi.encodePacked(vm.addr(key)));
     }
 
-    function buldConfig(address, EvaluableConfigV3[] memory flowConfig) internal virtual returns (bytes memory) {
+    function buildConfig(address, EvaluableConfigV3[] memory flowConfig) internal virtual returns (bytes memory) {
         return abi.encode(flowConfig);
     }
 
@@ -65,7 +65,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
             }
 
             vm.recordLogs();
-            flow = iCloneFactory.clone(iFlowImplementation, buldConfig(configExpression, flowConfig));
+            flow = iCloneFactory.clone(iFlowImplementation, buildConfig(configExpression, flowConfig));
         }
 
         {
@@ -83,7 +83,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         address[] memory expressions = new address[](1);
         expressions[0] = address(uint160(uint256(keccak256("expression"))));
         (address flow, EvaluableV2[] memory evaluables) =
-            deployFlow({expressions: expressions, constants: new uint256[][](1)});
+            deployFlow({expressions: expressions, constants: new uint256[](0).matrixFrom()});
         return (flow, evaluables[0]);
     }
 
