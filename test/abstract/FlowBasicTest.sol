@@ -36,7 +36,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         internal
         returns (EvaluableConfigV3 memory)
     {
-        expressionDeployerDeployExpression2MockCall(bytecode, constants, expression, bytes(hex"0006"));
+        expressionDeployerDeployExpression2MockCall(bytecode, constants, expression, bytes(hex"00060001"));
         return EvaluableConfigV3(iDeployer, bytecode, constants);
     }
 
@@ -99,13 +99,12 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         return (flow, evaluables);
     }
 
-    function mintAndBurnFlowStack(
-        address, /*account*/
-        uint256, /*mint*/
-        uint256, /*burn*/
-        uint256, /*id*/
-        FlowTransferV1 memory transfer
-    ) internal view virtual returns (uint256[] memory stack, bytes32 transferHash) {
+    function mintAndBurnFlowStack(address, uint256, uint256, uint256, FlowTransferV1 memory transfer)
+        internal
+        view
+        virtual
+        returns (uint256[] memory stack, bytes32 transferHash)
+    {
         transferHash = keccak256(abi.encode(transfer));
         stack = sentinel.generateFlowStack(transfer);
     }

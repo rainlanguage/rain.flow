@@ -73,13 +73,12 @@ abstract contract FlowERC20Test is FlowBasicTest, AbstractFlowTest {
         return abi.encode(flowErc721Config);
     }
 
-    function mintAndBurnFlowStack(
-        address account,
-        uint256 mint,
-        uint256 burn,
-        uint256,
-        FlowTransferV1 memory transfer
-    ) internal view override returns (uint256[] memory stack, bytes32 transferHash) {
+    function mintAndBurnFlowStack(address account, uint256 mint, uint256 burn, uint256, FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory stack, bytes32 transferHash)
+    {
         ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
         mints[0] = ERC20SupplyChange({account: account, amount: mint});
 
