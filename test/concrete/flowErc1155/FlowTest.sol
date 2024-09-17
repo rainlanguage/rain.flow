@@ -2,6 +2,7 @@
 pragma solidity =0.8.19;
 
 import {Test, Vm} from "forge-std/Test.sol";
+import "forge-std/console.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {IERC20Upgradeable as IERC20} from
     "openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
@@ -47,6 +48,10 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.assume(alice != address(0));
         vm.assume(expressionA != expressionB);
         vm.assume(!alice.isContract());
+        vm.assume(sentinel != tokenIdA);
+        vm.assume(sentinel != tokenIdB);
+        vm.assume(sentinel != amountA);
+        vm.assume(sentinel != amountB);
 
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
@@ -54,6 +59,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         (IFlowERC1155V5 flow, EvaluableV2[] memory evaluables) =
             deployIFlowERC1155V5(expressions, expressionB, new uint256[][](1), "uri");
         assumeEtchable(alice, address(flow));
+        console.log("contextTransferAsss:", uint256(uint160(address(alice))));
 
         // Mint tokens to Alice
         {
@@ -80,6 +86,12 @@ contract Erc1155FlowTest is FlowERC1155Test {
             address(alice),
             address(flow)
         );
+        console.log("contextTransferA:", uint256(uint160(address(alice))));
+        console.log(uint256(uint160(address(flow))), tokenIdA);
+
+        console.log("ExpressionA:", address(expressionA));
+        console.log("ExpressionB:", address(expressionB));
+        console.log("Alice's balance before transfer: ", IERC1155(address(flow)).balanceOf(alice, tokenIdA));
 
         // Expect call token transfer
         interpreterEval2ExpectCall(
@@ -89,12 +101,14 @@ contract Erc1155FlowTest is FlowERC1155Test {
             ),
             contextTransferA
         );
-
+        console.log("Calling flow.flow");
         flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+        console.log("Called flow.flow");
 
         vm.startPrank(alice);
         IERC1155(address(flow)).safeTransferFrom(alice, address(flow), tokenIdA, amountA, "");
         vm.stopPrank();
+        console.log("Called safeTransferFrom");
 
         {
             uint256[][] memory contextTransferB = LibContextWrapper.buildAndSetContext(
