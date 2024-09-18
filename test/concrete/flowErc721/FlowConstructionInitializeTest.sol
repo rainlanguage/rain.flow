@@ -46,4 +46,34 @@ contract FlowConstructionInitializeTest is FlowERC721Test {
         assertEq(sender, address(iCloneErc721Factory), "wrong sender in Initialize event");
         assertEq(keccak256(abi.encode(flowERC721ConfigV2)), keccak256(abi.encode(config)), "wrong compare Structs");
     }
+
+    function testFlowConstructionBadCallerMetaERC721(
+        address expression,
+        bytes memory bytecode,
+        uint256[] memory constants,
+        string memory name,
+        string memory symbol,
+        string memory baseUri
+    ) external {
+        // Define callerMeta
+        bytes memory invalidCallerMeta = bytes(hex"00000006");
+
+        EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](1);
+        flowConfig[0] = EvaluableConfigV3(iDeployer, bytecode, constants);
+
+        FlowERC721ConfigV2 memory flowERC721ConfigV2 = FlowERC721ConfigV2(
+            name, symbol, baseUri, EvaluableConfigV3(iDeployerForEvalHandleTransfer, bytecode, constants), flowConfig
+        );
+
+        // Test with invalid callerMeta
+        vm.mockCall(
+            address(iDeployerForEvalHandleTransfer),
+            abi.encodeWithSelector(IExpressionDeployerV3.deployExpression2.selector),
+            abi.encode(iInterpreter, iStore, expression, invalidCallerMeta)
+        );
+
+        // Expecting revert due to bad callerMeta
+        vm.expectRevert();
+        iCloneErc721Factory.clone(address(iFlowERC721Implementation), abi.encode(flowERC721ConfigV2));
+    }
 }
