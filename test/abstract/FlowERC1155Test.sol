@@ -14,6 +14,7 @@ abstract contract FlowERC1155Test is FlowBasicTest {
     constructor() {
         vm.pauseGasMetering();
         iFlowImplementation = address(new FlowERC1155());
+        baseURI = "https://www.rainprotocol.xyz/nft/";
         vm.resumeGasMetering();
     }
 
@@ -52,9 +53,8 @@ abstract contract FlowERC1155Test is FlowBasicTest {
         returns (bytes memory)
     {
         EvaluableConfigV3 memory evaluableConfig =
-            expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
-        FlowERC1155ConfigV3 memory flowErc1155Config =
-            FlowERC1155ConfigV3("https://www.rainprotocol.xyz/nft/", evaluableConfig, flowConfig);
+            expressionDeployer(configExpression, new uint256[](0), createMockBytecode());
+        FlowERC1155ConfigV3 memory flowErc1155Config = FlowERC1155ConfigV3(baseURI, evaluableConfig, flowConfig);
         return abi.encode(flowErc1155Config);
     }
 }

@@ -21,6 +21,8 @@ abstract contract FlowERC20Test is FlowBasicTest, AbstractFlowTest {
     constructor() {
         vm.pauseGasMetering();
         iFlowImplementation = address(new FlowERC20());
+        name = "FlowERC20";
+        symbol = "F20";
         vm.resumeGasMetering();
     }
 
@@ -61,14 +63,10 @@ abstract contract FlowERC20Test is FlowBasicTest, AbstractFlowTest {
         returns (bytes memory)
     {
         EvaluableConfigV3 memory evaluableConfig =
-            expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
+            expressionDeployer(configExpression, new uint256[](0), createMockBytecode());
         // Initialize the FlowERC20Config struct
-        FlowERC20ConfigV2 memory flowErc721Config = FlowERC20ConfigV2({
-            name: "FlowERC20",
-            symbol: "F20",
-            evaluableConfig: evaluableConfig,
-            flowConfig: flowConfig
-        });
+        FlowERC20ConfigV2 memory flowErc721Config =
+            FlowERC20ConfigV2({name: name, symbol: symbol, evaluableConfig: evaluableConfig, flowConfig: flowConfig});
 
         return abi.encode(flowErc721Config);
     }

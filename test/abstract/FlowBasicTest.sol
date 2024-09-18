@@ -24,6 +24,9 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
 
     CloneFactory internal immutable iCloneFactory;
     address internal iFlowImplementation;
+    string internal name;
+    string internal symbol;
+    string internal baseURI;
 
     constructor() {
         vm.pauseGasMetering();
@@ -49,6 +52,26 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
 
     function buldConfig(address, EvaluableConfigV3[] memory flowConfig) internal virtual returns (bytes memory) {
         return abi.encode(flowConfig);
+    }
+
+    function createMockBytecode() internal pure virtual returns (bytes memory) {
+        /*
+            Bytecode structure:
+            - First byte: 0x03 (sourceCount = 3)
+            - Next 2 bytes: 0x0002 (offset for sourceIndex = 0)
+            - Next 2 bytes: 0x0005 (offset for sourceIndex = 1)
+            - Next 2 bytes: 0x0008 (offset for sourceIndex = 2)
+            - Data for sourceIndex = 0:
+                - opsCount: 0x0A
+                - opcode: 0xAA
+            - Data for sourceIndex = 1:
+                - opsCount: 0x0B
+                - opcode: 0xBB
+            - Data for sourceIndex = 2:
+                - opsCount: 0x0C
+                - opcode: 0xCC
+        */
+        return hex"030002000500080AAA0BBB0CCC";
     }
 
     function deployFlow(address[] memory expressions, address configExpression, uint256[][] memory constants)

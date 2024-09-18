@@ -26,6 +26,9 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
         iDeployerForEvalHandleTransfer =
             IExpressionDeployerV3(address(uint160(uint256(keccak256("deployer.for.evalhandle.transfer.rain.test")))));
         vm.etch(address(iInterpreter), REVERTING_MOCK_BYTECODE);
+        name = "FlowERC721";
+        symbol = "F721";
+        baseURI = "https://www.rainprotocol.xyz/nft/";
         vm.resumeGasMetering();
     }
 
@@ -73,12 +76,12 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
         returns (bytes memory)
     {
         EvaluableConfigV3 memory evaluableConfig =
-            expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
+            expressionDeployer(configExpression, new uint256[](0), createMockBytecode());
         // Initialize the FlowERC721Config struct
         FlowERC721ConfigV2 memory flowErc721Config = FlowERC721ConfigV2({
-            name: "FlowERC721",
-            symbol: "F721",
-            baseURI: "https://www.rainprotocol.xyz/nft/",
+            name: name,
+            symbol: symbol,
+            baseURI: baseURI,
             evaluableConfig: evaluableConfig,
             flowConfig: flowConfig
         });
@@ -108,6 +111,21 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
         burns[0] = ERC721SupplyChange({account: account, id: id});
 
         FlowERC721IOV1 memory flowERC721 = FlowERC721IOV1(mints, burns, transfer);
+
+        transferHash = keccak256(abi.encode(flowERC721));
+
+        stack = sentinel.generateFlowStack(flowERC721);
+    }
+
+    function mintFlowStack(address account, uint256, uint256 id, FlowTransferV1 memory transfer)
+        internal
+        view
+        returns (uint256[] memory stack, bytes32 transferHash)
+    {
+        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
+        mints[0] = ERC721SupplyChange({account: account, id: id});
+
+        FlowERC721IOV1 memory flowERC721 = FlowERC721IOV1(mints, new ERC721SupplyChange[](0), transfer);
 
         transferHash = keccak256(abi.encode(flowERC721));
 
