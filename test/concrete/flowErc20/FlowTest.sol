@@ -23,6 +23,7 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
+import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 
 contract Erc20FlowTest is FlowERC20Test {
     using LibEvaluable for EvaluableV2;
@@ -621,7 +622,7 @@ contract Erc20FlowTest is FlowERC20Test {
         );
 
         vm.startPrank(alice);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(MissingSentinel.selector, sentinel));
         flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
