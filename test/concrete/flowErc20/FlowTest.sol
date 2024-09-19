@@ -24,6 +24,7 @@ import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract Erc20FlowTest is FlowERC20Test {
     using LibEvaluable for EvaluableV2;
@@ -31,6 +32,7 @@ contract Erc20FlowTest is FlowERC20Test {
     using LibUint256Array for uint256[];
     using SignContextLib for Vm;
     using LibContextWrapper for uint256[][];
+    using Address for address;
 
     /**
      * @notice Tests the support for the transferPreflight hook.
@@ -624,6 +626,63 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(MissingSentinel.selector, sentinel));
         flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Tests not to be able to access values set in a flow across different flows
+     */
+    function testFlowERC20CannotAccessValuesAcrossDifferentFlows(
+        uint256 erc20OutAmount,
+        uint256 erc20InAmount,
+        address expressionA,
+        address expressionB,
+        address alice
+    ) external {
+        vm.assume(sentinel != erc20OutAmount);
+        vm.assume(sentinel != erc20InAmount);
+        vm.assume(alice != address(0));
+
+        vm.assume(!alice.isContract());
+
+        address[] memory expressions = new address[](2);
+        expressions[0] = expressionA;
+        expressions[1] = expressionB;
+
+        (IFlowERC20V5 erc20Flow, EvaluableV2[] memory evaluables) =
+            deployFlowERC20(expressions, expressionA, new uint256[][](2), "Flow ERC20", "F20");
+        assumeEtchable(alice, address(erc20Flow));
+
+        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
+        erc20Transfers[0] =
+            ERC20Transfer({token: address(iTokenA), from: address(erc20Flow), to: alice, amount: erc20OutAmount});
+        erc20Transfers[1] =
+            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc20Flow), amount: erc20InAmount});
+
+        vm.startPrank(alice);
+
+        vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
+        vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmount));
+
+        vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
+        vm.expectCall(
+            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc20Flow, erc20InAmount)
+        );
+
+        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
+
+        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
+
+        uint256[] memory stack = generateFlowStack(
+            FlowERC20IOV1(
+                mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+            )
+        );
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        erc20Flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 }
