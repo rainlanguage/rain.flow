@@ -17,7 +17,7 @@ abstract contract FlowERC721Test is FlowBasicTest {
 
     constructor() {
         vm.pauseGasMetering();
-        iFlowImplementation = address(new FlowERC721());
+        flowImplementation = address(new FlowERC721());
         iDeployerForEvalHandleTransfer =
             IExpressionDeployerV3(address(uint160(uint256(keccak256("deployer.for.evalhandle.transfer.rain.test")))));
         vm.etch(address(iInterpreter), REVERTING_MOCK_BYTECODE);

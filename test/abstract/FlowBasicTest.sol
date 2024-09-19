@@ -23,12 +23,12 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
     using Address for address;
 
     CloneFactory internal immutable iCloneFactory;
-    address internal iFlowImplementation;
+    address internal flowImplementation;
 
     constructor() {
         vm.pauseGasMetering();
         iCloneFactory = new CloneFactory();
-        iFlowImplementation = address(new Flow());
+        flowImplementation = address(new Flow());
         vm.resumeGasMetering();
     }
 
@@ -65,7 +65,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
             }
 
             vm.recordLogs();
-            flow = iCloneFactory.clone(iFlowImplementation, buildConfig(configExpression, flowConfig));
+            flow = iCloneFactory.clone(flowImplementation, buildConfig(configExpression, flowConfig));
         }
 
         {
@@ -109,7 +109,7 @@ abstract contract FlowBasicTest is FlowUtilsAbstractTest, InterpreterMockTest {
         vm.assume(account != address(iInterpreter));
         vm.assume(account != address(iStore));
         vm.assume(account != address(iCloneFactory));
-        vm.assume(account != address(iFlowImplementation));
+        vm.assume(account != address(flowImplementation));
         vm.assume(account != address(this));
         vm.assume(account != address(vm));
         vm.assume(sentinel != uint256(uint160(account)));

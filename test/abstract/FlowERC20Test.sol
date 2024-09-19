@@ -13,7 +13,7 @@ abstract contract FlowERC20Test is FlowBasicTest {
 
     constructor() {
         vm.pauseGasMetering();
-        iFlowImplementation = address(new FlowERC20());
+        flowImplementation = address(new FlowERC20());
         vm.resumeGasMetering();
     }
 

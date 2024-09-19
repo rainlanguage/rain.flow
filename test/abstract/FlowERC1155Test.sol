@@ -13,7 +13,7 @@ abstract contract FlowERC1155Test is FlowBasicTest {
 
     constructor() {
         vm.pauseGasMetering();
-        iFlowImplementation = address(new FlowERC1155());
+        flowImplementation = address(new FlowERC1155());
         vm.resumeGasMetering();
     }
 

@@ -17,7 +17,7 @@ contract FlowConstructionTest is FlowBasicTest {
         flowConfig[0] = EvaluableConfigV3(iDeployer, bytecode, constants);
 
         vm.recordLogs();
-        iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowConfig));
+        iCloneFactory.clone(address(flowImplementation), abi.encode(flowConfig));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature = keccak256("Initialize(address,(address,bytes,uint256[])[])");
