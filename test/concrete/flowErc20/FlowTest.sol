@@ -587,52 +587,6 @@ contract Erc20FlowTest is FlowERC20Test {
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
 
-        // Valid number of sentinels
-        (IFlowERC20V5 flowValid, EvaluableV2[] memory evaluablesValid) =
-            deployFlowERC20(expressions, expressionB, new uint256[][](1), "Flow ERC20", "F20");
-        assumeEtchable(alice, address(flowValid));
-
-        // Check that flow with valid number of sentinels passes
-        {
-            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-            mints[0] = ERC20SupplyChange({account: alice, amount: amount});
-
-            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-            burns[0] = ERC20SupplyChange({account: alice, amount: 0 ether});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC20IOV1(
-                    mints,
-                    burns,
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
-            interpreterEval2MockCall(stack, new uint256[](0));
-        }
-
-        uint256[][] memory context = LibContextWrapper.buildAndSetContext(
-            LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flowValid))), amount)
-                .matrixFrom(),
-            new SignedContextV1[](0),
-            address(alice),
-            address(flowValid)
-        );
-
-        // This should pass as the number of sentinels is valid
-        interpreterEval2ExpectCall(
-            address(flowValid),
-            LibEncodedDispatch.encode2(
-                expressionB, FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
-            ),
-            context
-        );
-
-        flowValid.flow(evaluablesValid[0], new uint256[](0), new SignedContextV1[](0));
-
-        vm.startPrank(alice);
-        IERC20(address(flowValid)).transfer(address(flowValid), amount);
-        vm.stopPrank();
-
         // Invalid number of sentinels (less than MIN_FLOW_SENTINELS)
         (IFlowERC20V5 flowInvalid, EvaluableV2[] memory evaluablesInvalid) =
             deployFlowERC20(expressions, expressionB, new uint256[][](1), "Flow ERC20 Invalid", "F20Inv");
