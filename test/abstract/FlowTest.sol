@@ -4,19 +4,14 @@ pragma solidity ^0.8.18;
 import {Vm} from "forge-std/Test.sol";
 import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {InterpreterMockTest} from "test/abstract/InterpreterMockTest.sol";
-import {IFlowV5} from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {STUB_EXPRESSION_BYTECODE, REVERTING_MOCK_BYTECODE} from "./TestConstants.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
-import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {LibLogHelper} from "test/lib/LibLogHelper.sol";
-import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
-    using LibUint256Matrix for uint256[];
     using LibLogHelper for Vm.Log[];
     using LibStackGeneration for uint256;
     using Address for address;
@@ -29,7 +24,13 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
         vm.resumeGasMetering();
     }
 
-    function buildConfig(address, EvaluableConfigV3[] memory flowConfig) internal virtual returns (bytes memory);
+    function buildConfig(
+        string memory name,
+        string memory symbol,
+        string memory baseURI,
+        address,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal virtual returns (bytes memory);
 
     function deployFlowImplementation() internal virtual returns (address flow);
 
@@ -48,10 +49,14 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
         return expressionDeployer(expression, constants, abi.encodePacked(vm.addr(key)));
     }
 
-    function deployFlow(address[] memory expressions, address configExpression, uint256[][] memory constants)
-        internal
-        returns (address flow, EvaluableV2[] memory evaluables)
-    {
+    function deployFlow(
+        string memory name,
+        string memory symbol,
+        string memory baseURI,
+        address[] memory expressions,
+        address configExpression,
+        uint256[][] memory constants
+    ) internal returns (address flow, EvaluableV2[] memory evaluables) {
         require(expressions.length == constants.length, "Expressions and constants array lengths must match");
 
         {
@@ -62,7 +67,9 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
             }
 
             vm.recordLogs();
-            flow = iCloneFactory.clone(deployFlowImplementation(), buildConfig(configExpression, flowConfig));
+            flow = iCloneFactory.clone(
+                deployFlowImplementation(), buildConfig(name, symbol, baseURI, configExpression, flowConfig)
+            );
         }
 
         {
@@ -74,26 +81,6 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
                 evaluables[i] = evaluable;
             }
         }
-    }
-
-    function deployFlow() internal returns (address, EvaluableV2 memory) {
-        address[] memory expressions = new address[](1);
-        expressions[0] = address(uint160(uint256(keccak256("expression"))));
-        (address flow, EvaluableV2[] memory evaluables) =
-            deployFlow({expressions: expressions, constants: new uint256[](0).matrixFrom()});
-        return (flow, evaluables[0]);
-    }
-
-    function deployFlow(address[] memory expressions, uint256[][] memory constants)
-        internal
-        returns (address flow, EvaluableV2[] memory evaluables)
-    {
-        (flow, evaluables) = deployFlow({
-            expressions: expressions,
-            configExpression: address(uint160(uint256(keccak256("configExpression")))),
-            constants: constants
-        });
-        return (flow, evaluables);
     }
 
     function assumeEtchable(address account) internal view {

@@ -53,11 +53,12 @@ abstract contract FlowERC721Test is FlowTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory,
-        string memory,
-        string memory
+        string memory name,
+        string memory symbol,
+        string memory baseURI
     ) internal returns (IFlowERC721V5, EvaluableV2[] memory) {
-        (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
+        (address flow, EvaluableV2[] memory evaluables) =
+            deployFlow(name, symbol, baseURI, expressions, configExpression, constants);
         return (IFlowERC721V5(flow), evaluables);
     }
 
@@ -65,18 +66,20 @@ abstract contract FlowERC721Test is FlowTest {
         flow = address(new FlowERC721());
     }
 
-    function buildConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
-        internal
-        override
-        returns (bytes memory)
-    {
+    function buildConfig(
+        string memory name,
+        string memory symbol,
+        string memory baseURI,
+        address configExpression,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal override returns (bytes memory) {
         EvaluableConfigV3 memory evaluableConfig =
             expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
         // Initialize the FlowERC721Config struct
         FlowERC721ConfigV2 memory flowErc721Config = FlowERC721ConfigV2({
-            name: "FlowERC721",
-            symbol: "F721",
-            baseURI: "https://www.rainprotocol.xyz/nft/",
+            name: name,
+            symbol: symbol,
+            baseURI: baseURI,
             evaluableConfig: evaluableConfig,
             flowConfig: flowConfig
         });

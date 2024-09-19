@@ -34,9 +34,10 @@ abstract contract FlowERC1155Test is FlowTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory
+        string memory baseURI
     ) internal returns (IFlowERC1155V5, EvaluableV2[] memory) {
-        (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
+        (address flow, EvaluableV2[] memory evaluables) =
+            deployFlow("", "", baseURI, expressions, configExpression, constants);
         return (IFlowERC1155V5(flow), evaluables);
     }
 
@@ -44,15 +45,16 @@ abstract contract FlowERC1155Test is FlowTest {
         flow = address(new FlowERC1155());
     }
 
-    function buildConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
-        internal
-        override
-        returns (bytes memory)
-    {
+    function buildConfig(
+        string memory,
+        string memory,
+        string memory baseURI,
+        address configExpression,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal override returns (bytes memory) {
         EvaluableConfigV3 memory evaluableConfig =
             expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
-        FlowERC1155ConfigV3 memory flowErc1155Config =
-            FlowERC1155ConfigV3("https://www.rainprotocol.xyz/nft/", evaluableConfig, flowConfig);
+        FlowERC1155ConfigV3 memory flowErc1155Config = FlowERC1155ConfigV3(baseURI, evaluableConfig, flowConfig);
         return abi.encode(flowErc1155Config);
     }
 }

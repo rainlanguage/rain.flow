@@ -11,6 +11,26 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 abstract contract FlowERC20Test is FlowTest {
     using LibUint256Matrix for uint256[];
 
+    function deployFlowImplementation() internal override returns (address flow) {
+        flow = address(new FlowERC20());
+    }
+
+    function buildConfig(
+        string memory name,
+        string memory symbol,
+        string memory,
+        address configExpression,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal override returns (bytes memory) {
+        EvaluableConfigV3 memory evaluableConfig =
+            expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
+        // Initialize the FlowERC20Config struct
+        FlowERC20ConfigV2 memory flowErc721Config =
+            FlowERC20ConfigV2({name: name, symbol: symbol, evaluableConfig: evaluableConfig, flowConfig: flowConfig});
+
+        return abi.encode(flowErc721Config);
+    }
+
     function deployFlowERC20(string memory name, string memory symbol)
         internal
         returns (IFlowERC20V5 flow, EvaluableV2 memory evaluable)
@@ -35,32 +55,11 @@ abstract contract FlowERC20Test is FlowTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory,
-        string memory
+        string memory name,
+        string memory symbol
     ) internal returns (IFlowERC20V5, EvaluableV2[] memory) {
-        (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
+        (address flow, EvaluableV2[] memory evaluables) =
+            deployFlow(name, symbol, "", expressions, configExpression, constants);
         return (IFlowERC20V5(flow), evaluables);
-    }
-
-    function deployFlowImplementation() internal override returns (address flow) {
-        flow = address(new FlowERC20());
-    }
-
-    function buildConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
-        internal
-        override
-        returns (bytes memory)
-    {
-        EvaluableConfigV3 memory evaluableConfig =
-            expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
-        // Initialize the FlowERC20Config struct
-        FlowERC20ConfigV2 memory flowErc721Config = FlowERC20ConfigV2({
-            name: "FlowERC20",
-            symbol: "F20",
-            evaluableConfig: evaluableConfig,
-            flowConfig: flowConfig
-        });
-
-        return abi.encode(flowErc721Config);
     }
 }
