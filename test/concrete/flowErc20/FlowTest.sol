@@ -578,18 +578,15 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow fails if number of sentinels is less than MIN_FLOW_SENTINEL.
      */
-    function testFlowERC20MinFlowSentinel(address alice, uint128 amount, address expressionA, address expressionB)
-        external
-    {
+    function testFlowERC20MinFlowSentinel(address alice, uint128 amount, address expressionA) external {
         vm.assume(alice != address(0));
-        vm.assume(expressionA != expressionB);
 
         address[] memory expressions = new address[](1);
         expressions[0] = expressionA;
 
         // Invalid number of sentinels (less than MIN_FLOW_SENTINELS)
         (IFlowERC20V5 flowInvalid, EvaluableV2[] memory evaluablesInvalid) =
-            deployFlowERC20(expressions, expressionB, new uint256[][](1), "Flow ERC20 Invalid", "F20Inv");
+            deployFlowERC20(expressions, expressionA, new uint256[][](1), "Flow ERC20 Invalid", "F20Inv");
         assumeEtchable(alice, address(flowInvalid));
 
         // Check that flow with invalid number of sentinels fails
@@ -615,11 +612,10 @@ contract Erc20FlowTest is FlowERC20Test {
             address(flowInvalid)
         );
 
-        // This should fail as the number of sentinels is less than MIN_FLOW_SENTINELS
         interpreterEval2RevertCall(
             address(flowInvalid),
             LibEncodedDispatch.encode2(
-                expressionB, FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
+                expressionA, FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
             ),
             contextInvalid
         );
