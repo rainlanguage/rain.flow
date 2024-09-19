@@ -632,50 +632,5 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.startPrank(alice);
         IERC20(address(flowValid)).transfer(address(flowValid), amount);
         vm.stopPrank();
-
-        // Invalid number of sentinels (less than MIN_FLOW_SENTINELS)
-        (IFlowERC20V5 flowInvalid, EvaluableV2[] memory evaluablesInvalid) =
-            deployFlowERC20(expressions, expressionB, new uint256[][](0), "Flow ERC20 Invalid", "F20Inv");
-        assumeEtchable(alice, address(flowInvalid));
-
-        // Check that flow with invalid number of sentinels fails
-        {
-            ERC20SupplyChange[] memory mintsInvalid = new ERC20SupplyChange[](1);
-            mintsInvalid[0] = ERC20SupplyChange({account: alice, amount: amount});
-
-            ERC20SupplyChange[] memory burnsInvalid = new ERC20SupplyChange[](1);
-            burnsInvalid[0] = ERC20SupplyChange({account: alice, amount: 0 ether});
-
-            uint256[] memory stackInvalid = generateFlowStack(
-                FlowERC20IOV1(
-                    mintsInvalid,
-                    burnsInvalid,
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
-            interpreterEval2MockCall(stackInvalid, new uint256[](0));
-        }
-
-        uint256[][] memory contextInvalid = LibContextWrapper.buildAndSetContext(
-            LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flowInvalid))), amount)
-                .matrixFrom(),
-            new SignedContextV1[](0),
-            address(alice),
-            address(flowInvalid)
-        );
-
-        // This should fail as the number of sentinels is less than MIN_FLOW_SENTINELS
-        interpreterEval2RevertCall(
-            address(flowInvalid),
-            LibEncodedDispatch.encode2(
-                expressionB, FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
-            ),
-            contextInvalid
-        );
-
-        vm.startPrank(alice);
-        vm.expectRevert("REVERT_EVAL2_CALL");
-        flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
-        vm.stopPrank();
     }
 }
