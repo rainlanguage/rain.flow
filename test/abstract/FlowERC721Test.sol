@@ -7,17 +7,16 @@ import {IExpressionDeployerV3} from "rain.interpreter.interface/interface/IExpre
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
+import {FlowTest} from "test/abstract/FlowTest.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 
-abstract contract FlowERC721Test is FlowBasicTest {
+abstract contract FlowERC721Test is FlowTest {
     using LibUint256Matrix for uint256[];
 
     IExpressionDeployerV3 internal immutable iDeployerForEvalHandleTransfer;
 
     constructor() {
         vm.pauseGasMetering();
-        flowImplementation = address(new FlowERC721());
         iDeployerForEvalHandleTransfer =
             IExpressionDeployerV3(address(uint160(uint256(keccak256("deployer.for.evalhandle.transfer.rain.test")))));
         vm.etch(address(iInterpreter), REVERTING_MOCK_BYTECODE);
@@ -60,6 +59,10 @@ abstract contract FlowERC721Test is FlowBasicTest {
     ) internal returns (IFlowERC721V5, EvaluableV2[] memory) {
         (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
         return (IFlowERC721V5(flow), evaluables);
+    }
+
+    function deployFlowImplementation() internal override returns (address flow) {
+        flow = address(new FlowERC721());
     }
 
     function buildConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)

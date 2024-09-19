@@ -6,16 +6,10 @@ import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpret
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {FlowERC1155} from "../../src/concrete/erc1155/FlowERC1155.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
-import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
+import {FlowTest} from "test/abstract/FlowTest.sol";
 
-abstract contract FlowERC1155Test is FlowBasicTest {
+abstract contract FlowERC1155Test is FlowTest {
     using LibUint256Matrix for uint256[];
-
-    constructor() {
-        vm.pauseGasMetering();
-        flowImplementation = address(new FlowERC1155());
-        vm.resumeGasMetering();
-    }
 
     function deployIFlowERC1155V5(string memory uri)
         internal
@@ -44,6 +38,10 @@ abstract contract FlowERC1155Test is FlowBasicTest {
     ) internal returns (IFlowERC1155V5, EvaluableV2[] memory) {
         (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
         return (IFlowERC1155V5(flow), evaluables);
+    }
+
+    function deployFlowImplementation() internal override returns (address flow) {
+        flow = address(new FlowERC1155());
     }
 
     function buildConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
