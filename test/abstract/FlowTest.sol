@@ -10,6 +10,7 @@ import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {LibLogHelper} from "test/lib/LibLogHelper.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {FlowTransferV1} from "src/interface/unstable/IFlowV5.sol";
 
 abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
     using LibLogHelper for Vm.Log[];
@@ -34,11 +35,16 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
 
     function deployFlowImplementation() internal virtual returns (address flow);
 
+    function mintAndBurnFlowStack(address account, uint256 mint, uint256 burn, uint256, FlowTransferV1 memory transfer)
+        internal
+        virtual
+        returns (uint256[] memory stack, bytes32 transferHash);
+
     function expressionDeployer(address expression, uint256[] memory constants, bytes memory bytecode)
         internal
         returns (EvaluableConfigV3 memory)
     {
-        expressionDeployerDeployExpression2MockCall(bytecode, constants, expression, bytes(hex"0006"));
+        expressionDeployerDeployExpression2MockCall(bytecode, constants, expression, bytes(hex"00060001"));
         return EvaluableConfigV3(iDeployer, bytecode, constants);
     }
 

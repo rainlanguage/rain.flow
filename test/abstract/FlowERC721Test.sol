@@ -12,7 +12,6 @@ import {FlowTest} from "test/abstract/FlowTest.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
-import {AbstractFlowTest} from "test/abstract/flow/AbstractFlowTest.sol";
 
 abstract contract FlowERC721Test is FlowTest {
     using LibUint256Matrix for uint256[];

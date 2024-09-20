@@ -6,10 +6,12 @@ import {Flow} from "src/concrete/basic/Flow.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
-import {IFlowV5} from "src/interface/unstable/IFlowV5.sol";
+import {IFlowV5, FlowTransferV1} from "src/interface/unstable/IFlowV5.sol";
+import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
 abstract contract FlowBasicTest is FlowTest {
     using LibUint256Matrix for uint256[];
+    using LibStackGeneration for uint256;
 
     function buildConfig(string memory, string memory, string memory, address, EvaluableConfigV3[] memory flowConfig)
         internal
@@ -50,7 +52,7 @@ abstract contract FlowBasicTest is FlowTest {
     function mintAndBurnFlowStack(address, uint256, uint256, uint256, FlowTransferV1 memory transfer)
         internal
         view
-        virtual
+        override
         returns (uint256[] memory stack, bytes32 transferHash)
     {
         transferHash = keccak256(abi.encode(transfer));
