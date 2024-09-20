@@ -8,22 +8,17 @@ import {FlowTransferV1} from "src/interface/unstable/IFlowV5.sol";
 import {FlowERC20} from "src/concrete/erc20/FlowERC20.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
-import {AbstractFlowTest} from "test/abstract/flow/AbstractFlowTest.sol";
+import {FlowTest} from "test/abstract/FlowTest.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 
-abstract contract FlowERC20Test is FlowBasicTest, AbstractFlowTest {
+abstract contract FlowERC20Test is FlowTest {
     using LibUint256Matrix for uint256[];
     using LibStackGeneration for uint256;
 
-    constructor() {
-        vm.pauseGasMetering();
-        iFlowImplementation = address(new FlowERC20());
-        name = "FlowERC20";
-        symbol = "F20";
-        vm.resumeGasMetering();
+    function deployFlowImplementation() internal override returns (address flow) {
+        flow = address(new FlowERC20());
     }
 
     function deployFlowERC20(string memory name, string memory symbol)
@@ -50,18 +45,21 @@ abstract contract FlowERC20Test is FlowBasicTest, AbstractFlowTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory,
-        string memory
+        string memory name,
+        string memory symbol
     ) internal returns (IFlowERC20V5, EvaluableV2[] memory) {
-        (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
+        (address flow, EvaluableV2[] memory evaluables) =
+            deployFlow(name, symbol, "", expressions, configExpression, constants);
         return (IFlowERC20V5(flow), evaluables);
     }
 
-    function buldConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
-        internal
-        override
-        returns (bytes memory)
-    {
+    function buldConfig(
+        string memory name,
+        string memory symbol,
+        string memory,
+        address configExpression,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal override returns (bytes memory) {
         EvaluableConfigV3 memory evaluableConfig =
             expressionDeployer(configExpression, new uint256[](0), createMockBytecode());
         // Initialize the FlowERC20Config struct
@@ -88,14 +86,5 @@ abstract contract FlowERC20Test is FlowBasicTest, AbstractFlowTest {
         transferHash = keccak256(abi.encode(flowERC20IO));
 
         stack = sentinel.generateFlowStack(flowERC20IO);
-    }
-
-    function abstractFlowCall(
-        address flowAddress,
-        EvaluableV2 memory evaluable,
-        uint256[] memory callerContext,
-        SignedContextV1[] memory signedContexts
-    ) internal override {
-        IFlowERC20V5(flowAddress).flow(evaluable, callerContext, signedContexts);
     }
 }

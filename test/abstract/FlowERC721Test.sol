@@ -8,13 +8,12 @@ import {IExpressionDeployerV3} from "rain.interpreter.interface/interface/IExpre
 import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
-import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
+import {FlowTest} from "test/abstract/FlowTest.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
-import {AbstractFlowTest} from "test/abstract/flow/AbstractFlowTest.sol";
 
-abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
+abstract contract FlowERC721Test is FlowTest {
     using LibUint256Matrix for uint256[];
     using LibStackGeneration for uint256;
 
@@ -22,7 +21,6 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
 
     constructor() {
         vm.pauseGasMetering();
-        iFlowImplementation = address(new FlowERC721());
         iDeployerForEvalHandleTransfer =
             IExpressionDeployerV3(address(uint160(uint256(keccak256("deployer.for.evalhandle.transfer.rain.test")))));
         vm.etch(address(iInterpreter), REVERTING_MOCK_BYTECODE);
@@ -62,19 +60,26 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory,
-        string memory,
-        string memory
+        string memory name,
+        string memory symbol,
+        string memory baseURI
     ) internal returns (IFlowERC721V5, EvaluableV2[] memory) {
-        (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
+        (address flow, EvaluableV2[] memory evaluables) =
+            deployFlow(name, symbol, baseURI, expressions, configExpression, constants);
         return (IFlowERC721V5(flow), evaluables);
     }
 
-    function buldConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
-        internal
-        override
-        returns (bytes memory)
-    {
+    function deployFlowImplementation() internal override returns (address flow) {
+        flow = address(new FlowERC721());
+    }
+
+    function buildConfig(
+        string memory name,
+        string memory symbol,
+        string memory baseURI,
+        address configExpression,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal override returns (bytes memory) {
         EvaluableConfigV3 memory evaluableConfig =
             expressionDeployer(configExpression, new uint256[](0), createMockBytecode());
         // Initialize the FlowERC721Config struct
@@ -87,15 +92,6 @@ abstract contract FlowERC721Test is FlowBasicTest, AbstractFlowTest {
         });
 
         return abi.encode(flowErc721Config);
-    }
-
-    function abstractFlowCall(
-        address flowAddress,
-        EvaluableV2 memory evaluable,
-        uint256[] memory callerContext,
-        SignedContextV1[] memory signedContexts
-    ) internal override {
-        IFlowERC721V5(flowAddress).flow(evaluable, callerContext, signedContexts);
     }
 
     function mintAndBurnFlowStack(address account, uint256, uint256, uint256 id, FlowTransferV1 memory transfer)
