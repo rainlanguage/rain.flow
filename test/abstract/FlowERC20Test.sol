@@ -53,7 +53,7 @@ abstract contract FlowERC20Test is FlowTest {
         return (IFlowERC20V5(flow), evaluables);
     }
 
-    function buldConfig(
+    function buildConfig(
         string memory name,
         string memory symbol,
         string memory,

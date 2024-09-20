@@ -89,6 +89,26 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
         }
     }
 
+    function createMockBytecode() internal pure virtual returns (bytes memory) {
+        /*
+            Bytecode structure:
+            - First byte: 0x03 (sourceCount = 3)
+            - Next 2 bytes: 0x0002 (offset for sourceIndex = 0)
+            - Next 2 bytes: 0x0005 (offset for sourceIndex = 1)
+            - Next 2 bytes: 0x0008 (offset for sourceIndex = 2)
+            - Data for sourceIndex = 0:
+                - opsCount: 0x0A
+                - opcode: 0xAA
+            - Data for sourceIndex = 1:
+                - opsCount: 0x0B
+                - opcode: 0xBB
+            - Data for sourceIndex = 2:
+                - opsCount: 0x0C
+                - opcode: 0xCC
+        */
+        return hex"030002000500080AAA0BBB0CCC";
+    }
+
     function assumeEtchable(address account) internal view {
         assumeEtchable(account, address(0));
     }

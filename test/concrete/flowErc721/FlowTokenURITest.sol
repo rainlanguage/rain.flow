@@ -30,17 +30,20 @@ contract Erc721TokenURITest is FlowERC721Test {
     /**
      * @dev Tests the generation of tokenURI based on the expression result.
      */
-    function testGenerateTokenURIBasedOnExpressionResult(address alice, uint256 tokenId) external {
+    function testGenerateTokenURIBasedOnExpressionResult(address alice, uint256 tokenId, string memory baseURI)
+        external
+    {
         vm.assume(alice != address(0));
         vm.assume(tokenId > 0);
+        vm.assume(bytes(baseURI).length > 0);
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
-        assumeEtchable(alice, flow);
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) = deployFlowERC721("FlowErc721", "FErc721", baseURI);
+        assumeEtchable(alice, address(flow));
 
         {
             (uint256[] memory stack,) = mintFlowStack(alice, 0, tokenId, transferEmpty());
             interpreterEval2MockCall(stack, new uint256[](0));
-            IFlowERC721V5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         }
 
         {
@@ -50,13 +53,13 @@ contract Erc721TokenURITest is FlowERC721Test {
         }
 
         uint256[][] memory context = LibContextWrapper.buildAndSetContext(
-            LibUint256Array.arrayFrom(tokenId).matrixFrom(), new SignedContextV1[](0), alice, flow
+            LibUint256Array.arrayFrom(tokenId).matrixFrom(), new SignedContextV1[](0), alice, address(flow)
         );
 
         {
             // Expect call token URI
             interpreterEval2ExpectCall(
-                flow,
+                address(flow),
                 LibEncodedDispatch.encode2(
                     address(uint160(uint256(keccak256("configExpression")))),
                     FLOW_ERC721_TOKEN_URI_ENTRYPOINT,
@@ -68,7 +71,7 @@ contract Erc721TokenURITest is FlowERC721Test {
             vm.startPrank(alice);
             assertEq(
                 string.concat(baseURI, tokenId.toString()),
-                IERC721Metadata(flow).tokenURI(tokenId),
+                IERC721Metadata(address(flow)).tokenURI(tokenId),
                 "Unexpected token URI mismatch"
             );
             vm.stopPrank();
@@ -76,7 +79,7 @@ contract Erc721TokenURITest is FlowERC721Test {
 
         {
             interpreterEval2RevertCall(
-                flow,
+                address(flow),
                 LibEncodedDispatch.encode2(
                     address(uint160(uint256(keccak256("configExpression")))),
                     FLOW_ERC721_TOKEN_URI_ENTRYPOINT,
@@ -87,7 +90,7 @@ contract Erc721TokenURITest is FlowERC721Test {
 
             vm.startPrank(alice);
             vm.expectRevert("REVERT_EVAL2_CALL");
-            IERC721Metadata(flow).tokenURI(tokenId);
+            IERC721Metadata(address(flow)).tokenURI(tokenId);
             vm.stopPrank();
         }
     }

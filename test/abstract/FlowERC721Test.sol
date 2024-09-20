@@ -24,9 +24,6 @@ abstract contract FlowERC721Test is FlowTest {
         iDeployerForEvalHandleTransfer =
             IExpressionDeployerV3(address(uint160(uint256(keccak256("deployer.for.evalhandle.transfer.rain.test")))));
         vm.etch(address(iInterpreter), REVERTING_MOCK_BYTECODE);
-        name = "FlowERC721";
-        symbol = "F721";
-        baseURI = "https://www.rainprotocol.xyz/nft/";
         vm.resumeGasMetering();
     }
 
@@ -118,6 +115,8 @@ abstract contract FlowERC721Test is FlowTest {
         view
         returns (uint256[] memory stack, bytes32 transferHash)
     {
+        vm.assume(sentinel != id);
+
         ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
         mints[0] = ERC721SupplyChange({account: account, id: id});
 
