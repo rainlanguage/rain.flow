@@ -649,9 +649,24 @@ contract Erc20FlowTest is FlowERC20Test {
         expressions[0] = expressionA;
         expressions[1] = expressionB;
 
+        uint256[][] memory constants = new uint256[][](2);
+
+        {
+            uint256[] memory constantsA = new uint256[](2);
+            constantsA[0] = 10;
+            constantsA[1] = 20;
+
+            uint256[] memory constantsB = new uint256[](3);
+            constantsB[0] = 30;
+            constantsB[1] = 40;
+            constantsB[2] = 50;
+
+            constants[0] = constantsA;
+            constants[1] = constantsB;
+        }
+
         (IFlowERC20V5 erc20Flow, EvaluableV2[] memory evaluables) =
-            deployFlowERC20(expressions, expressionA, new uint256[][](2), "Flow ERC20", "F20");
-        assumeEtchable(alice, address(erc20Flow));
+            deployFlowERC20(expressions, expressionA, constants, "Flow ERC20", "F20");
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
         erc20Transfers[0] =
