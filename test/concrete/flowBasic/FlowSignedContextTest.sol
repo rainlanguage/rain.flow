@@ -23,7 +23,7 @@ contract FlowSignedContextTest is FlowBasicTest {
         uint256 fuzzedKeyBob
     ) public {
         vm.assume(fuzzedKeyBob != fuzzedKeyAlice);
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
@@ -38,7 +38,7 @@ contract FlowSignedContextTest is FlowBasicTest {
             generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
 
         interpreterEval2MockCall(stack, new uint256[](0));
-        IFlowV5(flow).flow(evaluable, new uint256[](0), signedContexts);
+        flow.flow(evaluable, new uint256[](0), signedContexts);
 
         // With bad signature in second signed context
         SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
@@ -50,7 +50,7 @@ contract FlowSignedContextTest is FlowBasicTest {
         interpreterEval2MockCall(stack1, new uint256[](0));
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 1));
-        IFlowV5(flow).flow(evaluable, new uint256[](0), signedContexts1);
+        flow.flow(evaluable, new uint256[](0), signedContexts1);
     }
 
     /// Should validate a signed context
@@ -60,7 +60,7 @@ contract FlowSignedContextTest is FlowBasicTest {
         uint256 fuzzedKeyBob
     ) public {
         vm.assume(fuzzedKeyBob != fuzzedKeyAlice);
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
@@ -72,7 +72,7 @@ contract FlowSignedContextTest is FlowBasicTest {
         uint256[] memory stack =
             generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
         interpreterEval2MockCall(stack, new uint256[](0));
-        IFlowV5(flow).flow(evaluable, new uint256[](0), signedContext);
+        flow.flow(evaluable, new uint256[](0), signedContext);
 
         // With bad signature in second signed context
         SignedContextV1[] memory signedContext1 = new SignedContextV1[](1);
@@ -83,6 +83,6 @@ contract FlowSignedContextTest is FlowBasicTest {
         interpreterEval2MockCall(stack1, new uint256[](0));
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 0));
-        IFlowV5(flow).flow(evaluable, new uint256[](0), signedContext1);
+        flow.flow(evaluable, new uint256[](0), signedContext1);
     }
 }

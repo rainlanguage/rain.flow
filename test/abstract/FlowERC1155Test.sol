@@ -6,16 +6,10 @@ import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpret
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {FlowERC1155} from "../../src/concrete/erc1155/FlowERC1155.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
-import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
+import {FlowTest} from "test/abstract/FlowTest.sol";
 
-abstract contract FlowERC1155Test is FlowBasicTest {
+abstract contract FlowERC1155Test is FlowTest {
     using LibUint256Matrix for uint256[];
-
-    constructor() {
-        vm.pauseGasMetering();
-        iFlowImplementation = address(new FlowERC1155());
-        vm.resumeGasMetering();
-    }
 
     function deployIFlowERC1155V5(string memory uri)
         internal
@@ -40,21 +34,27 @@ abstract contract FlowERC1155Test is FlowBasicTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory
+        string memory baseURI
     ) internal returns (IFlowERC1155V5, EvaluableV2[] memory) {
-        (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
+        (address flow, EvaluableV2[] memory evaluables) =
+            deployFlow("", "", baseURI, expressions, configExpression, constants);
         return (IFlowERC1155V5(flow), evaluables);
     }
 
-    function buldConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
-        internal
-        override
-        returns (bytes memory)
-    {
+    function deployFlowImplementation() internal override returns (address flow) {
+        flow = address(new FlowERC1155());
+    }
+
+    function buildConfig(
+        string memory,
+        string memory,
+        string memory baseURI,
+        address configExpression,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal override returns (bytes memory) {
         EvaluableConfigV3 memory evaluableConfig =
             expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
-        FlowERC1155ConfigV3 memory flowErc1155Config =
-            FlowERC1155ConfigV3("https://www.rainprotocol.xyz/nft/", evaluableConfig, flowConfig);
+        FlowERC1155ConfigV3 memory flowErc1155Config = FlowERC1155ConfigV3(baseURI, evaluableConfig, flowConfig);
         return abi.encode(flowErc1155Config);
     }
 }

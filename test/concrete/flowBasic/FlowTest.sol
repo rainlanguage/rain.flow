@@ -26,7 +26,52 @@ contract FlowTest is AbstractFlowTest {
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount
     ) external {
-        flowERC20FlowERC721ToERC1155(alice, erc721InTokenId, erc1155OutTokenId, erc1155OutAmount);
+        vm.assume(sentinel != erc721InTokenId);
+        vm.assume(sentinel != erc1155OutTokenId);
+        vm.assume(sentinel != erc1155OutAmount);
+
+        vm.label(alice, "Alice");
+
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+
+        assumeEtchable(alice, address(flow));
+
+        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
+        erc721Transfers[0] =
+            ERC721Transfer({token: address(iTokenA), from: alice, to: address(flow), id: erc721InTokenId});
+
+        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](1);
+        erc1155Transfers[0] = ERC1155Transfer({
+            token: address(iTokenB),
+            from: address(flow),
+            to: alice,
+            id: erc1155OutTokenId,
+            amount: erc1155OutAmount
+        });
+
+        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
+        vm.expectCall(
+            iTokenB,
+            abi.encodeWithSelector(
+                IERC1155.safeTransferFrom.selector, flow, alice, erc1155OutTokenId, erc1155OutAmount, ""
+            )
+        );
+
+        vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
+        vm.expectCall(
+            iTokenA,
+            abi.encodeWithSelector(
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, flow, erc721InTokenId
+            )
+        );
+
+        uint256[] memory stack =
+            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers));
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        vm.startPrank(alice);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
     }
 
     function testFlowERC20ToERC721(address bob, uint256 erc20InAmount, uint256 erc721OutTokenId) external {
@@ -34,7 +79,7 @@ contract FlowTest is AbstractFlowTest {
         vm.assume(sentinel != erc721OutTokenId);
         vm.label(bob, "Bob");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(bob, address(flow));
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
@@ -60,7 +105,7 @@ contract FlowTest is AbstractFlowTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(bob);
-        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -77,7 +122,7 @@ contract FlowTest is AbstractFlowTest {
         vm.assume(sentinel != erc1155InAmount);
         vm.label(alice, "alice");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alice, address(flow));
 
         ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
@@ -119,7 +164,7 @@ contract FlowTest is AbstractFlowTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(alice);
-        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -128,7 +173,7 @@ contract FlowTest is AbstractFlowTest {
         vm.assume(sentinel != erc721InTokenId);
         vm.label(bob, "Bob");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(bob, address(flow));
 
         ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
@@ -159,7 +204,7 @@ contract FlowTest is AbstractFlowTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(bob);
-        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -168,7 +213,7 @@ contract FlowTest is AbstractFlowTest {
         vm.assume(sentinel != erc20InAmount);
         vm.label(alise, "Alise");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alise, address(flow));
 
         ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
@@ -189,7 +234,7 @@ contract FlowTest is AbstractFlowTest {
         interpreterEval2MockCall(stack, new uint256[](0));
 
         vm.startPrank(alise);
-        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -203,7 +248,7 @@ contract FlowTest is AbstractFlowTest {
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alise, address(flow));
         assumeEtchable(bob, address(flow));
 
@@ -222,7 +267,7 @@ contract FlowTest is AbstractFlowTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
-        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
 
         {
@@ -240,7 +285,7 @@ contract FlowTest is AbstractFlowTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
-        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -255,7 +300,7 @@ contract FlowTest is AbstractFlowTest {
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alise, address(flow));
         assumeEtchable(bob, address(flow));
 
@@ -274,7 +319,7 @@ contract FlowTest is AbstractFlowTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC721Flow.selector));
-        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -294,7 +339,7 @@ contract FlowTest is AbstractFlowTest {
         vm.label(alise, "Alise");
         vm.label(bob, "Bob");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
         assumeEtchable(alise, address(flow));
         assumeEtchable(bob, address(flow));
@@ -325,7 +370,7 @@ contract FlowTest is AbstractFlowTest {
 
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC1155Flow.selector));
-        IFlowV5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -346,10 +391,10 @@ contract FlowTest is AbstractFlowTest {
         address[] memory expressionsB = new address[](1);
         expressionsB[0] = expressionB;
 
-        (address flowB,) = deployFlow(expressionsB, new uint256[][](1));
+        (IFlowV5 flowB,) = deployFlow(expressionsB, new uint256[][](1));
         vm.startPrank(alise);
         vm.expectRevert(abi.encodeWithSelector(UnregisteredFlow.selector, evaluables[0].hash()));
-        IFlowV5(flowB).flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+        flowB.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 }
