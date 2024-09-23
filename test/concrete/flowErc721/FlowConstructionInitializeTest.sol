@@ -32,7 +32,7 @@ contract FlowConstructionInitializeTest is FlowERC721Test {
         );
 
         vm.recordLogs();
-        iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowERC721ConfigV2));
+        iCloneFactory.clone(deployFlowImplementation(), abi.encode(flowERC721ConfigV2));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature = keccak256(
