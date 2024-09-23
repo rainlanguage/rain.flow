@@ -1,26 +1,40 @@
 // SPDX-License-Identifier: CAL
 pragma solidity =0.8.19;
 
-import {AbstractPreviewTest} from "test/abstract/flow/AbstractPreviewTest.sol";
+import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
 import {
     IFlowV5, FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer
 } from "src/interface/unstable/IFlowV5.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 
-contract FlowPreviewTest is AbstractPreviewTest {
+contract FlowPreviewTest is FlowBasicTest {
     using LibEvaluable for EvaluableV2;
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC1155
-     * using multi-element arrays.
+     *      using multi-element arrays.
      */
     function testFlowBasePreviewDefinedFlowIOForERC1155MultiElementArrays(
         address alice,
         uint256 erc1155Amount,
         uint256 erc1155TokenId
     ) external {
-        flowPreviewDefinedFlowIOForERC1155MultiElementArrays(alice, erc1155Amount, erc1155TokenId);
+        vm.label(alice, "alice");
+
+        (IFlowV5 flow,) = deployFlow();
+        assumeEtchable(alice, address(flow));
+        {
+            (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
+            );
+
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
+        }
     }
 
     /**
@@ -32,7 +46,16 @@ contract FlowPreviewTest is AbstractPreviewTest {
         uint256 erc721TokenIdA,
         uint256 erc721TokenIdB
     ) external {
-        flowPreviewDefinedFlowIOForERC721MultiElementArrays(alice, erc721TokenIdA, erc721TokenIdB);
+        vm.label(alice, "alice");
+
+        (IFlowV5 flow,) = deployFlow();
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, multiTransferERC721(alice, address(flow), erc721TokenIdA, erc721TokenIdB)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**

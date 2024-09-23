@@ -211,7 +211,28 @@ contract Erc20FlowTest is FlowERC20Test {
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount
     ) external {
-        flowERC20FlowERC721ToERC1155(alice, erc721InTokenId, erc1155OutTokenId, erc1155OutAmount);
+        vm.assume(address(0) != alice);
+        vm.label(alice, "Alice");
+
+        (IFlowERC20V5 flow, EvaluableV2 memory evaluable) = deployFlowERC20("FlowERC20", "F20");
+        assumeEtchable(alice, address(flow));
+
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC721ToERC1155(alice, address(flow), erc721InTokenId, erc1155OutAmount, erc1155OutTokenId)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+        }
     }
 
     /**

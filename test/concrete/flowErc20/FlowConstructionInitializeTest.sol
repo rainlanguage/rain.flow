@@ -19,7 +19,7 @@ contract FlowConstructionInitializeTest is FlowERC20Test {
             FlowERC20ConfigV2("Flow ERC20", "F20", EvaluableConfigV3(iDeployer, bytecode, constants), flowConfig);
 
         vm.recordLogs();
-        iCloneFactory.clone(address(iFlowImplementation), abi.encode(flowERC20ConfigV2));
+        iCloneFactory.clone(deployFlowImplementation(), abi.encode(flowERC20ConfigV2));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature =
