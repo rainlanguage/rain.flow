@@ -639,12 +639,15 @@ contract Erc20FlowTest is FlowERC20Test {
         address expressionB,
         address alice
     ) external {
+        vm.assume(erc20InAmount != 0);
+        vm.assume(erc20OutAmount != 0);
         vm.assume(sentinel != erc20OutAmount);
         vm.assume(sentinel != erc20InAmount);
         vm.assume(alice != address(0));
-
         vm.assume(!alice.isContract());
+        vm.assume(expressionA != expressionB);
 
+        // Prepare expressions and constants for two different flows
         address[] memory expressions = new address[](2);
         expressions[0] = expressionA;
         expressions[1] = expressionB;
@@ -665,6 +668,7 @@ contract Erc20FlowTest is FlowERC20Test {
             constants[1] = constantsB;
         }
 
+        // Deploy the ERC20 flow with the given expressions and constants
         (IFlowERC20V5 erc20Flow, EvaluableV2[] memory evaluables) =
             deployFlowERC20(expressions, expressionA, constants, "Flow ERC20", "F20");
 
@@ -676,12 +680,15 @@ contract Erc20FlowTest is FlowERC20Test {
 
         vm.startPrank(alice);
 
+        // Mock ERC20 transfer calls for iTokenA
         vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
         vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmount));
 
+        // Mock ERC20 transferFrom calls for iTokenB
         vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(
-            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc20Flow, erc20InAmount)
+            address(iTokenB),
+            abi.encodeWithSelector(IERC20.transferFrom.selector, alice, address(erc20Flow), erc20InAmount)
         );
 
         ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
@@ -690,14 +697,33 @@ contract Erc20FlowTest is FlowERC20Test {
         ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
         burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
 
-        uint256[] memory stack = generateFlowStack(
+        uint256[] memory stackFlowA = generateFlowStack(
             FlowERC20IOV1(
                 mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
             )
         );
-        interpreterEval2MockCall(stack, new uint256[](0));
 
+        // Mock interpreter evaluation for Flow A
+        interpreterEval2MockCall(stackFlowA, new uint256[](0));
+
+        // Execute Flow A
         erc20Flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+
+        // Prepare the stack for the interpreter evaluation for Flow A
+        uint256[] memory stackFlowB = generateFlowStack(
+            FlowERC20IOV1(
+                new ERC20SupplyChange[](0),
+                new ERC20SupplyChange[](0),
+                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+            )
+        );
+
+        // Mock interpreter evaluation for Flow B
+        interpreterEval2MockCall(stackFlowB, new uint256[](0));
+
+        // Execute Flow B
+        erc20Flow.flow(evaluables[1], new uint256[](0), new SignedContextV1[](0));
+
         vm.stopPrank();
     }
 }
