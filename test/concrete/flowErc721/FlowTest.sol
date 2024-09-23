@@ -127,7 +127,8 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.assume(address(0) != alice);
         vm.label(alice, "Alice");
 
-        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) = deployFlowERC721("FlowERC721", "F721", "https://www.rainprotocol.xyz/nft/");
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721("FlowERC721", "F721", "https://www.rainprotocol.xyz/nft/");
         assumeEtchable(alice, address(flow));
 
         {

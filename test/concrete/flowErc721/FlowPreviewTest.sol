@@ -14,10 +14,11 @@ contract FlowPreviewTest is FlowERC721Test {
         address alice,
         uint256 erc1155Amount,
         uint256 erc1155TokenId
-    ) internal {
+    ) external {
         vm.label(alice, "alice");
 
-        (IFlowERC721V5 flow,) = deployFlow();
+        (IFlowERC721V5 flow,) =
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: "https://www.rainprotocol.xyz/nft/"});
         assumeEtchable(alice, address(flow));
         {
             (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
@@ -28,11 +29,7 @@ contract FlowPreviewTest is FlowERC721Test {
                 multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
             );
 
-            assertEq(
-                keccak256(abi.encode(transferHash)),
-                keccak256(abi.encode(flow.stackToFlow(stack))),
-                "wrong compare Structs"
-            );
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
         }
     }
 

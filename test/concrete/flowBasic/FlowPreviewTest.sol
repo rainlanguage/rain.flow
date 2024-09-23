@@ -19,7 +19,7 @@ contract FlowPreviewTest is FlowBasicTest {
         address alice,
         uint256 erc1155Amount,
         uint256 erc1155TokenId
-    ) internal {
+    ) external {
         vm.label(alice, "alice");
 
         (IFlowV5 flow,) = deployFlow();
@@ -33,11 +33,7 @@ contract FlowPreviewTest is FlowBasicTest {
                 multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
             );
 
-            assertEq(
-                keccak256(abi.encode(transferHash)),
-                keccak256(abi.encode(flow.stackToFlow(stack))),
-                "wrong compare Structs"
-            );
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
         }
     }
 

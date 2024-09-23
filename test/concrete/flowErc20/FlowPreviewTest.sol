@@ -19,10 +19,10 @@ contract FlowPreviewTest is FlowERC20Test {
         address alice,
         uint256 erc1155Amount,
         uint256 erc1155TokenId
-    ) internal {
+    ) external {
         vm.label(alice, "alice");
 
-        (IFlowERC20V5 flow,) = deployFlowERC20();
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
         {
             (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
@@ -33,11 +33,7 @@ contract FlowPreviewTest is FlowERC20Test {
                 multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
             );
 
-            assertEq(
-                keccak256(abi.encode(transferHash)),
-                keccak256(abi.encode(flow.stackToFlow(stack))),
-                "wrong compare Structs"
-            );
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
         }
     }
 
