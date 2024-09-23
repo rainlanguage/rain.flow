@@ -6,6 +6,9 @@ import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {
     IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
+import {
+    IFlowERC1155V5
+} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 
 contract FlowPreviewTest is FlowERC1155Test {
     /**
@@ -16,8 +19,26 @@ contract FlowPreviewTest is FlowERC1155Test {
         address alice,
         uint256 erc1155Amount,
         uint256 erc1155TokenId
-    ) external {
-        flowPreviewDefinedFlowIOForERC1155MultiElementArrays(alice, erc1155Amount, erc1155TokenId);
+    ) internal {
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+        {
+            (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
+            );
+
+            assertEq(
+                keccak256(abi.encode(transferHash)),
+                keccak256(abi.encode(flow.stackToFlow(stack))),
+                "wrong compare Structs"
+            );
+        }
     }
 
     /// Should preview empty flow io

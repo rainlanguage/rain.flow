@@ -14,8 +14,26 @@ contract FlowPreviewTest is FlowERC721Test {
         address alice,
         uint256 erc1155Amount,
         uint256 erc1155TokenId
-    ) external {
-        flowPreviewDefinedFlowIOForERC1155MultiElementArrays(alice, erc1155Amount, erc1155TokenId);
+    ) internal {
+        vm.label(alice, "alice");
+
+        (IFlowERC721V5 flow,) = deployFlow();
+        assumeEtchable(alice, address(flow));
+        {
+            (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
+            );
+
+            assertEq(
+                keccak256(abi.encode(transferHash)),
+                keccak256(abi.encode(flow.stackToFlow(stack))),
+                "wrong compare Structs"
+            );
+        }
     }
 
     /**
