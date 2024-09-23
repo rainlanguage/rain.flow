@@ -724,6 +724,8 @@ contract Erc20FlowTest is FlowERC20Test {
         // Execute Flow B
         erc20Flow.flow(evaluables[1], new uint256[](0), new SignedContextV1[](0));
 
+        assertTrue(stackFlowA[0] != stackFlowB[0], "Flow A and Flow B stack values should not be equal");
+
         vm.stopPrank();
     }
 }
