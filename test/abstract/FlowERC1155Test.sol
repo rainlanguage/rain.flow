@@ -12,19 +12,12 @@ import {EvaluableConfigV3} from "rain.interpreter.interface/interface/IInterpret
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {FlowERC1155} from "../../src/concrete/erc1155/FlowERC1155.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
-import {FlowBasicTest} from "test/abstract/FlowBasicTest.sol";
-import {AbstractPreviewTest} from "test/abstract/flow/AbstractPreviewTest.sol";
+import {FlowTest} from "test/abstract/FlowTest.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 
-abstract contract FlowERC1155Test is FlowBasicTest, AbstractPreviewTest {
+abstract contract FlowERC1155Test is FlowTest {
     using LibUint256Matrix for uint256[];
     using LibStackGeneration for uint256;
-
-    constructor() {
-        vm.pauseGasMetering();
-        iFlowImplementation = address(new FlowERC1155());
-        vm.resumeGasMetering();
-    }
 
     function deployIFlowERC1155V5(string memory uri)
         internal
@@ -49,21 +42,27 @@ abstract contract FlowERC1155Test is FlowBasicTest, AbstractPreviewTest {
         address[] memory expressions,
         address configExpression,
         uint256[][] memory constants,
-        string memory
+        string memory baseURI
     ) internal returns (IFlowERC1155V5, EvaluableV2[] memory) {
-        (address flow, EvaluableV2[] memory evaluables) = deployFlow(expressions, configExpression, constants);
+        (address flow, EvaluableV2[] memory evaluables) =
+            deployFlow("", "", baseURI, expressions, configExpression, constants);
         return (IFlowERC1155V5(flow), evaluables);
     }
 
-    function buldConfig(address configExpression, EvaluableConfigV3[] memory flowConfig)
-        internal
-        override
-        returns (bytes memory)
-    {
+    function deployFlowImplementation() internal override returns (address flow) {
+        flow = address(new FlowERC1155());
+    }
+
+    function buildConfig(
+        string memory,
+        string memory,
+        string memory baseURI,
+        address configExpression,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal override returns (bytes memory) {
         EvaluableConfigV3 memory evaluableConfig =
             expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
-        FlowERC1155ConfigV3 memory flowErc1155Config =
-            FlowERC1155ConfigV3("https://www.rainprotocol.xyz/nft/", evaluableConfig, flowConfig);
+        FlowERC1155ConfigV3 memory flowErc1155Config = FlowERC1155ConfigV3(baseURI, evaluableConfig, flowConfig);
         return abi.encode(flowErc1155Config);
     }
 
@@ -80,19 +79,10 @@ abstract contract FlowERC1155Test is FlowBasicTest, AbstractPreviewTest {
         ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
         burns[0] = ERC1155SupplyChange({account: account, id: id, amount: burn});
 
-        FlowERC1155IOV1 memory flowERC1155IO = FlowERC1155IOV1(mints, burns, transfer);
+        FlowERC1155IOV1 memory flowERC1155 = FlowERC1155IOV1(mints, burns, transfer);
 
-        transferHash = keccak256(abi.encode(flowERC1155IO));
+        transferHash = keccak256(abi.encode(flowERC1155));
 
-        stack = sentinel.generateFlowStack(flowERC1155IO);
-    }
-
-    function abstractStackToFlowCall(address flowAddress, uint256[] memory stack)
-        internal
-        pure
-        override
-        returns (bytes32 stackToFlowTransfersHash)
-    {
-        stackToFlowTransfersHash = keccak256(abi.encode(IFlowERC1155V5(flowAddress).stackToFlow(stack)));
+        stack = sentinel.generateFlowStack(flowERC1155);
     }
 }

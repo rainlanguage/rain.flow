@@ -21,7 +21,7 @@ contract FlowContextTest is FlowBasicTest {
         SignedContextV1[] memory signedContext = new SignedContextV1[](0);
         vm.label(alice, "Alice");
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
         uint256[][] memory context =
             LibContextWrapper.buildAndSetContext(callerContext, signedContext, address(alice), address(flow));
@@ -40,7 +40,7 @@ contract FlowContextTest is FlowBasicTest {
             );
         }
         vm.startPrank(alice);
-        IFlowV5(flow).flow(evaluable, callerContext, signedContext);
+        flow.flow(evaluable, callerContext, signedContext);
         vm.stopPrank();
     }
 }

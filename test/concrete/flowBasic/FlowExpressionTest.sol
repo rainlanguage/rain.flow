@@ -51,7 +51,7 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
         uint256[][] memory matrixCallerContext =
             fuzzedcallerContext0.matrixFrom(fuzzedcallerContext1, fuzzedcallerContext0);
 
-        (address flow, EvaluableV2 memory evaluable) = deployFlow();
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
         {
             uint256[] memory stack = generateFlowStack(
@@ -70,7 +70,7 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
             }
 
             vm.recordLogs();
-            IFlowV5(flow).flow(evaluable, fuzzedcallerContext0, signedContext);
+            flow.flow(evaluable, fuzzedcallerContext0, signedContext);
         }
 
         {
