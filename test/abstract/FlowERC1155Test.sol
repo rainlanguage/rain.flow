@@ -41,8 +41,8 @@ abstract contract FlowERC1155Test is FlowTest {
         return (IFlowERC1155V5(flow), evaluables);
     }
 
-    function deployFlowImplementation() internal override returns (address flow) {
-        flow = address(new FlowERC1155());
+    function deployFlowImplementation() internal override returns (address) {
+        return address(new FlowERC1155());
     }
 
     function buildConfig(

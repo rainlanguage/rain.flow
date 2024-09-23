@@ -11,8 +11,8 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 abstract contract FlowERC20Test is FlowTest {
     using LibUint256Matrix for uint256[];
 
-    function deployFlowImplementation() internal override returns (address flow) {
-        flow = address(new FlowERC20());
+    function deployFlowImplementation() internal override returns (address) {
+        return address(new FlowERC20());
     }
 
     function buildConfig(

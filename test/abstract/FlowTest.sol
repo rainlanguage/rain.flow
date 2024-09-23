@@ -32,7 +32,7 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
         EvaluableConfigV3[] memory flowConfig
     ) internal virtual returns (bytes memory);
 
-    function deployFlowImplementation() internal virtual returns (address flow);
+    function deployFlowImplementation() internal virtual returns (address);
 
     function expressionDeployer(address expression, uint256[] memory constants, bytes memory bytecode)
         internal
