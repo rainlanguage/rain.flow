@@ -114,7 +114,7 @@ abstract contract FlowERC721Test is FlowTest {
     function mintFlowStack(address account, uint256, uint256 id, FlowTransferV1 memory transfer)
         internal
         view
-        returns (uint256[] memory stack, bytes32 transferHash)
+        returns (uint256[] memory, bytes32)
     {
         vm.assume(sentinel != id);
 
@@ -123,8 +123,10 @@ abstract contract FlowERC721Test is FlowTest {
 
         FlowERC721IOV1 memory flowERC721 = FlowERC721IOV1(mints, new ERC721SupplyChange[](0), transfer);
 
-        transferHash = keccak256(abi.encode(flowERC721));
+        bytes32 transferHash = keccak256(abi.encode(flowERC721));
 
-        stack = sentinel.generateFlowStack(flowERC721);
+        uint256[] memory stack = sentinel.generateFlowStack(flowERC721);
+
+        return (stack, transferHash);
     }
 }
