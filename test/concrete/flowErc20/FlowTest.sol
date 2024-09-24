@@ -23,6 +23,7 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
+import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 
 contract Erc20FlowTest is FlowERC20Test {
     using LibEvaluable for EvaluableV2;
@@ -535,5 +536,56 @@ contract Erc20FlowTest is FlowERC20Test {
             IERC20(address(flow)).transfer(address(flow), amount);
             vm.stopPrank();
         }
+    }
+
+    /**
+     * @notice Tests the flow fails if number of sentinels is less than MIN_FLOW_SENTINEL.
+     */
+    function testFlowERC20MinFlowSentinel(address alice, uint128 amount, address expressionA) external {
+        vm.assume(alice != address(0));
+
+        address[] memory expressions = new address[](1);
+        expressions[0] = expressionA;
+
+        // Invalid number of sentinels (less than MIN_FLOW_SENTINELS)
+        (IFlowERC20V5 flowInvalid, EvaluableV2[] memory evaluablesInvalid) =
+            deployFlowERC20(expressions, expressionA, new uint256[][](1), "Flow ERC20 Invalid", "F20Inv");
+        assumeEtchable(alice, address(flowInvalid));
+
+        // Check that flow with invalid number of sentinels fails
+        {
+            uint256[] memory stackInvalid = generateFlowStack(
+                FlowERC20IOV1(
+                    new ERC20SupplyChange[](0),
+                    new ERC20SupplyChange[](0),
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+
+            // Change stack sentinel
+            stackInvalid[0] = 0;
+            interpreterEval2MockCall(stackInvalid, new uint256[](0));
+        }
+
+        uint256[][] memory contextInvalid = LibContextWrapper.buildAndSetContext(
+            LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flowInvalid))), amount)
+                .matrixFrom(),
+            new SignedContextV1[](0),
+            address(alice),
+            address(flowInvalid)
+        );
+
+        interpreterEval2RevertCall(
+            address(flowInvalid),
+            LibEncodedDispatch.encode2(
+                expressionA, FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
+            ),
+            contextInvalid
+        );
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(MissingSentinel.selector, sentinel));
+        flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
     }
 }

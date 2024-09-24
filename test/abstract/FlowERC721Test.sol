@@ -66,8 +66,8 @@ abstract contract FlowERC721Test is FlowTest {
         return (IFlowERC721V5(flow), evaluables);
     }
 
-    function deployFlowImplementation() internal override returns (address flow) {
-        flow = address(new FlowERC721());
+    function deployFlowImplementation() internal override returns (address) {
+        return address(new FlowERC721());
     }
 
     function buildConfig(
