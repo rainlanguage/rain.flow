@@ -383,11 +383,18 @@ contract FlowTest is FlowBasicTest {
 
         vm.label(alise, "Alise");
 
-        (, EvaluableV2 memory evaluableA) = deployFlow(expressionA);
-        (IFlowV5 flowB,) = deployFlow(expressionB);
+        address[] memory expressionsA = new address[](1);
+        expressionsA[0] = expressionA;
+
+        (, EvaluableV2[] memory evaluables) = deployFlow(expressionsA, new uint256[][](1));
+
+        address[] memory expressionsB = new address[](1);
+        expressionsB[0] = expressionB;
+
+        (IFlowV5 flowB,) = deployFlow(expressionsB, new uint256[][](1));
         vm.startPrank(alise);
-        vm.expectRevert(abi.encodeWithSelector(UnregisteredFlow.selector, evaluableA.hash()));
-        flowB.flow(evaluableA, new uint256[](0), new SignedContextV1[](0));
+        vm.expectRevert(abi.encodeWithSelector(UnregisteredFlow.selector, evaluables[0].hash()));
+        flowB.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 }

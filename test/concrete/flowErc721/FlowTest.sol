@@ -38,31 +38,14 @@ contract Erc721FlowTest is FlowERC721Test {
     /**
      * @notice Tests the support for the transferPreflight hook.
      */
-    function testFlowERC721SupportsTransferPreflightHook(
-        address alice,
-        uint256 tokenIdA,
-        uint256 tokenIdB,
-        address expressionA,
-        address expressionB
-    ) external {
+    function testFlowERC721SupportsTransferPreflightHook(address alice, uint256 tokenIdA, uint256 tokenIdB) external {
         vm.assume(alice != address(0));
         vm.assume(sentinel != tokenIdA);
         vm.assume(sentinel != tokenIdB);
         vm.assume(tokenIdA != tokenIdB);
-        vm.assume(expressionA != expressionB);
         vm.assume(!alice.isContract());
 
-        address[] memory expressions = new address[](1);
-        expressions[0] = expressionA;
-
-        (IFlowERC721V5 flow, EvaluableV2[] memory evaluables) = deployFlowERC721({
-            expressions: expressions,
-            configExpression: expressionB,
-            constants: new uint256[][](1),
-            name: "FlowERC721",
-            symbol: "F721",
-            baseURI: "https://www.rainprotocol.xyz/nft/"
-        });
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) = deployFlowERC721({name: "", symbol: "", baseURI: ""});
         assumeEtchable(alice, address(flow));
 
         {
@@ -93,12 +76,14 @@ contract Erc721FlowTest is FlowERC721Test {
             interpreterEval2ExpectCall(
                 address(flow),
                 LibEncodedDispatch.encode2(
-                    expressionB, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
+                    address(uint160(uint256(keccak256("configExpression")))),
+                    FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
+                    FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
                 ),
                 contextTransferA
             );
 
-            flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+            IFlowERC721V5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
 
             vm.startPrank(alice);
             IERC721(address(flow)).transferFrom({from: alice, to: address(flow), tokenId: tokenIdA});
@@ -117,7 +102,9 @@ contract Erc721FlowTest is FlowERC721Test {
             interpreterEval2RevertCall(
                 address(flow),
                 LibEncodedDispatch.encode2(
-                    expressionB, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
+                    address(uint160(uint256(keccak256("configExpression")))),
+                    FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
+                    FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
                 ),
                 contextTransferB
             );
