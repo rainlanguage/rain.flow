@@ -73,7 +73,7 @@ abstract contract FlowERC20Test is FlowTest {
         internal
         view
         override
-        returns (uint256[] memory stack, bytes32 transferHash)
+        returns (uint256[] memory, bytes32)
     {
         ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
         mints[0] = ERC20SupplyChange({account: account, amount: mint});
@@ -83,8 +83,10 @@ abstract contract FlowERC20Test is FlowTest {
 
         FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(mints, burns, transfer);
 
-        transferHash = keccak256(abi.encode(flowERC20IO));
+        bytes32 transferHash = keccak256(abi.encode(flowERC20IO));
 
-        stack = sentinel.generateFlowStack(flowERC20IO);
+        uint256[] memory stack = sentinel.generateFlowStack(flowERC20IO);
+
+        return (stack, transferHash);
     }
 }

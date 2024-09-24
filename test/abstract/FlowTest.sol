@@ -38,7 +38,7 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
     function mintAndBurnFlowStack(address account, uint256 mint, uint256 burn, uint256, FlowTransferV1 memory transfer)
         internal
         virtual
-        returns (uint256[] memory stack, bytes32 transferHash);
+        returns (uint256[] memory, bytes32);
 
     function expressionDeployer(address expression, uint256[] memory constants, bytes memory bytecode)
         internal

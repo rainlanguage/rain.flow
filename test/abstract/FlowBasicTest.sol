@@ -53,9 +53,10 @@ abstract contract FlowBasicTest is FlowTest {
         internal
         view
         override
-        returns (uint256[] memory stack, bytes32 transferHash)
+        returns (uint256[] memory, bytes32)
     {
-        transferHash = keccak256(abi.encode(transfer));
-        stack = sentinel.generateFlowStack(transfer);
+        bytes32 transferHash = keccak256(abi.encode(transfer));
+        uint256[] memory stack = sentinel.generateFlowStack(transfer);
+        return (stack, transferHash);
     }
 }

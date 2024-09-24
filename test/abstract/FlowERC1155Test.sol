@@ -72,7 +72,7 @@ abstract contract FlowERC1155Test is FlowTest {
         uint256 burn,
         uint256 id,
         FlowTransferV1 memory transfer
-    ) internal view override returns (uint256[] memory stack, bytes32 transferHash) {
+    ) internal view override returns (uint256[] memory, bytes32) {
         ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
         mints[0] = ERC1155SupplyChange({account: account, id: id, amount: mint});
 
@@ -81,8 +81,10 @@ abstract contract FlowERC1155Test is FlowTest {
 
         FlowERC1155IOV1 memory flowERC1155 = FlowERC1155IOV1(mints, burns, transfer);
 
-        transferHash = keccak256(abi.encode(flowERC1155));
+        bytes32 transferHash = keccak256(abi.encode(flowERC1155));
 
-        stack = sentinel.generateFlowStack(flowERC1155);
+        uint256[] memory stack = sentinel.generateFlowStack(flowERC1155);
+
+        return (stack, transferHash);
     }
 }
