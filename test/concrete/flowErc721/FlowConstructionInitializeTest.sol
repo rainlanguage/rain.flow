@@ -74,6 +74,6 @@ contract FlowConstructionInitializeTest is FlowERC721Test {
 
         // Expecting revert due to bad callerMeta
         vm.expectRevert();
-        iCloneErc721Factory.clone(address(iFlowERC721Implementation), abi.encode(flowERC721ConfigV2));
+        iCloneFactory.clone(deployFlowImplementation(), abi.encode(flowERC721ConfigV2));
     }
 }
