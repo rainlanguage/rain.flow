@@ -22,8 +22,8 @@ abstract contract FlowBasicTest is FlowTest {
         return abi.encode(flowConfig);
     }
 
-    function deployFlowImplementation() internal override returns (address flow) {
-        flow = address(new Flow());
+    function deployFlowImplementation() internal override returns (address) {
+        return address(new Flow());
     }
 
     function deployFlow() internal returns (IFlowV5, EvaluableV2 memory) {

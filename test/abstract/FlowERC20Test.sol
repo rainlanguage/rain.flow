@@ -17,8 +17,8 @@ abstract contract FlowERC20Test is FlowTest {
     using LibUint256Matrix for uint256[];
     using LibStackGeneration for uint256;
 
-    function deployFlowImplementation() internal override returns (address flow) {
-        flow = address(new FlowERC20());
+    function deployFlowImplementation() internal override returns (address) {
+        return address(new FlowERC20());
     }
 
     function deployFlowERC20(string memory name, string memory symbol)
