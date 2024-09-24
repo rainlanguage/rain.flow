@@ -27,6 +27,7 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 
 contract Erc721FlowTest is FlowERC721Test {
     using LibEvaluable for EvaluableV2;
@@ -439,5 +440,56 @@ contract Erc721FlowTest is FlowERC721Test {
             IERC721(address(flowErc721)).transferFrom({from: alice, to: address(flowErc721), tokenId: tokenId});
             vm.stopPrank();
         }
+    }
+
+    /// Should not flow if number of sentinels is less than MIN_FLOW_SENTINELS
+    function testFlowERC721MinFlowSentinel(address alice, uint128 amount, address expressionA, string memory baseURI)
+        external
+    {
+        vm.assume(alice != address(0));
+
+        address[] memory expressions = new address[](1);
+        expressions[0] = expressionA;
+
+        // Invalid number of sentinels (less than MIN_FLOW_SENTINELS)
+        (IFlowERC721V5 flowInvalid, EvaluableV2[] memory evaluablesInvalid) =
+            deployFlowERC721(expressions, expressionA, new uint256[][](1), "FlowErc721", "FErc721", baseURI);
+        assumeEtchable(alice, address(flowInvalid));
+
+        // Check that flow with invalid number of sentinels fails
+        {
+            uint256[] memory stackInvalid = generateFlowStack(
+                FlowERC721IOV1(
+                    new ERC721SupplyChange[](0),
+                    new ERC721SupplyChange[](0),
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+
+            // Change stack sentinel
+            stackInvalid[0] = 0;
+            interpreterEval2MockCall(stackInvalid, new uint256[](0));
+        }
+
+        uint256[][] memory contextInvalid = LibContextWrapper.buildAndSetContext(
+            LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flowInvalid))), amount)
+                .matrixFrom(),
+            new SignedContextV1[](0),
+            address(alice),
+            address(flowInvalid)
+        );
+
+        interpreterEval2RevertCall(
+            address(flowInvalid),
+            LibEncodedDispatch.encode2(
+                expressionA, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
+            ),
+            contextInvalid
+        );
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(MissingSentinel.selector, sentinel));
+        flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
     }
 }

@@ -13,16 +13,26 @@ import {IInterpreterV2, DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interfac
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {
-    IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
+    IFlowERC1155V5,
+    ERC1155SupplyChange,
+    FlowERC1155IOV1,
+    FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
+    FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
+import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
+import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
+import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
+import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 
 contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
+    using LibUint256Matrix for uint256[];
     using Address for address;
 
     /// Tests the flow between ERC721 and ERC1155 on the good path.
@@ -446,5 +456,55 @@ contract Erc1155FlowTest is FlowERC1155Test {
 
             assertEq(IERC1155(address(flowErc1155)).balanceOf(alice, tokenId), erc20InAmount - erc20OutAmount);
         }
+    }
+
+    /// Should not flow if number of sentinels is less than MIN_FLOW_SENTINELS
+    function testFlowERC1155MinFlowSentinel(address alice, uint128 amount, address expressionA, string memory uri)
+        external
+    {
+        vm.assume(alice != address(0));
+
+        address[] memory expressions = new address[](1);
+        expressions[0] = expressionA;
+
+        (IFlowERC1155V5 flowInvalid, EvaluableV2[] memory evaluablesInvalid) =
+            deployIFlowERC1155V5(expressions, expressionA, new uint256[][](1), uri);
+        assumeEtchable(alice, address(flowInvalid));
+
+        // Check that flow with invalid number of sentinels fails
+        {
+            uint256[] memory stackInvalid = generateFlowStack(
+                FlowERC1155IOV1(
+                    new ERC1155SupplyChange[](0),
+                    new ERC1155SupplyChange[](0),
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+
+            // Change stack sentinel
+            stackInvalid[0] = 0;
+            interpreterEval2MockCall(stackInvalid, new uint256[](0));
+        }
+
+        uint256[][] memory contextInvalid = LibContextWrapper.buildAndSetContext(
+            LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flowInvalid))), amount)
+                .matrixFrom(),
+            new SignedContextV1[](0),
+            address(alice),
+            address(flowInvalid)
+        );
+
+        interpreterEval2RevertCall(
+            address(flowInvalid),
+            LibEncodedDispatch.encode2(
+                expressionA, FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
+            ),
+            contextInvalid
+        );
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(MissingSentinel.selector, sentinel));
+        flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
     }
 }

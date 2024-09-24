@@ -22,8 +22,8 @@ abstract contract FlowBasicTest is FlowTest {
         return abi.encode(flowConfig);
     }
 
-    function deployFlowImplementation() internal override returns (address flow) {
-        flow = address(new Flow());
+    function deployFlowImplementation() internal override returns (address) {
+        return address(new Flow());
     }
 
     function deployFlow() internal returns (IFlowV5, EvaluableV2 memory) {
@@ -53,9 +53,10 @@ abstract contract FlowBasicTest is FlowTest {
         internal
         view
         override
-        returns (uint256[] memory stack, bytes32 transferHash)
+        returns (uint256[] memory, bytes32)
     {
-        transferHash = keccak256(abi.encode(transfer));
-        stack = sentinel.generateFlowStack(transfer);
+        bytes32 transferHash = keccak256(abi.encode(transfer));
+        uint256[] memory stack = sentinel.generateFlowStack(transfer);
+        return (stack, transferHash);
     }
 }
