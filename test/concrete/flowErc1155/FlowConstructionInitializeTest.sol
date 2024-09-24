@@ -24,7 +24,7 @@ contract FlowConstructionInitializeTest is FlowERC1155Test {
             FlowERC1155ConfigV3(uri, EvaluableConfigV3(iDeployer, bytecode, constants), flowConfig);
 
         vm.recordLogs();
-        iCloneErc1155Factory.clone(address(iFlowErc1155Implementation), abi.encode(flowERC1155ConfigV3));
+        iCloneFactory.clone(deployFlowImplementation(), abi.encode(flowERC1155ConfigV3));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature =
@@ -34,7 +34,7 @@ contract FlowConstructionInitializeTest is FlowERC1155Test {
         (address sender, FlowERC1155ConfigV3 memory config) =
             abi.decode(concreteEvent.data, (address, FlowERC1155ConfigV3));
 
-        assertEq(sender, address(iCloneErc1155Factory), "wrong sender in Initialize event");
+        assertEq(sender, address(iCloneFactory), "wrong sender in Initialize event");
         assertEq(keccak256(abi.encode(flowERC1155ConfigV3)), keccak256(abi.encode(config)), "wrong compare Structs");
     }
 
@@ -51,6 +51,6 @@ contract FlowConstructionInitializeTest is FlowERC1155Test {
 
         // Expecting revert due to bad callerMeta
         vm.expectRevert();
-        iCloneErc1155Factory.clone(address(iFlowErc1155Implementation), abi.encode(flowERC1155ConfigV3));
+        iCloneFactory.clone(deployFlowImplementation(), abi.encode(flowERC1155ConfigV3));
     }
 }
