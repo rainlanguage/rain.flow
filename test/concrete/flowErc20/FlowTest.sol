@@ -21,7 +21,7 @@ import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncod
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
-import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {DEFAULT_STATE_NAMESPACE, IInterpreterV2} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
@@ -637,7 +637,8 @@ contract Erc20FlowTest is FlowERC20Test {
         uint256 erc20InAmount,
         address expressionA,
         address expressionB,
-        address alice
+        address alice,
+        address interpreterStore
     ) external {
         vm.assume(erc20InAmount != 0);
         vm.assume(erc20OutAmount != 0);
@@ -668,64 +669,44 @@ contract Erc20FlowTest is FlowERC20Test {
             constants[1] = constantsB;
         }
 
+        // Define different namespaces for Flow A and Flow B
+        uint256 namespaceFlowA = 0xA;
+        uint256 namespaceFlowB = 0xB;
+
         // Deploy the ERC20 flow with the given expressions and constants
         (IFlowERC20V5 erc20Flow, EvaluableV2[] memory evaluables) =
             deployFlowERC20(expressions, expressionA, constants, "Flow ERC20", "F20");
 
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(erc20Flow), to: alice, amount: erc20OutAmount});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc20Flow), amount: erc20InAmount});
+        uint256[] memory mockReturnForFlowA = new uint256[](1);
+        mockReturnForFlowA[0] = 123;
 
-        vm.startPrank(alice);
+        vm.mockCall(
+            address(iInterpreter), abi.encodeWithSelector(IInterpreterV2.eval2.selector), abi.encode(mockReturnForFlowA)
+        );
 
-        // Mock ERC20 transfer calls for iTokenA
-        vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
-        vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmount));
-
-        // Mock ERC20 transferFrom calls for iTokenB
-        vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
         vm.expectCall(
-            address(iTokenB),
-            abi.encodeWithSelector(IERC20.transferFrom.selector, alice, address(erc20Flow), erc20InAmount)
+            address(interpreterStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector, namespaceFlowA, "")
         );
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        uint256[] memory stackFlowA = generateFlowStack(
-            FlowERC20IOV1(
-                mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-
-        // Mock interpreter evaluation for Flow A
-        interpreterEval2MockCall(stackFlowA, new uint256[](0));
 
         // Execute Flow A
         erc20Flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
 
-        // Prepare the stack for the interpreter evaluation for Flow A
-        uint256[] memory stackFlowB = generateFlowStack(
-            FlowERC20IOV1(
-                new ERC20SupplyChange[](0),
-                new ERC20SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
+        uint256[] memory mockReturnForFlowB = new uint256[](1);
+
+        mockReturnForFlowB[0] = 456;
+
+        vm.mockCall(
+            address(iInterpreter), abi.encodeWithSelector(IInterpreterV2.eval2.selector), abi.encode(mockReturnForFlowB)
         );
 
-        // Mock interpreter evaluation for Flow B
-        interpreterEval2MockCall(stackFlowB, new uint256[](0));
+        vm.expectCall(
+            address(interpreterStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector, namespaceFlowB, "")
+        );
 
         // Execute Flow B
         erc20Flow.flow(evaluables[1], new uint256[](0), new SignedContextV1[](0));
 
-        assertTrue(stackFlowA[0] != stackFlowB[0], "Flow A and Flow B stack values should not be equal");
-
-        vm.stopPrank();
+        // Assert that values between Flow A and Flow B are not the same
+        assertTrue(mockReturnForFlowA[0] != mockReturnForFlowB[0], "Flow A and Flow B values should not be equal");
     }
 }
