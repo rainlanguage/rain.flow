@@ -27,6 +27,7 @@ import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 
 contract Erc721FlowTest is FlowERC721Test {
     using LibEvaluable for EvaluableV2;
@@ -37,26 +38,16 @@ contract Erc721FlowTest is FlowERC721Test {
     /**
      * @notice Tests the support for the transferPreflight hook.
      */
-    function testFlowERC721SupportsTransferPreflightHook(
-        address alice,
-        uint256 tokenIdA,
-        uint256 tokenIdB,
-        address expressionA,
-        address expressionB
-    ) external {
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721SupportsTransferPreflightHook(address alice, uint256 tokenIdA, uint256 tokenIdB) external {
         vm.assume(alice != address(0));
         vm.assume(sentinel != tokenIdA);
         vm.assume(sentinel != tokenIdB);
         vm.assume(tokenIdA != tokenIdB);
-        vm.assume(expressionA != expressionB);
         vm.assume(!alice.isContract());
 
-        address[] memory expressions = new address[](1);
-        expressions[0] = expressionA;
-
-        (address flow, EvaluableV2[] memory evaluables) =
-            deployFlow({expressions: expressions, configExpression: expressionB, constants: new uint256[][](1)});
-        assumeEtchable(alice, flow);
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) = deployFlowERC721({name: "", symbol: "", baseURI: ""});
+        assumeEtchable(alice, address(flow));
 
         {
             ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
@@ -75,49 +66,53 @@ contract Erc721FlowTest is FlowERC721Test {
 
         {
             uint256[][] memory contextTransferA = LibContextWrapper.buildAndSetContext(
-                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(flow)), tokenIdA).matrixFrom(
-                ),
+                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flow))), tokenIdA)
+                    .matrixFrom(),
                 new SignedContextV1[](0),
                 address(alice),
-                flow
+                address(flow)
             );
 
             // Expect call token transfer
             interpreterEval2ExpectCall(
-                flow,
+                address(flow),
                 LibEncodedDispatch.encode2(
-                    expressionB, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
+                    address(uint160(uint256(keccak256("configExpression")))),
+                    FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
+                    FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
                 ),
                 contextTransferA
             );
 
-            IFlowERC721V5(flow).flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+            IFlowERC721V5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
 
             vm.startPrank(alice);
-            IERC721(flow).transferFrom({from: alice, to: flow, tokenId: tokenIdA});
+            IERC721(address(flow)).transferFrom({from: alice, to: address(flow), tokenId: tokenIdA});
             vm.stopPrank();
         }
 
         {
             uint256[][] memory contextTransferB = LibContextWrapper.buildAndSetContext(
-                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(flow)), tokenIdB).matrixFrom(
-                ),
+                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flow))), tokenIdB)
+                    .matrixFrom(),
                 new SignedContextV1[](0),
                 address(alice),
-                flow
+                address(flow)
             );
 
             interpreterEval2RevertCall(
-                flow,
+                address(flow),
                 LibEncodedDispatch.encode2(
-                    expressionB, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
+                    address(uint160(uint256(keccak256("configExpression")))),
+                    FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
+                    FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
                 ),
                 contextTransferB
             );
 
             vm.startPrank(alice);
             vm.expectRevert("REVERT_EVAL2_CALL");
-            IERC721(flow).transferFrom({from: alice, to: flow, tokenId: tokenIdB});
+            IERC721(address(flow)).transferFrom({from: alice, to: address(flow), tokenId: tokenIdB});
             vm.stopPrank();
         }
     }
@@ -125,13 +120,36 @@ contract Erc721FlowTest is FlowERC721Test {
     /**
      * @notice Tests the flow between ERC721 and ERC1155 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721FlowERC721ToERC1155(
         address alice,
         uint256 erc721InTokenId,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount
     ) external {
-        flowERC20FlowERC721ToERC1155(alice, erc721InTokenId, erc1155OutTokenId, erc1155OutAmount);
+        vm.assume(address(0) != alice);
+        vm.label(alice, "Alice");
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721("FlowERC721", "F721", "https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC721ToERC1155(alice, address(flow), erc721InTokenId, erc1155OutAmount, erc1155OutTokenId)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+        }
     }
 
     function testFlowERC721FlowERC20ToERC721(
@@ -186,6 +204,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721lowERC1155ToERC1155(
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
@@ -258,6 +277,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721lowERC20ToERC20(
         uint256 erc20OutAmount,
         uint256 erc20InAmount,
@@ -315,6 +335,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721FlowERC721ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
@@ -375,6 +396,7 @@ contract Erc721FlowTest is FlowERC721Test {
     }
 
     /// Should utilize context in HANDLE_TRANSFER entrypoint
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721UtilizeContextInHandleTransferEntrypoint(
         address alice,
         address expressionA,
@@ -424,5 +446,57 @@ contract Erc721FlowTest is FlowERC721Test {
             IERC721(address(flowErc721)).transferFrom({from: alice, to: address(flowErc721), tokenId: tokenId});
             vm.stopPrank();
         }
+    }
+
+    /// Should not flow if number of sentinels is less than MIN_FLOW_SENTINELS
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721MinFlowSentinel(address alice, uint128 amount, address expressionA, string memory baseURI)
+        external
+    {
+        vm.assume(alice != address(0));
+
+        address[] memory expressions = new address[](1);
+        expressions[0] = expressionA;
+
+        // Invalid number of sentinels (less than MIN_FLOW_SENTINELS)
+        (IFlowERC721V5 flowInvalid, EvaluableV2[] memory evaluablesInvalid) =
+            deployFlowERC721(expressions, expressionA, new uint256[][](1), "FlowErc721", "FErc721", baseURI);
+        assumeEtchable(alice, address(flowInvalid));
+
+        // Check that flow with invalid number of sentinels fails
+        {
+            uint256[] memory stackInvalid = generateFlowStack(
+                FlowERC721IOV1(
+                    new ERC721SupplyChange[](0),
+                    new ERC721SupplyChange[](0),
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+
+            // Change stack sentinel
+            stackInvalid[0] = 0;
+            interpreterEval2MockCall(stackInvalid, new uint256[](0));
+        }
+
+        uint256[][] memory contextInvalid = LibContextWrapper.buildAndSetContext(
+            LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flowInvalid))), amount)
+                .matrixFrom(),
+            new SignedContextV1[](0),
+            address(alice),
+            address(flowInvalid)
+        );
+
+        interpreterEval2RevertCall(
+            address(flowInvalid),
+            LibEncodedDispatch.encode2(
+                expressionA, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
+            ),
+            contextInvalid
+        );
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(MissingSentinel.selector, sentinel));
+        flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
     }
 }

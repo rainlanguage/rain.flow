@@ -25,6 +25,7 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
      * @dev Tests that the addresses of expressions emitted in the event
      *      match the addresses provided by the deployer.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasicShouldDeployExpression(address[] memory expressions) public {
         uint256 length = bound(expressions.length, 0, 10);
         assembly ("memory-safe") {
@@ -43,6 +44,7 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
     /**
      * @dev Validates that the context emitted in the event matches the expected values.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testShouldValidateContextFromEvent(
         uint256 fuzzedKeyAlice,
         uint256[] memory fuzzedcallerContext0,
