@@ -138,7 +138,20 @@ contract FlowPreviewTest is FlowERC1155Test {
         uint256 erc20AmountIn,
         uint256 erc20AmountOut
     ) external {
-        flowPreviewDefinedFlowIOForERC20SingleElementArrays(alice, erc20AmountIn, erc20AmountOut);
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransfersERC20toERC20(alice, address(flow), erc20AmountIn, erc20AmountOut)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /// Should preview empty flow io
