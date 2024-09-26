@@ -33,12 +33,12 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
         EvaluableConfigV3[] memory flowConfig
     ) internal virtual returns (bytes memory);
 
-    function deployFlowImplementation() internal virtual returns (address flow);
+    function deployFlowImplementation() internal virtual returns (address);
 
     function mintAndBurnFlowStack(address account, uint256 mint, uint256 burn, uint256, FlowTransferV1 memory transfer)
         internal
         virtual
-        returns (uint256[] memory stack, bytes32 transferHash);
+        returns (uint256[] memory, bytes32);
 
     function expressionDeployer(address expression, uint256[] memory constants, bytes memory bytecode)
         internal
@@ -87,6 +87,26 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
                 evaluables[i] = evaluable;
             }
         }
+    }
+
+    function createMockBytecode() internal pure virtual returns (bytes memory) {
+        /*
+            Bytecode structure:
+            - First byte: 0x03 (sourceCount = 3)
+            - Next 2 bytes: 0x0002 (offset for sourceIndex = 0)
+            - Next 2 bytes: 0x0005 (offset for sourceIndex = 1)
+            - Next 2 bytes: 0x0008 (offset for sourceIndex = 2)
+            - Data for sourceIndex = 0:
+                - opsCount: 0x0A
+                - opcode: 0xAA
+            - Data for sourceIndex = 1:
+                - opsCount: 0x0B
+                - opcode: 0xBB
+            - Data for sourceIndex = 2:
+                - opsCount: 0x0C
+                - opcode: 0xCC
+        */
+        return hex"030002000500080AAA0BBB0CCC";
     }
 
     function assumeEtchable(address account) internal view {
