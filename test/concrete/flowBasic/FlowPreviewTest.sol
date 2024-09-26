@@ -13,67 +13,29 @@ contract FlowPreviewTest is FlowBasicTest {
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC1155
-     * using multi-element arrays.
+     *      using multi-element arrays.
      */
     /// forge-config: default.fuzz.runs = 100
     function testFlowBasePreviewDefinedFlowIOForERC1155MultiElementArrays(
         address alice,
-        uint256 erc1155OutTokenIdA,
-        uint256 erc1155OutAmountA,
-        uint256 erc1155InTokenIdB,
-        uint256 erc1155InAmountB
+        uint256 erc1155Amount,
+        uint256 erc1155TokenId
     ) external {
-        vm.assume(sentinel != erc1155OutTokenIdA);
-        vm.assume(sentinel != erc1155OutAmountA);
-        vm.assume(sentinel != erc1155InTokenIdB);
-        vm.assume(sentinel != erc1155InAmountB);
         vm.label(alice, "alice");
 
         (IFlowV5 flow,) = deployFlow();
         assumeEtchable(alice, address(flow));
+        {
+            (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
+            );
 
-        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](4);
-
-        erc1155Transfers[0] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: address(flow),
-            to: alice,
-            id: erc1155OutTokenIdA,
-            amount: erc1155OutAmountA
-        });
-
-        erc1155Transfers[1] = ERC1155Transfer({
-            token: address(iTokenB),
-            from: address(flow),
-            to: alice,
-            id: erc1155InTokenIdB,
-            amount: erc1155InAmountB
-        });
-
-        erc1155Transfers[2] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: alice,
-            to: address(flow),
-            id: erc1155OutTokenIdA,
-            amount: erc1155OutAmountA
-        });
-
-        erc1155Transfers[3] = ERC1155Transfer({
-            token: address(iTokenB),
-            from: alice,
-            to: address(flow),
-            id: erc1155InTokenIdB,
-            amount: erc1155InAmountB
-        });
-
-        FlowTransferV1 memory flowTransfer =
-            FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers);
-
-        uint256[] memory stack = generateFlowStack(flowTransfer);
-
-        assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
+        }
     }
 
     /**
