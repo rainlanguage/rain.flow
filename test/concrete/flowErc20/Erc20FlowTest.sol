@@ -35,6 +35,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the support for the transferPreflight hook.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20SupportsTransferPreflightHook(
         address alice,
         uint128 amount,
@@ -114,6 +115,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests minting and burning tokens per flow in exchange for another token (e.g., ERC20).
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20MintAndBurnTokensPerFlowForERC20Exchange(
         uint256 erc20OutAmount,
         uint256 erc20InAmount,
@@ -206,6 +208,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC721 and ERC1155 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC721ToERC1155(
         address alice,
         uint256 erc721InTokenId,
@@ -239,6 +242,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC20 and ERC721 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC20ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc20InAmount,
@@ -293,6 +297,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC1155 and ERC1155 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC1155ToERC1155(
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
@@ -366,6 +371,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC721 and ERC721 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC721ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
@@ -427,6 +433,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC20 and ERC20 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC20ToERC20(
         uint256 erc20OutAmount,
         uint256 erc20InAmount,
@@ -484,6 +491,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the utilization of context in the CAN_TRANSFER entrypoint.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20UtilizeContextInCanTransferEntrypoint(
         address alice,
         uint256 amount,
@@ -541,6 +549,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow fails if number of sentinels is less than MIN_FLOW_SENTINEL.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20MinFlowSentinel(address alice, uint128 amount, address expressionA) external {
         vm.assume(alice != address(0));
 

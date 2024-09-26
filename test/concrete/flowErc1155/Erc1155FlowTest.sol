@@ -36,6 +36,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
     using Address for address;
 
     /// Tests the flow between ERC721 and ERC1155 on the good path.
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155FlowERC721ToERC1155(
         address alice,
         uint256 erc721InTokenId,
@@ -66,6 +67,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         }
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155FlowERC20ToERC20(
         uint256 erc1155OutAmount,
         uint256 erc20InAmount,
@@ -122,6 +124,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155FlowERC721ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
@@ -179,6 +182,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155FlowERC1155ToERC1155(
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
@@ -251,6 +255,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155FlowERC20ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc20InAmount,
@@ -307,6 +312,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
     }
 
     /// Should utilize context in CAN_TRANSFER entrypoint
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155UtilizeContextInCanTransferEntrypoint(
         address alice,
         uint256 amount,
@@ -365,6 +371,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
     }
 
     /// Should mint and burn tokens per flow in exchange for another token (e.g. ERC20).
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155MintAndBurnTokensPerFlowForERC20Exchange(
         uint256 erc20OutAmount,
         uint256 erc20InAmount,
@@ -459,6 +466,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
     }
 
     /// Should not flow if number of sentinels is less than MIN_FLOW_SENTINELS
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155MinFlowSentinel(address alice, uint128 amount, address expressionA, string memory uri)
         external
     {

@@ -20,6 +20,7 @@ import {
 contract FlowTest is FlowBasicTest {
     using LibEvaluable for EvaluableV2;
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721ToERC1155(
         address alice,
         uint256 erc721InTokenId,
@@ -50,6 +51,7 @@ contract FlowTest is FlowBasicTest {
         }
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20ToERC721(address bob, uint256 erc20InAmount, uint256 erc721OutTokenId) external {
         vm.assume(sentinel != erc20InAmount);
         vm.assume(sentinel != erc721OutTokenId);
@@ -85,6 +87,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC1155ToERC1155(
         address alice,
         uint256 erc1155OutTokenId,
@@ -144,6 +147,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721InTokenId) external {
         vm.assume(sentinel != erc721OutTokenId);
         vm.assume(sentinel != erc721InTokenId);
@@ -184,6 +188,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20ToERC20(address alise, uint256 erc20OutAmount, uint256 erc20InAmount) external {
         vm.assume(sentinel != erc20OutAmount);
         vm.assume(sentinel != erc20InAmount);
@@ -214,6 +219,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowShouldErrorIfERC20FlowFromIsOtherThanSourceContractOrMsgSender(
         address alise,
         address bob,
@@ -265,6 +271,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowShouldErrorIfERC721FlowFromIsOtherThanSourceContractOrMsgSender(
         address alise,
         address bob,
@@ -299,6 +306,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowShouldErrorIfERC1155FlowFromIsOtherThanSourceContractOrMsgSender(
         address alise,
         address bob,
@@ -350,6 +358,7 @@ contract FlowTest is FlowBasicTest {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testShouldErrorIfFlowBeingEvaluatedIsUnregistered(address alise, address expressionA, address expressionB)
         external
     {
