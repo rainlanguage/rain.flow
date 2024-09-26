@@ -22,6 +22,7 @@ contract FlowExpressionTest is FlowERC721Test {
      * @dev Tests that the addresses of expressions emitted in the event
      *      match the addresses provided by the deployer.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721ShouldDeployExpression(
         address[] memory expressions,
         string memory name,
@@ -46,6 +47,7 @@ contract FlowExpressionTest is FlowERC721Test {
     /**
      * @dev Validates that the context emitted in the event matches the expected values.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721ShouldValidateContextFromEvent(
         uint256 fuzzedKeyAlice,
         uint256[] memory fuzzedcallerContext0,

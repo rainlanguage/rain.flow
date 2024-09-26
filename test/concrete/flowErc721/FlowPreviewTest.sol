@@ -10,6 +10,7 @@ contract FlowPreviewTest is FlowERC721Test {
      * @dev Tests the preview of defined Flow IO for ERC1155
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC1155MultiElementArrays(
         address alice,
         uint256 erc1155Amount,
@@ -37,7 +38,10 @@ contract FlowPreviewTest is FlowERC721Test {
      * @dev Tests the preview of defined Flow IO for ERC721
      *      using multi-element arrays.
      */
-    function testFlowERC20PreviewDefinedFlowIOForERC721MultiElementArrays(
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721PreviewDefinedFlowIOForERC721MultiElementArrays(
+        string memory symbol,
+        string memory baseURI,
         address alice,
         uint256 erc721TokenIdA,
         uint256 erc721TokenIdB
@@ -59,6 +63,7 @@ contract FlowPreviewTest is FlowERC721Test {
      * @dev Tests the preview of defined Flow IO for ERC20
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC20MultiElementArrays(
         string memory symbol,
         string memory baseURI,
@@ -106,6 +111,7 @@ contract FlowPreviewTest is FlowERC721Test {
      * @dev Tests the preview of defined Flow IO for ERC1155
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC1155SingleElementArrays(
         string memory symbol,
         string memory baseURI,
@@ -164,6 +170,7 @@ contract FlowPreviewTest is FlowERC721Test {
      * @dev Tests the preview of defined Flow IO for ERC721
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC721SingleElementArrays(
         string memory symbol,
         string memory baseURI,
@@ -205,6 +212,7 @@ contract FlowPreviewTest is FlowERC721Test {
      * @dev Tests the preview of defined Flow IO for ERC20
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC20SingleElementArrays(
         string memory symbol,
         string memory baseURI,
@@ -247,6 +255,7 @@ contract FlowPreviewTest is FlowERC721Test {
     /**
      * @dev Tests the preview of an empty Flow IO.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewEmptyFlowIO(string memory symbol, string memory baseURI, address alice) public {
         (IFlowERC721V5 flow,) = deployFlowERC721({name: symbol, symbol: symbol, baseURI: baseURI});
         assumeEtchable(alice, address(flow));

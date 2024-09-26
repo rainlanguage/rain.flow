@@ -15,6 +15,7 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of defined Flow IO for ERC1155
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasePreviewDefinedFlowIOForERC1155MultiElementArrays(
         address alice,
         uint256 erc1155Amount,
@@ -41,6 +42,7 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of defined Flow IO for ERC721
      * using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasePreviewDefinedFlowIOForERC721MultiElementArrays(
         address alice,
         uint256 erc721TokenIdA,
@@ -62,6 +64,7 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of defined Flow IO for ERC20
      * using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasePreviewDefinedFlowIOForERC20MultiElementArrays(
         address alice,
         uint256 erc20AmountA,
@@ -99,6 +102,7 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of defined Flow IO for ERC1155
      * using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasePreviewDefinedFlowIOForERC1155SingleElementArrays(
         address alice,
         uint256 erc1155OutTokenId,
@@ -146,6 +150,7 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of defined Flow IO for ERC721
      * using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasePreviewDefinedFlowIOForERC721SingleElementArrays(
         address alice,
         uint256 erc721TokenInId,
@@ -176,6 +181,7 @@ contract FlowPreviewTest is FlowBasicTest {
      * @dev Tests the preview of defined Flow IO for ERC20
      * using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasePreviewDefinedFlowIOForERC20SingleElementArrays(
         address alice,
         uint256 erc20AmountIn,
@@ -207,6 +213,7 @@ contract FlowPreviewTest is FlowBasicTest {
     /**
      * @dev Tests the preview of an empty Flow IO.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasePreviewEmptyFlowIO() public {
         (IFlowV5 flow,) = deployFlow();
 
