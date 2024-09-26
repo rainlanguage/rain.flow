@@ -146,27 +146,20 @@ contract FlowPreviewTest is FlowBasicTest {
         uint256 erc20AmountIn,
         uint256 erc20AmountOut
     ) external {
-        vm.assume(sentinel != erc20AmountIn);
-        vm.assume(sentinel != erc20AmountOut);
-
         vm.label(alice, "alice");
 
         (IFlowV5 flow,) = deployFlow();
         assumeEtchable(alice, address(flow));
 
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmountOut});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmountIn});
-
-        FlowTransferV1 memory flowTransfer =
-            FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0));
-        uint256[] memory stack = generateFlowStack(flowTransfer);
-
-        assertEq(
-            keccak256(abi.encode(flowTransfer)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransfersERC20toERC20(alice, address(flow), erc20AmountIn, erc20AmountOut)
         );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
