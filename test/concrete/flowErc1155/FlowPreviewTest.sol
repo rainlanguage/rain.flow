@@ -6,6 +6,7 @@ import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {
     IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
+import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 
 contract FlowPreviewTest is FlowERC1155Test {
     /**
@@ -17,7 +18,21 @@ contract FlowPreviewTest is FlowERC1155Test {
         uint256 erc1155Amount,
         uint256 erc1155TokenId
     ) external {
-        flowPreviewDefinedFlowIOForERC1155MultiElementArrays(alice, erc1155Amount, erc1155TokenId);
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+        {
+            (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
+            );
+
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
+        }
     }
 
     /**
@@ -29,7 +44,16 @@ contract FlowPreviewTest is FlowERC1155Test {
         uint256 erc721TokenIdA,
         uint256 erc721TokenIdB
     ) external {
-        flowPreviewDefinedFlowIOForERC721MultiElementArrays(alice, erc721TokenIdA, erc721TokenIdB);
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, multiTransferERC721(alice, address(flow), erc721TokenIdA, erc721TokenIdB)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
@@ -41,7 +65,16 @@ contract FlowPreviewTest is FlowERC1155Test {
         uint256 erc20AmountA,
         uint256 erc20AmountB
     ) external {
-        flowPreviewDefinedFlowIOForERC20MultiElementArrays(alice, erc20AmountA, erc20AmountB);
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, multiTransfersERC20(alice, address(flow), erc20AmountA, erc20AmountB)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
@@ -53,7 +86,22 @@ contract FlowPreviewTest is FlowERC1155Test {
         uint256 erc1155Amount,
         uint256 erc1155TokenId
     ) external {
-        flowPreviewDefinedFlowIOForERC1155SingleElementArrays(alice, erc1155Amount, erc1155TokenId);
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransferERC1155ToERC1155(
+                alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount
+            )
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**

@@ -10,54 +10,110 @@ contract FlowPreviewTest is FlowERC721Test {
      * @dev Tests the preview of defined Flow IO for ERC1155
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC1155MultiElementArrays(
         address alice,
         uint256 erc1155Amount,
         uint256 erc1155TokenId
     ) external {
-        flowPreviewDefinedFlowIOForERC1155MultiElementArrays(alice, erc1155Amount, erc1155TokenId);
+        vm.label(alice, "alice");
+
+        (IFlowERC721V5 flow,) =
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
+        {
+            (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
+            );
+
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
+        }
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC721
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC721MultiElementArrays(
         address alice,
         uint256 erc721TokenIdA,
         uint256 erc721TokenIdB
     ) external {
-        flowPreviewDefinedFlowIOForERC721MultiElementArrays(alice, erc721TokenIdA, erc721TokenIdB);
+        vm.label(alice, "alice");
+
+        (IFlowERC721V5 flow,) =
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, multiTransferERC721(alice, address(flow), erc721TokenIdA, erc721TokenIdB)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC20
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC20MultiElementArrays(
         address alice,
         uint256 erc20AmountA,
         uint256 erc20AmountB
     ) external {
-        flowPreviewDefinedFlowIOForERC20MultiElementArrays(alice, erc20AmountA, erc20AmountB);
+        vm.label(alice, "alice");
+
+        (IFlowERC721V5 flow,) =
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, multiTransfersERC20(alice, address(flow), erc20AmountA, erc20AmountB)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC1155
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC1155SingleElementArrays(
         address alice,
         uint256 erc1155Amount,
         uint256 erc1155TokenId
     ) external {
-        flowPreviewDefinedFlowIOForERC1155SingleElementArrays(alice, erc1155Amount, erc1155TokenId);
+        vm.label(alice, "alice");
+
+        (IFlowERC721V5 flow,) =
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransferERC1155ToERC1155(
+                alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount
+            )
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC721
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC721SingleElementArrays(
         address alice,
         uint256 erc721TokenInId,
@@ -70,6 +126,7 @@ contract FlowPreviewTest is FlowERC721Test {
      * @dev Tests the preview of defined Flow IO for ERC20
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC20SingleElementArrays(
         string memory symbol,
         string memory baseURI,
@@ -112,6 +169,7 @@ contract FlowPreviewTest is FlowERC721Test {
     /**
      * @dev Tests the preview of an empty Flow IO.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewEmptyFlowIO(string memory symbol, string memory baseURI, address alice) public {
         (IFlowERC721V5 flow,) = deployFlowERC721({name: symbol, symbol: symbol, baseURI: baseURI});
         assumeEtchable(alice, address(flow));
