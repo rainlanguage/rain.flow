@@ -120,7 +120,20 @@ contract FlowPreviewTest is FlowERC20Test {
         uint256 erc721TokenInId,
         uint256 erc721TokenOutId
     ) external {
-        flowPreviewDefinedFlowIOForERC721SingleElementArrays(alice, erc721TokenInId, erc721TokenOutId);
+        vm.label(alice, "alice");
+
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransferERC721ToERC721(alice, address(flow), erc721TokenInId, erc721TokenOutId)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
