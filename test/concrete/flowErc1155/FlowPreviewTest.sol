@@ -6,8 +6,56 @@ import {FlowERC1155Test} from "test/abstract/FlowERC1155Test.sol";
 import {
     IFlowERC1155V5, ERC1155SupplyChange, FlowERC1155IOV1
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
+import {IFlowERC1155V5} from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 
 contract FlowPreviewTest is FlowERC1155Test {
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC1155
+     *      using multi-element arrays.
+     */
+    function testFlowERC1155PreviewDefinedFlowIOForERC1155MultiElementArrays(
+        address alice,
+        uint256 erc1155Amount,
+        uint256 erc1155TokenId
+    ) external {
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+        {
+            (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
+            );
+
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
+        }
+    }
+
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC721
+     *      using multi-element arrays.
+     */
+    function testFlowERC1155PreviewDefinedFlowIOForERC721MultiElementArrays(
+        address alice,
+        uint256 erc721TokenIdA,
+        uint256 erc721TokenIdB
+    ) external {
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, multiTransferERC721(alice, address(flow), erc721TokenIdA, erc721TokenIdB)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
+    }
+
     /// Should preview empty flow io
     function testFlowERC1155PreviewEmptyFlowIO(string memory uri, address alice, uint256 amount) public {
         (IFlowERC1155V5 flow,) = deployIFlowERC1155V5({uri: uri});

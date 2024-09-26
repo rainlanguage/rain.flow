@@ -10,6 +10,7 @@ import {CloneFactory} from "rain.factory/src/concrete/CloneFactory.sol";
 import {LibLogHelper} from "test/lib/LibLogHelper.sol";
 import {LibStackGeneration} from "test/lib/LibStackGeneration.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {FlowTransferV1} from "src/interface/unstable/IFlowV5.sol";
 
 abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
     using LibLogHelper for Vm.Log[];
@@ -34,11 +35,16 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
 
     function deployFlowImplementation() internal virtual returns (address);
 
+    function mintAndBurnFlowStack(address account, uint256 mint, uint256 burn, uint256, FlowTransferV1 memory transfer)
+        internal
+        virtual
+        returns (uint256[] memory, bytes32);
+
     function expressionDeployer(address expression, uint256[] memory constants, bytes memory bytecode)
         internal
         returns (EvaluableConfigV3 memory)
     {
-        expressionDeployerDeployExpression2MockCall(bytecode, constants, expression, bytes(hex"0006"));
+        expressionDeployerDeployExpression2MockCall(bytecode, constants, expression, bytes(hex"00060001"));
         return EvaluableConfigV3(iDeployer, bytecode, constants);
     }
 
@@ -81,6 +87,26 @@ abstract contract FlowTest is FlowUtilsAbstractTest, InterpreterMockTest {
                 evaluables[i] = evaluable;
             }
         }
+    }
+
+    function createMockBytecode() internal pure virtual returns (bytes memory) {
+        /*
+            Bytecode structure:
+            - First byte: 0x03 (sourceCount = 3)
+            - Next 2 bytes: 0x0002 (offset for sourceIndex = 0)
+            - Next 2 bytes: 0x0005 (offset for sourceIndex = 1)
+            - Next 2 bytes: 0x0008 (offset for sourceIndex = 2)
+            - Data for sourceIndex = 0:
+                - opsCount: 0x0A
+                - opcode: 0xAA
+            - Data for sourceIndex = 1:
+                - opsCount: 0x0B
+                - opcode: 0xBB
+            - Data for sourceIndex = 2:
+                - opsCount: 0x0C
+                - opcode: 0xCC
+        */
+        return hex"030002000500080AAA0BBB0CCC";
     }
 
     function assumeEtchable(address account) internal view {

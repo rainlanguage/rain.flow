@@ -38,6 +38,7 @@ contract Erc721FlowTest is FlowERC721Test {
     /**
      * @notice Tests the support for the transferPreflight hook.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721SupportsTransferPreflightHook(address alice, uint256 tokenIdA, uint256 tokenIdB) external {
         vm.assume(alice != address(0));
         vm.assume(sentinel != tokenIdA);
@@ -116,6 +117,41 @@ contract Erc721FlowTest is FlowERC721Test {
         }
     }
 
+    /**
+     * @notice Tests the flow between ERC721 and ERC1155 on the good path.
+     */
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721FlowERC721ToERC1155(
+        address alice,
+        uint256 erc721InTokenId,
+        uint256 erc1155OutTokenId,
+        uint256 erc1155OutAmount
+    ) external {
+        vm.assume(address(0) != alice);
+        vm.label(alice, "Alice");
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721("FlowERC721", "F721", "https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC721ToERC1155(alice, address(flow), erc721InTokenId, erc1155OutAmount, erc1155OutTokenId)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+        }
+    }
+
     function testFlowERC721FlowERC20ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc20InAmount,
@@ -168,6 +204,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721lowERC1155ToERC1155(
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
@@ -240,6 +277,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721lowERC20ToERC20(
         uint256 erc20OutAmount,
         uint256 erc20InAmount,
@@ -297,6 +335,7 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.stopPrank();
     }
 
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721FlowERC721ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
@@ -357,6 +396,7 @@ contract Erc721FlowTest is FlowERC721Test {
     }
 
     /// Should utilize context in HANDLE_TRANSFER entrypoint
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721UtilizeContextInHandleTransferEntrypoint(
         address alice,
         address expressionA,
@@ -409,6 +449,7 @@ contract Erc721FlowTest is FlowERC721Test {
     }
 
     /// Should not flow if number of sentinels is less than MIN_FLOW_SENTINELS
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721MinFlowSentinel(address alice, uint128 amount, address expressionA, string memory baseURI)
         external
     {
