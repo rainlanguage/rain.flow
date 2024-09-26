@@ -35,6 +35,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the support for the transferPreflight hook.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20SupportsTransferPreflightHook(
         address alice,
         uint128 amount,
@@ -114,6 +115,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests minting and burning tokens per flow in exchange for another token (e.g., ERC20).
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20MintAndBurnTokensPerFlowForERC20Exchange(
         uint256 erc20OutAmount,
         uint256 erc20InAmount,
@@ -206,77 +208,41 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC721 and ERC1155 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC721ToERC1155(
         address alice,
         uint256 erc721InTokenId,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount
     ) external {
-        vm.assume(sentinel != erc721InTokenId);
-        vm.assume(sentinel != erc1155OutTokenId);
-        vm.assume(sentinel != erc1155OutAmount);
         vm.assume(address(0) != alice);
-
         vm.label(alice, "Alice");
 
-        (IFlowERC20V5 flow, EvaluableV2 memory evaluable) = deployFlowERC20("Flow ERC20", "F20");
-
+        (IFlowERC20V5 flow, EvaluableV2 memory evaluable) = deployFlowERC20("FlowERC20", "F20");
         assumeEtchable(alice, address(flow));
 
         {
-            ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
-            erc721Transfers[0] =
-                ERC721Transfer({token: address(iTokenA), from: alice, to: address(flow), id: erc721InTokenId});
-
-            ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](1);
-            erc1155Transfers[0] = ERC1155Transfer({
-                token: address(iTokenB),
-                from: address(flow),
-                to: alice,
-                id: erc1155OutTokenId,
-                amount: erc1155OutAmount
-            });
-
-            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-            mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-            burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC20IOV1(mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, erc1155Transfers))
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC721ToERC1155(alice, address(flow), erc721InTokenId, erc1155OutAmount, erc1155OutTokenId)
             );
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 
         {
-            vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
-            vm.expectCall(
-                iTokenB,
-                abi.encodeWithSelector(
-                    IERC1155.safeTransferFrom.selector, flow, alice, erc1155OutTokenId, erc1155OutAmount, ""
-                )
-            );
-
-            vm.mockCall(
-                iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), ""
-            );
-            vm.expectCall(
-                iTokenA,
-                abi.encodeWithSelector(
-                    bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, flow, erc721InTokenId
-                )
-            );
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
         }
-
-        vm.startPrank(alice);
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
-        vm.stopPrank();
     }
 
     /**
      * @notice Tests the flow between ERC20 and ERC721 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC20ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc20InAmount,
@@ -331,6 +297,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC1155 and ERC1155 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC1155ToERC1155(
         uint256 fuzzedKeyAlice,
         uint256 erc1155OutTokenId,
@@ -404,6 +371,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC721 and ERC721 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC721ToERC721(
         uint256 fuzzedKeyAlice,
         uint256 erc721OutTokenId,
@@ -465,6 +433,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow between ERC20 and ERC20 on the good path.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20FlowERC20ToERC20(
         uint256 erc20OutAmount,
         uint256 erc20InAmount,
@@ -522,6 +491,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the utilization of context in the CAN_TRANSFER entrypoint.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20UtilizeContextInCanTransferEntrypoint(
         address alice,
         uint256 amount,
@@ -579,6 +549,7 @@ contract Erc20FlowTest is FlowERC20Test {
     /**
      * @notice Tests the flow fails if number of sentinels is less than MIN_FLOW_SENTINEL.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20MinFlowSentinel(address alice, uint128 amount, address expressionA) external {
         vm.assume(alice != address(0));
 

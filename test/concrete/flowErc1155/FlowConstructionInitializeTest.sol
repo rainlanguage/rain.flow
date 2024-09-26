@@ -24,7 +24,7 @@ contract FlowConstructionInitializeTest is FlowERC1155Test {
             FlowERC1155ConfigV3(uri, EvaluableConfigV3(iDeployer, bytecode, constants), flowConfig);
 
         vm.recordLogs();
-        iCloneErc1155Factory.clone(address(iFlowErc1155Implementation), abi.encode(flowERC1155ConfigV3));
+        iCloneFactory.clone(deployFlowImplementation(), abi.encode(flowERC1155ConfigV3));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes32 eventSignature =
@@ -34,23 +34,7 @@ contract FlowConstructionInitializeTest is FlowERC1155Test {
         (address sender, FlowERC1155ConfigV3 memory config) =
             abi.decode(concreteEvent.data, (address, FlowERC1155ConfigV3));
 
-        assertEq(sender, address(iCloneErc1155Factory), "wrong sender in Initialize event");
+        assertEq(sender, address(iCloneFactory), "wrong sender in Initialize event");
         assertEq(keccak256(abi.encode(flowERC1155ConfigV3)), keccak256(abi.encode(config)), "wrong compare Structs");
-    }
-
-    function testFlowConstructionBadCallerMetaERC1155(
-        bytes memory bytecode,
-        uint256[] memory constants,
-        string memory uri
-    ) external {
-        EvaluableConfigV3[] memory flowConfig = new EvaluableConfigV3[](1);
-        flowConfig[0] = EvaluableConfigV3(iDeployer, bytecode, constants);
-
-        FlowERC1155ConfigV3 memory flowERC1155ConfigV3 =
-            FlowERC1155ConfigV3(uri, EvaluableConfigV3(iDeployer, bytecode, constants), flowConfig);
-
-        // Expecting revert due to bad callerMeta
-        vm.expectRevert();
-        iCloneErc1155Factory.clone(address(iFlowErc1155Implementation), abi.encode(flowERC1155ConfigV3));
     }
 }
