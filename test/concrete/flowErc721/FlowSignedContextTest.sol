@@ -14,6 +14,7 @@ contract FlowSignedContextTest is FlowERC721Test {
     using SignContextLib for Vm;
 
     /// Should validate multiple signed contexts
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721ValidateMultipleSignedContexts(
         string memory name,
         string memory symbol,
@@ -82,6 +83,7 @@ contract FlowSignedContextTest is FlowERC721Test {
     }
 
     /// Should validate a signed context
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC721ValidateSignedContexts(
         string memory name,
         string memory symbol,

@@ -17,24 +17,8 @@ abstract contract FlowERC20Test is FlowTest {
     using LibUint256Matrix for uint256[];
     using LibStackGeneration for uint256;
 
-    function deployFlowImplementation() internal override returns (address flow) {
-        flow = address(new FlowERC20());
-    }
-
-    function buildConfig(
-        string memory name,
-        string memory symbol,
-        string memory,
-        address configExpression,
-        EvaluableConfigV3[] memory flowConfig
-    ) internal override returns (bytes memory) {
-        EvaluableConfigV3 memory evaluableConfig =
-            expressionDeployer(configExpression, new uint256[](0), hex"0100026001FF");
-        // Initialize the FlowERC20Config struct
-        FlowERC20ConfigV2 memory flowErc721Config =
-            FlowERC20ConfigV2({name: name, symbol: symbol, evaluableConfig: evaluableConfig, flowConfig: flowConfig});
-
-        return abi.encode(flowErc721Config);
+    function deployFlowImplementation() internal override returns (address) {
+        return address(new FlowERC20());
     }
 
     function deployFlowERC20(string memory name, string memory symbol)
@@ -69,11 +53,27 @@ abstract contract FlowERC20Test is FlowTest {
         return (IFlowERC20V5(flow), evaluables);
     }
 
+    function buildConfig(
+        string memory name,
+        string memory symbol,
+        string memory,
+        address configExpression,
+        EvaluableConfigV3[] memory flowConfig
+    ) internal override returns (bytes memory) {
+        EvaluableConfigV3 memory evaluableConfig =
+            expressionDeployer(configExpression, new uint256[](0), createMockBytecode());
+        // Initialize the FlowERC20Config struct
+        FlowERC20ConfigV2 memory flowErc721Config =
+            FlowERC20ConfigV2({name: name, symbol: symbol, evaluableConfig: evaluableConfig, flowConfig: flowConfig});
+
+        return abi.encode(flowErc721Config);
+    }
+
     function mintAndBurnFlowStack(address account, uint256 mint, uint256 burn, uint256, FlowTransferV1 memory transfer)
         internal
         view
         override
-        returns (uint256[] memory stack, bytes32 transferHash)
+        returns (uint256[] memory, bytes32)
     {
         ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
         mints[0] = ERC20SupplyChange({account: account, amount: mint});
@@ -83,8 +83,10 @@ abstract contract FlowERC20Test is FlowTest {
 
         FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(mints, burns, transfer);
 
-        transferHash = keccak256(abi.encode(flowERC20IO));
+        bytes32 transferHash = keccak256(abi.encode(flowERC20IO));
 
-        stack = sentinel.generateFlowStack(flowERC20IO);
+        uint256[] memory stack = sentinel.generateFlowStack(flowERC20IO);
+
+        return (stack, transferHash);
     }
 }

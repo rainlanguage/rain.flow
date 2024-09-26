@@ -16,6 +16,7 @@ contract FlowSignedContextTest is FlowBasicTest {
     using SignContextLib for Vm;
 
     /// Should validate multiple signed contexts
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasicValidateMultipleSignedContexts(
         uint256[] memory context0,
         uint256[] memory context1,
@@ -54,6 +55,7 @@ contract FlowSignedContextTest is FlowBasicTest {
     }
 
     /// Should validate a signed context
+    /// forge-config: default.fuzz.runs = 100
     function testFlowBasicValidateSignedContexts(
         uint256[] memory context0,
         uint256 fuzzedKeyAlice,
