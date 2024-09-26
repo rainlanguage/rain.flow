@@ -104,6 +104,31 @@ contract FlowPreviewTest is FlowERC1155Test {
         assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
+    /**
+     * @dev Tests the preview of defined Flow IO for ERC721
+     *      using single-element arrays.
+     */
+    function testFlowERC1155PreviewDefinedFlowIOForERC721SingleElementArrays(
+        address alice,
+        uint256 erc721TokenInId,
+        uint256 erc721TokenOutId
+    ) external {
+        vm.label(alice, "alice");
+
+        (IFlowERC1155V5 flow,) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransferERC721ToERC721(alice, address(flow), erc721TokenInId, erc721TokenOutId)
+        );
+
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
+    }
+
     /// Should preview empty flow io
     function testFlowERC1155PreviewEmptyFlowIO(string memory uri, address alice, uint256 amount) public {
         (IFlowERC1155V5 flow,) = deployIFlowERC1155V5({uri: uri});

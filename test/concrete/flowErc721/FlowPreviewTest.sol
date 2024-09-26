@@ -115,40 +115,25 @@ contract FlowPreviewTest is FlowERC721Test {
      */
     /// forge-config: default.fuzz.runs = 100
     function testFlowERC721PreviewDefinedFlowIOForERC721SingleElementArrays(
-        string memory symbol,
-        string memory baseURI,
         address alice,
         uint256 erc721TokenInId,
         uint256 erc721TokenOutId
     ) external {
-        vm.assume(sentinel != erc721TokenInId);
-        vm.assume(sentinel != erc721TokenOutId);
-
         vm.label(alice, "alice");
 
-        (IFlowERC721V5 flow,) = deployFlowERC721({name: symbol, symbol: symbol, baseURI: baseURI});
+        (IFlowERC721V5 flow,) =
+            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: "https://www.rainprotocol.xyz/nft/"});
         assumeEtchable(alice, address(flow));
 
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
-        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: address(flow), to: alice, id: erc721TokenOutId});
-        erc721Transfers[1] = ERC721Transfer({token: iTokenA, from: alice, to: address(flow), id: erc721TokenInId});
-
-        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
-        mints[0] = ERC721SupplyChange({account: alice, id: 1});
-        mints[1] = ERC721SupplyChange({account: alice, id: 2});
-
-        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
-        burns[0] = ERC721SupplyChange({account: alice, id: 2});
-
-        FlowERC721IOV1 memory flowERC721IO = FlowERC721IOV1(
-            mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransferERC721ToERC721(alice, address(flow), erc721TokenInId, erc721TokenOutId)
         );
 
-        uint256[] memory stack = generateFlowStack(flowERC721IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC721IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**

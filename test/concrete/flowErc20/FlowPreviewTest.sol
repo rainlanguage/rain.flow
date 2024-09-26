@@ -116,39 +116,24 @@ contract FlowPreviewTest is FlowERC20Test {
      */
     /// forge-config: default.fuzz.runs = 100
     function testFlowERC20PreviewDefinedFlowIOForERC721SingleElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
         uint256 erc721TokenInId,
         uint256 erc721TokenOutId
     ) external {
-        vm.assume(sentinel != erc721TokenInId);
-        vm.assume(sentinel != erc721TokenOutId);
-
         vm.label(alice, "alice");
 
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
 
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
-        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: address(flow), to: alice, id: erc721TokenOutId});
-        erc721Transfers[1] = ERC721Transfer({token: iTokenA, from: alice, to: address(flow), id: erc721TokenInId});
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransferERC721ToERC721(alice, address(flow), erc721TokenInId, erc721TokenOutId)
         );
 
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
