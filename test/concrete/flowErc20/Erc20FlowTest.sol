@@ -21,9 +21,10 @@ import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncod
 import {LibUint256Array} from "rain.solmem/lib/LibUint256Array.sol";
 import {LibUint256Matrix} from "rain.solmem/lib/LibUint256Matrix.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
-import {DEFAULT_STATE_NAMESPACE} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
+import {DEFAULT_STATE_NAMESPACE, IInterpreterV2} from "rain.interpreter.interface/interface/IInterpreterV2.sol";
 import {IInterpreterStoreV2} from "rain.interpreter.interface/interface/IInterpreterStoreV2.sol";
 import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 contract Erc20FlowTest is FlowERC20Test {
     using LibEvaluable for EvaluableV2;
@@ -31,6 +32,7 @@ contract Erc20FlowTest is FlowERC20Test {
     using LibUint256Array for uint256[];
     using SignContextLib for Vm;
     using LibContextWrapper for uint256[][];
+    using Address for address;
 
     /**
      * @notice Tests the support for the transferPreflight hook.
@@ -596,5 +598,86 @@ contract Erc20FlowTest is FlowERC20Test {
         vm.expectRevert(abi.encodeWithSelector(MissingSentinel.selector, sentinel));
         flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
+    }
+
+    /**
+     * @notice Tests not to be able to access values set in a flow across different flows
+     */
+    function testFlowERC20CannotAccessValuesAcrossDifferentFlows(
+        uint256 erc20OutAmount,
+        uint256 erc20InAmount,
+        address expressionA,
+        address expressionB,
+        address alice,
+        address interpreterStore
+    ) external {
+        vm.assume(erc20InAmount != 0);
+        vm.assume(erc20OutAmount != 0);
+        vm.assume(sentinel != erc20OutAmount);
+        vm.assume(sentinel != erc20InAmount);
+        vm.assume(alice != address(0));
+        vm.assume(!alice.isContract());
+        vm.assume(expressionA != expressionB);
+
+        // Prepare expressions and constants for two different flows
+        address[] memory expressions = new address[](2);
+        expressions[0] = expressionA;
+        expressions[1] = expressionB;
+
+        uint256[][] memory constants = new uint256[][](2);
+
+        {
+            uint256[] memory constantsA = new uint256[](2);
+            constantsA[0] = 10;
+            constantsA[1] = 20;
+
+            uint256[] memory constantsB = new uint256[](3);
+            constantsB[0] = 30;
+            constantsB[1] = 40;
+            constantsB[2] = 50;
+
+            constants[0] = constantsA;
+            constants[1] = constantsB;
+        }
+
+        // Define different namespaces for Flow A and Flow B
+        uint256 namespaceFlowA = 0xA;
+        uint256 namespaceFlowB = 0xB;
+
+        // Deploy the ERC20 flow with the given expressions and constants
+        (IFlowERC20V5 erc20Flow, EvaluableV2[] memory evaluables) =
+            deployFlowERC20(expressions, expressionA, constants, "Flow ERC20", "F20");
+
+        uint256[] memory mockReturnForFlowA = new uint256[](1);
+        mockReturnForFlowA[0] = 123;
+
+        vm.mockCall(
+            address(iInterpreter), abi.encodeWithSelector(IInterpreterV2.eval2.selector), abi.encode(mockReturnForFlowA)
+        );
+
+        vm.expectCall(
+            address(interpreterStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector, namespaceFlowA, "")
+        );
+
+        // Execute Flow A
+        erc20Flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+
+        uint256[] memory mockReturnForFlowB = new uint256[](1);
+
+        mockReturnForFlowB[0] = 456;
+
+        vm.mockCall(
+            address(iInterpreter), abi.encodeWithSelector(IInterpreterV2.eval2.selector), abi.encode(mockReturnForFlowB)
+        );
+
+        vm.expectCall(
+            address(interpreterStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector, namespaceFlowB, "")
+        );
+
+        // Execute Flow B
+        erc20Flow.flow(evaluables[1], new uint256[](0), new SignedContextV1[](0));
+
+        // Assert that values between Flow A and Flow B are not the same
+        assertTrue(mockReturnForFlowA[0] != mockReturnForFlowB[0], "Flow A and Flow B values should not be equal");
     }
 }
