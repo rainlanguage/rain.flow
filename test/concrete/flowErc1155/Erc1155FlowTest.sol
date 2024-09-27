@@ -33,7 +33,96 @@ contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using LibUint256Array for uint256[];
     using Address for address;
+
+    function testFlowERC1155SupportsTransferPreflightHook(
+        address alice,
+        uint256 tokenIdA,
+        uint256 tokenIdB,
+        uint256 amountA,
+        uint256 amountB,
+        address expressionA,
+        address expressionB
+    ) external {
+        vm.assume(alice != address(0));
+        vm.assume(expressionA != expressionB);
+        vm.assume(!alice.isContract());
+        vm.assume(sentinel != tokenIdA);
+        vm.assume(sentinel != tokenIdB);
+        vm.assume(sentinel != amountA);
+        vm.assume(sentinel != amountB);
+
+        address[] memory expressions = new address[](1);
+        expressions[0] = expressionA;
+
+        (IFlowERC1155V5 flow, EvaluableV2[] memory evaluables) =
+            deployIFlowERC1155V5(expressions, expressionB, new uint256[][](1), "uri");
+        assumeEtchable(alice, address(flow));
+
+        // Mint tokens to Alice
+        {
+            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](2);
+            mints[0] = ERC1155SupplyChange({account: alice, id: tokenIdA, amount: amountA});
+            mints[1] = ERC1155SupplyChange({account: alice, id: tokenIdB, amount: amountB});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC1155IOV1(
+                    mints,
+                    new ERC1155SupplyChange[](0),
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        // Attempt a token transfer
+        uint256[][] memory contextTransferA = LibContextWrapper.buildAndSetContext(
+            LibUint256Array.arrayFrom(
+                uint256(uint160(address(alice))), uint256(uint160(address(flow))), tokenIdA, amountA
+            ).matrixFrom(),
+            new SignedContextV1[](0),
+            address(alice),
+            address(flow)
+        );
+
+        // Expect call token transfer
+        interpreterEval2ExpectCall(
+            address(flow),
+            LibEncodedDispatch.encode2(
+                expressionB, FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
+            ),
+            contextTransferA
+        );
+        flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+
+        vm.startPrank(alice);
+        IERC1155(address(flow)).safeTransferFrom(alice, address(flow), tokenIdA, amountA, "");
+        vm.stopPrank();
+
+        {
+            uint256[][] memory contextTransferB = LibContextWrapper.buildAndSetContext(
+                LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flow))), tokenIdB)
+                    .matrixFrom(),
+                new SignedContextV1[](0),
+                address(alice),
+                address(flow)
+            );
+
+            interpreterEval2RevertCall(
+                address(flow),
+                LibEncodedDispatch.encode2(
+                    expressionB, FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
+                ),
+                contextTransferB
+            );
+
+            vm.startPrank(alice);
+            // vm.expectRevert("REVERT_EVAL2_CALL");
+            IERC1155(address(flow)).safeTransferFrom(alice, address(flow), tokenIdB, amountB, "");
+            vm.stopPrank();
+        }
+    }
 
     /// Tests the flow between ERC721 and ERC1155 on the good path.
     /// forge-config: default.fuzz.runs = 100
@@ -168,7 +257,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         mints[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: amount});
 
         ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
-        burns[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: 0 ether});
+        burns[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: amount});
 
         uint256[] memory stack = generateFlowStack(
             FlowERC1155IOV1(
