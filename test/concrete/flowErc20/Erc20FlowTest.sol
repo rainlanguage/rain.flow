@@ -122,44 +122,15 @@ contract Erc20FlowTest is FlowERC20Test {
         uint256 mintAndBurn,
         address alice
     ) external {
-        vm.assume(sentinel != erc20OutAmount);
-        vm.assume(sentinel != erc20InAmount);
-        vm.assume(sentinel != mintAndBurn);
         vm.assume(address(0) != alice);
 
         (IFlowERC20V5 flow, EvaluableV2 memory evaluable) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
 
-        {
-            vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-            vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
-
-            vm.expectCall(
-                address(iTokenA), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, flow, erc20InAmount), 2
-            );
-            vm.expectCall(address(iTokenB), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmount), 2);
-        }
-
         // Stack mint
         {
-            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-
-            erc20Transfers[0] =
-                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20InAmount});
-
-            erc20Transfers[1] =
-                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20OutAmount});
-
-            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-            mints[0] = ERC20SupplyChange({account: alice, amount: mintAndBurn});
-
-            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-            burns[0] = ERC20SupplyChange({account: alice, amount: 0 ether});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC20IOV1(
-                    mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
+            (uint256[] memory stack,) = mintFlowStack(
+                alice, mintAndBurn, 0, transfersERC20toERC20(alice, address(flow), erc20InAmount, erc20OutAmount)
             );
             interpreterEval2MockCall(stack, new uint256[](0));
         }
@@ -174,24 +145,8 @@ contract Erc20FlowTest is FlowERC20Test {
 
         // Stack burn
         {
-            ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-
-            erc20Transfers[0] =
-                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20InAmount});
-
-            erc20Transfers[1] =
-                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20OutAmount});
-
-            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-            mints[0] = ERC20SupplyChange({account: alice, amount: 0 ether});
-
-            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-            burns[0] = ERC20SupplyChange({account: alice, amount: mintAndBurn});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC20IOV1(
-                    mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
+            (uint256[] memory stack,) = burnFlowStack(
+                alice, mintAndBurn, 0, transfersERC20toERC20(alice, address(flow), erc20OutAmount, erc20InAmount)
             );
             interpreterEval2MockCall(stack, new uint256[](0));
         }

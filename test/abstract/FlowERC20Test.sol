@@ -89,4 +89,44 @@ abstract contract FlowERC20Test is FlowTest {
 
         return (stack, transferHash);
     }
+
+    function mintFlowStack(address account, uint256 mint, uint256, FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory, bytes32)
+    {
+        vm.assume(sentinel != mint);
+
+        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+        mints[0] = ERC20SupplyChange({account: account, amount: mint});
+
+        FlowERC20IOV1 memory flowERC721 = FlowERC20IOV1(mints, new ERC20SupplyChange[](0), transfer);
+
+        bytes32 transferHash = keccak256(abi.encode(flowERC721));
+
+        uint256[] memory stack = sentinel.generateFlowStack(flowERC721);
+
+        return (stack, transferHash);
+    }
+
+    function burnFlowStack(address account, uint256 burn, uint256, FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory, bytes32)
+    {
+        vm.assume(sentinel != burn);
+
+        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+        burns[0] = ERC20SupplyChange({account: account, amount: burn});
+
+        FlowERC20IOV1 memory flowERC721 = FlowERC20IOV1(new ERC20SupplyChange[](0), burns, transfer);
+
+        bytes32 transferHash = keccak256(abi.encode(flowERC721));
+
+        uint256[] memory stack = sentinel.generateFlowStack(flowERC721);
+
+        return (stack, transferHash);
+    }
 }

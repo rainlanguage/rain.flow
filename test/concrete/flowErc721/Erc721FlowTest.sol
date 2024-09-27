@@ -118,6 +118,56 @@ contract Erc721FlowTest is FlowERC721Test {
     }
 
     /**
+     * @notice Tests minting and burning tokens per flow in exchange for another token (e.g., ERC20).
+     */
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721MintAndBurnTokensPerFlowForERC20Exchange(
+        uint256 erc20OutAmount,
+        uint256 erc20InAmount,
+        uint256 tokenId,
+        address alice
+    ) external {
+        vm.assume(address(0) != alice);
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721({name: "FlowERC721", symbol: "F721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
+
+        // Stack mint
+        {
+            (uint256[] memory stack,) = mintFlowStack(
+                alice, 0, tokenId, transfersERC20toERC20(alice, address(flow), erc20InAmount, erc20OutAmount)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+
+            assertEq(IERC721(address(flow)).balanceOf(alice), 1);
+            assertEq(alice, IERC721(address(flow)).ownerOf(tokenId));
+        }
+
+        // Stack burn
+        {
+            (uint256[] memory stack,) = burnFlowStack(
+                alice, 0, tokenId, transfersERC20toERC20(alice, address(flow), erc20OutAmount, erc20InAmount)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+
+            assertEq(IERC721(address(flow)).balanceOf(alice), 0);
+        }
+    }
+
+    /**
      * @notice Tests the flow between ERC721 and ERC1155 on the good path.
      */
     /// forge-config: default.fuzz.runs = 100
