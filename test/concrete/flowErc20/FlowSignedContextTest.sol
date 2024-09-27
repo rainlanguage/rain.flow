@@ -14,6 +14,7 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC20Test {
     using SignContextLib for Vm;
 
     /// Should validate multiple signed contexts
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20ValidateMultipleSignedContexts(
         string memory name,
         string memory symbol,
@@ -34,35 +35,43 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC20Test {
         signedContexts[0] = vm.signContext(aliceKey, aliceKey, context0);
         signedContexts[1] = vm.signContext(aliceKey, aliceKey, context1);
 
-        uint256[] memory stack = generateFlowStack(
-            FlowERC20IOV1(
-                new ERC20SupplyChange[](0),
-                new ERC20SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-        interpreterEval2MockCall(stack, new uint256[](0));
-        erc20Flow.flow(evaluable, new uint256[](0), signedContexts);
+        {
+            address alice = vm.addr(aliceKey);
+            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+            mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
 
+            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+            burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
+
+            uint256[] memory stack = generateFlowStack(
+                FlowERC20IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+            erc20Flow.flow(evaluable, new uint256[](0), signedContexts);
+
+            uint256[] memory stack1 = generateFlowStack(
+                FlowERC20IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack1, new uint256[](0));
+        }
         // With bad signature in second signed context
         SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
         signedContexts1[0] = vm.signContext(aliceKey, aliceKey, context0);
         signedContexts1[1] = vm.signContext(aliceKey, bobKey, context1);
-
-        uint256[] memory stack1 = generateFlowStack(
-            FlowERC20IOV1(
-                new ERC20SupplyChange[](0),
-                new ERC20SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-        interpreterEval2MockCall(stack1, new uint256[](0));
-
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 1));
         erc20Flow.flow(evaluable, new uint256[](0), signedContexts1);
     }
 
     /// Should validate a signed context
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20ValidateSignedContexts(
         string memory name,
         string memory symbol,
@@ -79,17 +88,24 @@ contract FlowSignedContextTest is FlowUtilsAbstractTest, FlowERC20Test {
 
         SignedContextV1[] memory signedContext = new SignedContextV1[](1);
         signedContext[0] = vm.signContext(aliceKey, aliceKey, context0);
+        {
+            address alice = vm.addr(aliceKey);
+            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
+            mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
 
-        uint256[] memory stack = generateFlowStack(
-            FlowERC20IOV1(
-                new ERC20SupplyChange[](0),
-                new ERC20SupplyChange[](0),
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-        interpreterEval2MockCall(stack, new uint256[](0));
-        erc20Flow.flow(evaluable, new uint256[](0), signedContext);
+            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
+            burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
 
+            uint256[] memory stack = generateFlowStack(
+                FlowERC20IOV1(
+                    mints,
+                    burns,
+                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+            erc20Flow.flow(evaluable, new uint256[](0), signedContext);
+        }
         // With bad signature in second signed context
         SignedContextV1[] memory signedContext1 = new SignedContextV1[](1);
         signedContext1[0] = vm.signContext(aliceKey, bobKey, context0);
