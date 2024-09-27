@@ -383,8 +383,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
     ) external {
         vm.assume(address(0) != alice);
 
-        (IFlowERC1155V5 flow, EvaluableV2 memory evaluable) =
-            deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        (IFlowERC1155V5 flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
         assumeEtchable(alice, address(flow));
 
         // Stack mint
