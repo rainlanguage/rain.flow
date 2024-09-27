@@ -15,305 +15,157 @@ contract FlowPreviewTest is FlowERC20Test {
      * @dev Tests the preview of defined Flow IO for ERC1155
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20PreviewDefinedFlowIOForERC1155MultiElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
-        uint256 erc1155OutTokenIdA,
-        uint256 erc1155OutAmountA,
-        uint256 erc1155InTokenIdB,
-        uint256 erc1155InAmountB
+        uint256 erc1155Amount,
+        uint256 erc1155TokenId
     ) external {
-        vm.assume(sentinel != erc1155OutTokenIdA);
-        vm.assume(sentinel != erc1155OutAmountA);
-        vm.assume(sentinel != erc1155InTokenIdB);
-        vm.assume(sentinel != erc1155InAmountB);
         vm.label(alice, "alice");
 
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
+        {
+            (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                multiTransferERC1155(alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount)
+            );
 
-        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](4);
-
-        erc1155Transfers[0] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: address(flow),
-            to: alice,
-            id: erc1155OutTokenIdA,
-            amount: erc1155OutAmountA
-        });
-
-        erc1155Transfers[1] = ERC1155Transfer({
-            token: address(iTokenB),
-            from: address(flow),
-            to: alice,
-            id: erc1155InTokenIdB,
-            amount: erc1155InAmountB
-        });
-
-        erc1155Transfers[2] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: alice,
-            to: address(flow),
-            id: erc1155OutTokenIdA,
-            amount: erc1155OutAmountA
-        });
-
-        erc1155Transfers[3] = ERC1155Transfer({
-            token: address(iTokenB),
-            from: alice,
-            to: address(flow),
-            id: erc1155InTokenIdB,
-            amount: erc1155InAmountB
-        });
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
-        );
-
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+            assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
+        }
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC721
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20PreviewDefinedFlowIOForERC721MultiElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
         uint256 erc721TokenIdA,
         uint256 erc721TokenIdB
     ) external {
-        vm.assume(sentinel != erc721TokenIdA);
-        vm.assume(sentinel != erc721TokenIdB);
-
         vm.label(alice, "alice");
 
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
 
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](4);
-        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: address(flow), to: alice, id: erc721TokenIdA});
-        erc721Transfers[1] = ERC721Transfer({token: iTokenB, from: address(flow), to: alice, id: erc721TokenIdB});
-        erc721Transfers[2] = ERC721Transfer({token: iTokenA, from: alice, to: address(flow), id: erc721TokenIdA});
-        erc721Transfers[3] = ERC721Transfer({token: iTokenB, from: alice, to: address(flow), id: erc721TokenIdB});
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, multiTransferERC721(alice, address(flow), erc721TokenIdA, erc721TokenIdB)
         );
 
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC20
      *      using multi-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20PreviewDefinedFlowIOForERC20MultiElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
         uint256 erc20AmountA,
         uint256 erc20AmountB
     ) external {
-        vm.assume(sentinel != erc20AmountA);
-        vm.assume(sentinel != erc20AmountB);
-
         vm.label(alice, "alice");
 
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
 
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](4);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmountA});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20AmountB});
-        erc20Transfers[2] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmountA});
-        erc20Transfers[3] =
-            ERC20Transfer({token: address(iTokenB), from: alice, to: address(flow), amount: erc20AmountB});
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice, 20 ether, 10 ether, 5, multiTransfersERC20(alice, address(flow), erc20AmountA, erc20AmountB)
         );
 
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC1155
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20PreviewDefinedFlowIOForERC1155SingleElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
-        uint256 erc1155OutTokenId,
-        uint256 erc1155OutAmount,
-        uint256 erc1155InTokenId,
-        uint256 erc1155InAmount
+        uint256 erc1155Amount,
+        uint256 erc1155TokenId
     ) external {
-        vm.assume(sentinel != erc1155OutTokenId);
-        vm.assume(sentinel != erc1155OutAmount);
-        vm.assume(sentinel != erc1155InTokenId);
-        vm.assume(sentinel != erc1155InAmount);
         vm.label(alice, "alice");
 
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
 
-        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
-
-        erc1155Transfers[0] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: address(flow),
-            to: alice,
-            id: erc1155OutTokenId,
-            amount: erc1155OutAmount
-        });
-
-        erc1155Transfers[1] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: alice,
-            to: address(flow),
-            id: erc1155InTokenId,
-            amount: erc1155InAmount
-        });
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransferERC1155ToERC1155(
+                alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount
+            )
         );
 
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC721
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20PreviewDefinedFlowIOForERC721SingleElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
         uint256 erc721TokenInId,
         uint256 erc721TokenOutId
     ) external {
-        vm.assume(sentinel != erc721TokenInId);
-        vm.assume(sentinel != erc721TokenOutId);
-
         vm.label(alice, "alice");
 
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
 
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
-        erc721Transfers[0] = ERC721Transfer({token: iTokenA, from: address(flow), to: alice, id: erc721TokenOutId});
-        erc721Transfers[1] = ERC721Transfer({token: iTokenA, from: alice, to: address(flow), id: erc721TokenInId});
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransferERC721ToERC721(alice, address(flow), erc721TokenInId, erc721TokenOutId)
         );
 
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
      * @dev Tests the preview of defined Flow IO for ERC20
      *      using single-element arrays.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20PreviewDefinedFlowIOForERC20SingleElementArrays(
-        string memory name,
-        string memory symbol,
         address alice,
         uint256 erc20AmountIn,
         uint256 erc20AmountOut
     ) external {
-        vm.assume(sentinel != erc20AmountIn);
-        vm.assume(sentinel != erc20AmountOut);
-
         vm.label(alice, "alice");
 
-        (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
+        (IFlowERC20V5 flow,) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
 
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alice, amount: erc20AmountOut});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20AmountIn});
-
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        FlowERC20IOV1 memory flowERC20IO = FlowERC20IOV1(
-            mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
+        (uint256[] memory stack, bytes32 transferHash) = mintAndBurnFlowStack(
+            alice,
+            20 ether,
+            10 ether,
+            5,
+            createTransfersERC20toERC20(alice, address(flow), erc20AmountIn, erc20AmountOut)
         );
 
-        uint256[] memory stack = generateFlowStack(flowERC20IO);
-
-        assertEq(
-            keccak256(abi.encode(flowERC20IO)), keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs"
-        );
+        assertEq(transferHash, keccak256(abi.encode(flow.stackToFlow(stack))), "wrong compare Structs");
     }
 
     /**
      * @dev Tests the preview of an empty Flow IO.
      */
+    /// forge-config: default.fuzz.runs = 100
     function testFlowERC20PreviewEmptyFlowIO(string memory name, string memory symbol, address alice) public {
         (IFlowERC20V5 flow,) = deployFlowERC20(name, symbol);
         assumeEtchable(alice, address(flow));
