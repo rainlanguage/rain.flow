@@ -17,6 +17,10 @@ import {
     UnregisteredFlow
 } from "src/error/ErrFlow.sol";
 
+import {FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS} from "src/abstract/FlowCommon.sol";
+import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
+import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
+
 contract FlowTest is FlowBasicTest {
     using LibEvaluable for EvaluableV2;
 
@@ -381,5 +385,28 @@ contract FlowTest is FlowBasicTest {
         vm.expectRevert(abi.encodeWithSelector(UnregisteredFlow.selector, evaluables[0].hash()));
         flowB.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
+    }
+
+    /**
+     * @notice Tests that the flow halts if it does not meet the 'ensure' requirement.
+     */
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowHaltIfEnsureRequirementNotMet() external {
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(address(0), address(flow));
+
+        (uint256[] memory stack,) = mintAndBurnFlowStack(address(this), 20 ether, 10 ether, 5, transferEmpty());
+        interpreterEval2MockCall(stack, new uint256[](0));
+
+        uint256[][] memory context = LibContextWrapper.buildAndSetContext(
+            new uint256[](0), new SignedContextV1[](0), address(this), address(flow)
+        );
+
+        interpreterEval2RevertCall(
+            address(flow), LibEncodedDispatch.encode2(evaluable.expression, FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS), context
+        );
+
+        vm.expectRevert("REVERT_EVAL2_CALL");
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
     }
 }

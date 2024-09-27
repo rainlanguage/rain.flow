@@ -59,4 +59,26 @@ abstract contract FlowBasicTest is FlowTest {
         uint256[] memory stack = sentinel.generateFlowStack(transfer);
         return (stack, transferHash);
     }
+
+    function mintFlowStack(address, uint256, uint256, FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory, bytes32)
+    {
+        bytes32 transferHash = keccak256(abi.encode(transfer));
+        uint256[] memory stack = sentinel.generateFlowStack(transfer);
+        return (stack, transferHash);
+    }
+
+    function burnFlowStack(address, uint256, uint256, FlowTransferV1 memory transfer)
+        internal
+        view
+        override
+        returns (uint256[] memory, bytes32)
+    {
+        bytes32 transferHash = keccak256(abi.encode(transfer));
+        uint256[] memory stack = sentinel.generateFlowStack(transfer);
+        return (stack, transferHash);
+    }
 }

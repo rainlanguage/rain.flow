@@ -15,6 +15,8 @@ import {
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
 } from "../../../src/interface/unstable/IFlowERC721V5.sol";
+import {BurnerNotOwner} from "src/interface/deprecated/v4/IFlowERC721V4.sol";
+
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
@@ -118,6 +120,56 @@ contract Erc721FlowTest is FlowERC721Test {
     }
 
     /**
+     * @notice Tests minting and burning tokens per flow in exchange for another token (e.g., ERC20).
+     */
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721MintAndBurnTokensPerFlowForERC20Exchange(
+        uint256 erc20OutAmount,
+        uint256 erc20InAmount,
+        uint256 tokenId,
+        address alice
+    ) external {
+        vm.assume(address(0) != alice);
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721({name: "FlowERC721", symbol: "F721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
+
+        // Stack mint
+        {
+            (uint256[] memory stack,) = mintFlowStack(
+                alice, 0, tokenId, transfersERC20toERC20(alice, address(flow), erc20InAmount, erc20OutAmount)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+
+            assertEq(IERC721(address(flow)).balanceOf(alice), 1);
+            assertEq(alice, IERC721(address(flow)).ownerOf(tokenId));
+        }
+
+        // Stack burn
+        {
+            (uint256[] memory stack,) = burnFlowStack(
+                alice, 0, tokenId, transfersERC20toERC20(alice, address(flow), erc20OutAmount, erc20InAmount)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        {
+            vm.startPrank(alice);
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+            vm.stopPrank();
+
+            assertEq(IERC721(address(flow)).balanceOf(alice), 0);
+        }
+    }
+
+    /**
      * @notice Tests the flow between ERC721 and ERC1155 on the good path.
      */
     /// forge-config: default.fuzz.runs = 100
@@ -162,6 +214,7 @@ contract Erc721FlowTest is FlowERC721Test {
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         address alice = vm.addr(aliceKey);
+        vm.assume(!alice.isContract());
 
         vm.assume(sentinel != erc20InAmount);
         vm.assume(sentinel != erc721OutTokenId);
@@ -292,6 +345,7 @@ contract Erc721FlowTest is FlowERC721Test {
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         address alice = vm.addr(aliceKey);
+        vm.assume(!alice.isContract());
 
         (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
             deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
@@ -393,6 +447,40 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.startPrank(alice);
         erc721Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
+    }
+
+    /**
+     * @notice Tests failure when the token burner is not the owner.
+     */
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721FailWhenTokenBurnerIsNotOwner(address alice, address bob, uint256 tokenId) public {
+        vm.assume(alice != address(0));
+        vm.assume(bob != address(0));
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721({name: "FlowERC721", symbol: "F721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
+
+        // Stack mint
+        {
+            (uint256[] memory stack,) = mintFlowStack(alice, 0, tokenId, transferEmpty());
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        assertEq(IERC721(address(flow)).balanceOf(alice), 1);
+        assertEq(alice, IERC721(address(flow)).ownerOf(tokenId));
+
+        // Stack burn
+        {
+            (uint256[] memory stack,) = burnFlowStack(bob, 0, tokenId, transferEmpty());
+
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.expectRevert(abi.encodeWithSelector(BurnerNotOwner.selector));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
     }
 
     /// Should utilize context in HANDLE_TRANSFER entrypoint
