@@ -23,7 +23,7 @@ abstract contract FlowERC1155Test is FlowTest {
         internal
         returns (IFlowERC1155V5 flowErc1155, EvaluableV2 memory evaluable)
     {
-        (flowErc1155, evaluable) = deployIFlowERC1155V5(address(0), uri);
+        (flowErc1155, evaluable) = deployIFlowERC1155V5(address(uint160(uint256(keccak256("expression")))), uri);
     }
 
     function deployIFlowERC1155V5(address expression, string memory uri)
@@ -33,8 +33,9 @@ abstract contract FlowERC1155Test is FlowTest {
         address[] memory expressions = new address[](1);
         expressions[0] = expression;
         uint256[] memory constants = new uint256[](0);
-        (IFlowERC1155V5 flowErc1155, EvaluableV2[] memory evaluables) =
-            deployIFlowERC1155V5(expressions, address(1), constants.matrixFrom(), uri);
+        (IFlowERC1155V5 flowErc1155, EvaluableV2[] memory evaluables) = deployIFlowERC1155V5(
+            expressions, address(uint160(uint256(keccak256("configExpression")))), constants.matrixFrom(), uri
+        );
         return (flowErc1155, evaluables[0]);
     }
 
