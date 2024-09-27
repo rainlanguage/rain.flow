@@ -449,7 +449,6 @@ contract Erc721FlowTest is FlowERC721Test {
         vm.stopPrank();
     }
 
-
     /**
      * @notice Tests failure when the token burner is not the owner.
      */
@@ -457,9 +456,6 @@ contract Erc721FlowTest is FlowERC721Test {
     function testFlowERC721FailWhenTokenBurnerIsNotOwner(address alice, address bob, uint256 tokenId) public {
         vm.assume(alice != address(0));
         vm.assume(bob != address(0));
-        vm.assume(bob != alice);
-        vm.assume(sentinel != tokenId);
-        vm.assume(!alice.isContract());
 
         (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
             deployFlowERC721({name: "FlowERC721", symbol: "F721", baseURI: "https://www.rainprotocol.xyz/nft/"});
@@ -467,17 +463,9 @@ contract Erc721FlowTest is FlowERC721Test {
 
         // Stack mint
         {
-            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
-            mints[0] = ERC721SupplyChange({account: alice, id: tokenId});
+            (uint256[] memory stack,) = mintFlowStack(alice, 0, tokenId, transferEmpty());
 
-            uint256[] memory stackMint = generateFlowStack(
-                FlowERC721IOV1(
-                    mints,
-                    new ERC721SupplyChange[](0),
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
-            interpreterEval2MockCall(stackMint, new uint256[](0));
+            interpreterEval2MockCall(stack, new uint256[](0));
         }
 
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
@@ -486,17 +474,9 @@ contract Erc721FlowTest is FlowERC721Test {
 
         // Stack burn
         {
-            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
-            burns[0] = ERC721SupplyChange({account: bob, id: tokenId});
+            (uint256[] memory stack,) = burnFlowStack(bob, 0, tokenId, transferEmpty());
 
-            uint256[] memory stackBurn = generateFlowStack(
-                FlowERC721IOV1(
-                    new ERC721SupplyChange[](0),
-                    burns,
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
-            interpreterEval2MockCall(stackBurn, new uint256[](0));
+            interpreterEval2MockCall(stack, new uint256[](0));
         }
 
         vm.expectRevert(abi.encodeWithSelector(BurnerNotOwner.selector));
