@@ -63,7 +63,7 @@ contract Erc721FlowTest is FlowERC721Test {
                 FlowERC721IOV1(
                     mints,
                     new ERC721SupplyChange[](0),
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
+                    transferEmpty()
                 )
             );
             interpreterEval2MockCall(stack, new uint256[](0));
