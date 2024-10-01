@@ -23,27 +23,18 @@ contract FlowTimeTest is FlowERC20Test {
         vm.assume(alice != address(0));
         vm.assume(writeToStore.length != 0);
         (IFlowERC20V5 erc20Flow, EvaluableV2 memory evaluable) = deployFlowERC20(name, symbol);
+        assumeEtchable(alice, address(erc20Flow));
 
-        ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-        mints[0] = ERC20SupplyChange({account: alice, amount: 20 ether});
-
-        ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-        burns[0] = ERC20SupplyChange({account: alice, amount: 10 ether});
-
-        uint256[] memory stack = generateFlowStack(
-            FlowERC20IOV1(
-                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-
-        interpreterEval2MockCall(stack, writeToStore);
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(alice, 20 ether, 10 ether, 5, transferEmpty());
+            interpreterEval2MockCall(stack, writeToStore);
+            vm.expectCall(
+                address(iStore),
+                abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
+            );
+        }
 
         vm.mockCall(address(iStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector), abi.encode());
-
-        vm.expectCall(
-            address(iStore),
-            abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
-        );
 
         erc20Flow.flow(evaluable, writeToStore, new SignedContextV1[](0));
     }

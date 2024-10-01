@@ -17,8 +17,7 @@ contract FlowTimeTest is FlowBasicTest {
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
-        uint256[] memory stack =
-            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
+        uint256[] memory stack = generateFlowStack(transferEmpty());
 
         interpreterEval2MockCall(stack, writeToStore);
 

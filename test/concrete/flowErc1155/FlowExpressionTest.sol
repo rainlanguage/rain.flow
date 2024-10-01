@@ -50,7 +50,6 @@ contract FlowExpressionTest is FlowERC1155Test {
         uint256[] memory fuzzedcallerContext0,
         uint256[] memory fuzzedcallerContext1,
         string memory uri,
-        uint256 id,
         uint256 amount,
         address alice
     ) public {
@@ -64,20 +63,7 @@ contract FlowExpressionTest is FlowERC1155Test {
         (IFlowERC1155V5 flowErc1155, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
 
         {
-            ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
-            mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
-
-            ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
-            burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC1155IOV1(
-                    mints,
-                    burns,
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
-
+            (uint256[] memory stack,) = mintAndBurnFlowStack(alice, 20 ether, 10 ether, 5, transferEmpty());
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 

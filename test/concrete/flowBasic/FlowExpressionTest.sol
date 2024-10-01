@@ -55,14 +55,6 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
-        {
-            uint256[] memory stack = generateFlowStack(
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            );
-
-            interpreterEval2MockCall(stack, new uint256[](0));
-        }
-
         SignedContextV1[] memory signedContext = new SignedContextV1[](matrixCallerContext.length);
         {
             // Ensure the fuzzed key is within the valid range for secp256k1
@@ -70,6 +62,9 @@ contract FlowExpressionTest is FlowBasicTest, IInterpreterCallerV2 {
             for (uint256 i = 0; i < matrixCallerContext.length; i++) {
                 signedContext[i] = vm.signContext(aliceKey, aliceKey, matrixCallerContext[i]);
             }
+
+            (uint256[] memory stack,) = mintAndBurnFlowStack(vm.addr(aliceKey), 20 ether, 10 ether, 5, transferEmpty());
+            interpreterEval2MockCall(stack, new uint256[](0));
 
             vm.recordLogs();
             flow.flow(evaluable, fuzzedcallerContext0, signedContext);

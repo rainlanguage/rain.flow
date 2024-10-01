@@ -27,9 +27,7 @@ contract FlowContextTest is FlowBasicTest {
             LibContextWrapper.buildAndSetContext(callerContext, signedContext, address(alice), address(flow));
 
         {
-            uint256[] memory stack = generateFlowStack(
-                FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            );
+            uint256[] memory stack = generateFlowStack(transferEmpty());
 
             interpreterEval2MockCall(stack, new uint256[](0));
 

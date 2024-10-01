@@ -19,38 +19,23 @@ contract FlowTimeTest is FlowUtilsAbstractTest, FlowERC1155Test {
     using SignContextLib for Vm;
     using Address for address;
 
-    function testFlowTime(string memory uri, uint256[] memory writeToStore, uint256 id, uint256 amount, address alice)
-        public
-    {
+    function testFlowERC1155FlowTime(string memory uri, uint256[] memory writeToStore, address alice) public {
         vm.assume(alice != address(0));
-        vm.assume(amount != 0);
-        vm.assume(sentinel != amount);
-        vm.assume(sentinel != id);
         vm.assume(writeToStore.length != 0);
-        vm.assume(!alice.isContract());
 
         (IFlowERC1155V5 erc1155Flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5(uri);
+        assumeEtchable(alice, address(erc1155Flow));
 
-        ERC1155SupplyChange[] memory mints = new ERC1155SupplyChange[](1);
-        mints[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
-
-        ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
-        burns[0] = ERC1155SupplyChange({account: alice, id: id, amount: amount});
-
-        uint256[] memory stack = generateFlowStack(
-            FlowERC1155IOV1(
-                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-
-        interpreterEval2MockCall(stack, writeToStore);
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(alice, 20 ether, 10 ether, 5, transferEmpty());
+            interpreterEval2MockCall(stack, writeToStore);
+            vm.expectCall(
+                address(iStore),
+                abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
+            );
+        }
 
         vm.mockCall(address(iStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector), abi.encode());
-
-        vm.expectCall(
-            address(iStore),
-            abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
-        );
 
         erc1155Flow.flow(evaluable, writeToStore, new SignedContextV1[](0));
     }

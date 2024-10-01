@@ -35,8 +35,7 @@ contract FlowSignedContextTest is FlowBasicTest {
         signedContexts[0] = vm.signContext(aliceKey, aliceKey, context0);
         signedContexts[1] = vm.signContext(aliceKey, aliceKey, context1);
 
-        uint256[] memory stack =
-            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
+        uint256[] memory stack = generateFlowStack(transferEmpty());
 
         interpreterEval2MockCall(stack, new uint256[](0));
         flow.flow(evaluable, new uint256[](0), signedContexts);
@@ -45,10 +44,6 @@ contract FlowSignedContextTest is FlowBasicTest {
         SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
         signedContexts1[0] = vm.signContext(aliceKey, aliceKey, context0);
         signedContexts1[1] = vm.signContext(aliceKey, bobKey, context1);
-
-        uint256[] memory stack1 =
-            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
-        interpreterEval2MockCall(stack1, new uint256[](0));
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 1));
         flow.flow(evaluable, new uint256[](0), signedContexts1);
@@ -71,18 +66,13 @@ contract FlowSignedContextTest is FlowBasicTest {
         SignedContextV1[] memory signedContext = new SignedContextV1[](1);
         signedContext[0] = vm.signContext(aliceKey, aliceKey, context0);
 
-        uint256[] memory stack =
-            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
+        uint256[] memory stack = generateFlowStack(transferEmpty());
         interpreterEval2MockCall(stack, new uint256[](0));
         flow.flow(evaluable, new uint256[](0), signedContext);
 
         // With bad signature in second signed context
         SignedContextV1[] memory signedContext1 = new SignedContextV1[](1);
         signedContext1[0] = vm.signContext(aliceKey, bobKey, context0);
-
-        uint256[] memory stack1 =
-            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0)));
-        interpreterEval2MockCall(stack1, new uint256[](0));
 
         vm.expectRevert(abi.encodeWithSelector(InvalidSignature.selector, 0));
         flow.flow(evaluable, new uint256[](0), signedContext1);

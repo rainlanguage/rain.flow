@@ -56,95 +56,22 @@ contract FlowTest is FlowBasicTest {
     }
 
     /// forge-config: default.fuzz.runs = 100
-    function testFlowERC20ToERC721(address bob, uint256 erc20InAmount, uint256 erc721OutTokenId) external {
-        vm.assume(sentinel != erc20InAmount);
-        vm.assume(sentinel != erc721OutTokenId);
-        vm.label(bob, "Bob");
-
-        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
-        assumeEtchable(bob, address(flow));
-
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: bob, to: address(flow), amount: erc20InAmount});
-
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
-        erc721Transfers[0] = ERC721Transfer({token: iTokenB, from: address(flow), to: bob, id: erc721OutTokenId});
-
-        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-        vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector, bob, flow, erc20InAmount));
-
-        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
-        vm.expectCall(
-            iTokenB,
-            abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), flow, bob, erc721OutTokenId
-            )
-        );
-
-        uint256[] memory stack =
-            generateFlowStack(FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)));
-        interpreterEval2MockCall(stack, new uint256[](0));
-
-        vm.startPrank(bob);
-        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
-        vm.stopPrank();
-    }
-
-    /// forge-config: default.fuzz.runs = 100
-    function testFlowERC1155ToERC1155(
-        address alice,
-        uint256 erc1155OutTokenId,
-        uint256 erc1155OutAmount,
-        uint256 erc1155InTokenId,
-        uint256 erc1155InAmount
-    ) external {
-        vm.assume(sentinel != erc1155OutTokenId);
-        vm.assume(sentinel != erc1155OutAmount);
-        vm.assume(sentinel != erc1155InTokenId);
-        vm.assume(sentinel != erc1155InAmount);
-        vm.label(alice, "alice");
+    function testFlowERC20ToERC721(address alice, uint256 erc20InAmount, uint256 erc721OutTokenId) external {
+        vm.label(alice, "Alice");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
         assumeEtchable(alice, address(flow));
 
-        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
-        erc1155Transfers[0] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: address(flow),
-            to: alice,
-            id: erc1155OutTokenId,
-            amount: erc1155OutAmount
-        });
-
-        erc1155Transfers[1] = ERC1155Transfer({
-            token: address(iTokenB),
-            from: alice,
-            to: address(flow),
-            id: erc1155InTokenId,
-            amount: erc1155InAmount
-        });
-
-        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
-        vm.expectCall(
-            iTokenA,
-            abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, flow, alice, erc1155OutTokenId, erc1155OutAmount, ""
-            )
-        );
-
-        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
-        vm.expectCall(
-            iTokenB,
-            abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, alice, flow, erc1155InTokenId, erc1155InAmount, ""
-            )
-        );
-
-        uint256[] memory stack =
-            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers));
-
-        interpreterEval2MockCall(stack, new uint256[](0));
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC20ToERC721(alice, address(flow), erc20InAmount, erc721OutTokenId)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
 
         vm.startPrank(alice);
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
@@ -152,90 +79,87 @@ contract FlowTest is FlowBasicTest {
     }
 
     /// forge-config: default.fuzz.runs = 100
-    function testFlowERC721ToERC721(address bob, uint256 erc721OutTokenId, uint256 erc721InTokenId) external {
-        vm.assume(sentinel != erc721OutTokenId);
-        vm.assume(sentinel != erc721InTokenId);
-        vm.label(bob, "Bob");
+    function testFlowERC1155ToERC1155(address alice, uint256 erc1155TokenId, uint256 erc1155Amount) external {
+        vm.label(alice, "Alice");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
-        assumeEtchable(bob, address(flow));
+        assumeEtchable(alice, address(flow));
 
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
-        erc721Transfers[0] =
-            ERC721Transfer({token: address(iTokenA), from: address(flow), to: bob, id: erc721OutTokenId});
-        erc721Transfers[1] =
-            ERC721Transfer({token: address(iTokenB), from: bob, to: address(flow), id: erc721InTokenId});
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC1155ToERC1155(
+                    alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
 
-        vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
-        vm.expectCall(
-            iTokenA,
-            abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), flow, bob, erc721OutTokenId
-            )
-        );
-
-        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
-        vm.expectCall(
-            iTokenB,
-            abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), bob, flow, erc721InTokenId
-            )
-        );
-
-        uint256[] memory stack =
-            generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0)));
-
-        interpreterEval2MockCall(stack, new uint256[](0));
-
-        vm.startPrank(bob);
+        vm.startPrank(alice);
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
     /// forge-config: default.fuzz.runs = 100
-    function testFlowERC20ToERC20(address alise, uint256 erc20OutAmount, uint256 erc20InAmount) external {
-        vm.assume(sentinel != erc20OutAmount);
-        vm.assume(sentinel != erc20InAmount);
-        vm.label(alise, "Alise");
+    function testFlowERC721ToERC721(address alice, uint256 erc721OutTokenId, uint256 erc721InTokenId) external {
+        vm.assume(sentinel != erc721OutTokenId);
+        vm.assume(sentinel != erc721InTokenId);
+        vm.label(alice, "Alice");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
-        assumeEtchable(alise, address(flow));
+        assumeEtchable(alice, address(flow));
 
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(flow), to: alise, amount: erc20OutAmount});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: alise, to: address(flow), amount: erc20InAmount});
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC721ToERC721(alice, address(flow), erc721InTokenId, erc721OutTokenId)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
 
-        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
-        vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transfer.selector, alise, erc20OutAmount));
+        vm.startPrank(alice);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
 
-        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-        vm.expectCall(iTokenB, abi.encodeWithSelector(IERC20.transferFrom.selector, alise, flow, erc20InAmount));
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC20ToERC20(address alice, uint256 erc20OutAmount, uint256 erc20InAmount) external {
+        vm.label(alice, "Alice");
 
-        uint256[] memory stack =
-            generateFlowStack(FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0)));
+        (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
+        assumeEtchable(alice, address(flow));
 
-        interpreterEval2MockCall(stack, new uint256[](0));
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice, 20 ether, 10 ether, 5, transfersERC20toERC20(alice, address(flow), erc20InAmount, erc20OutAmount)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
 
-        vm.startPrank(alise);
+        vm.startPrank(alice);
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
     /// forge-config: default.fuzz.runs = 100
     function testFlowShouldErrorIfERC20FlowFromIsOtherThanSourceContractOrMsgSender(
-        address alise,
+        address alice,
         address bob,
         uint256 erc20Amount
     ) external {
         vm.assume(sentinel != erc20Amount);
-        vm.assume(bob != alise);
-        vm.label(alise, "Alise");
+        vm.assume(bob != alice);
+        vm.label(alice, "Alice");
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
-        assumeEtchable(alise, address(flow));
+        assumeEtchable(alice, address(flow));
         assumeEtchable(bob, address(flow));
 
         {
@@ -243,7 +167,7 @@ contract FlowTest is FlowBasicTest {
             erc20Transfers[0] =
                 ERC20Transfer({token: address(iTokenA), from: bob, to: address(flow), amount: erc20Amount});
             erc20Transfers[1] =
-                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alise, amount: erc20Amount});
+                ERC20Transfer({token: address(iTokenB), from: address(flow), to: alice, amount: erc20Amount});
 
             uint256[] memory stack =
                 generateFlowStack(FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0)));
@@ -251,7 +175,7 @@ contract FlowTest is FlowBasicTest {
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 
-        vm.startPrank(alise);
+        vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
@@ -259,8 +183,8 @@ contract FlowTest is FlowBasicTest {
         {
             ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
             erc20Transfers[0] =
-                ERC20Transfer({token: address(iTokenA), from: alise, to: address(flow), amount: erc20Amount});
-            erc20Transfers[1] = ERC20Transfer({token: address(iTokenB), from: bob, to: alise, amount: erc20Amount});
+                ERC20Transfer({token: address(iTokenA), from: alice, to: address(flow), amount: erc20Amount});
+            erc20Transfers[1] = ERC20Transfer({token: address(iTokenB), from: bob, to: alice, amount: erc20Amount});
             vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
 
             uint256[] memory stack =
@@ -269,7 +193,7 @@ contract FlowTest is FlowBasicTest {
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 
-        vm.startPrank(alise);
+        vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC20Flow.selector));
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
@@ -277,18 +201,18 @@ contract FlowTest is FlowBasicTest {
 
     /// forge-config: default.fuzz.runs = 100
     function testFlowShouldErrorIfERC721FlowFromIsOtherThanSourceContractOrMsgSender(
-        address alise,
+        address alice,
         address bob,
         uint256 erc721TokenId
     ) external {
         vm.assume(sentinel != erc721TokenId);
-        vm.assume(bob != alise);
+        vm.assume(bob != alice);
 
-        vm.label(alise, "Alise");
+        vm.label(alice, "Alice");
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
-        assumeEtchable(alise, address(flow));
+        assumeEtchable(alice, address(flow));
         assumeEtchable(bob, address(flow));
 
         {
@@ -296,7 +220,7 @@ contract FlowTest is FlowBasicTest {
             erc721Transfers[0] =
                 ERC721Transfer({token: address(iTokenA), from: bob, to: address(flow), id: erc721TokenId});
             erc721Transfers[1] =
-                ERC721Transfer({token: address(iTokenB), from: address(flow), to: alise, id: erc721TokenId});
+                ERC721Transfer({token: address(iTokenB), from: address(flow), to: alice, id: erc721TokenId});
 
             uint256[] memory stack =
                 generateFlowStack(FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0)));
@@ -304,7 +228,7 @@ contract FlowTest is FlowBasicTest {
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 
-        vm.startPrank(alise);
+        vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC721Flow.selector));
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
@@ -312,24 +236,24 @@ contract FlowTest is FlowBasicTest {
 
     /// forge-config: default.fuzz.runs = 100
     function testFlowShouldErrorIfERC1155FlowFromIsOtherThanSourceContractOrMsgSender(
-        address alise,
+        address alice,
         address bob,
         uint256 erc1155OutTokenId,
         uint256 erc1155OutAmount,
         uint256 erc1155InTokenId,
         uint256 erc1155InAmount
     ) external {
-        vm.assume(bob != alise);
+        vm.assume(bob != alice);
         vm.assume(sentinel != erc1155OutTokenId);
         vm.assume(sentinel != erc1155OutAmount);
         vm.assume(sentinel != erc1155InTokenId);
         vm.assume(sentinel != erc1155InAmount);
-        vm.label(alise, "Alise");
+        vm.label(alice, "Alice");
         vm.label(bob, "Bob");
 
         (IFlowV5 flow, EvaluableV2 memory evaluable) = deployFlow();
 
-        assumeEtchable(alise, address(flow));
+        assumeEtchable(alice, address(flow));
         assumeEtchable(bob, address(flow));
 
         {
@@ -345,7 +269,7 @@ contract FlowTest is FlowBasicTest {
             erc1155Transfers[1] = ERC1155Transfer({
                 token: address(iTokenB),
                 from: address(flow),
-                to: alise,
+                to: alice,
                 id: erc1155InTokenId,
                 amount: erc1155InAmount
             });
@@ -356,21 +280,21 @@ contract FlowTest is FlowBasicTest {
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 
-        vm.startPrank(alise);
+        vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedERC1155Flow.selector));
         flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
     /// forge-config: default.fuzz.runs = 100
-    function testShouldErrorIfFlowBeingEvaluatedIsUnregistered(address alise, address expressionA, address expressionB)
+    function testShouldErrorIfFlowBeingEvaluatedIsUnregistered(address alice, address expressionA, address expressionB)
         external
     {
-        vm.assume(alise != address(0));
+        vm.assume(alice != address(0));
         vm.assume(expressionA != expressionB);
-        assumeEtchable(alise);
+        assumeEtchable(alice);
 
-        vm.label(alise, "Alise");
+        vm.label(alice, "Alice");
 
         address[] memory expressionsA = new address[](1);
         expressionsA[0] = expressionA;
@@ -381,7 +305,7 @@ contract FlowTest is FlowBasicTest {
         expressionsB[0] = expressionB;
 
         (IFlowV5 flowB,) = deployFlow(expressionsB, new uint256[][](1));
-        vm.startPrank(alise);
+        vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(UnregisteredFlow.selector, evaluables[0].hash()));
         flowB.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();

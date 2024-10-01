@@ -23,7 +23,6 @@ import {
     FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
 } from "../../../src/interface/unstable/IFlowERC1155V5.sol";
 
-
 contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
