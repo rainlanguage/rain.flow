@@ -39,37 +39,14 @@ contract Erc20FlowTest is FlowERC20Test {
      * @notice Tests the support for the transferPreflight hook.
      */
     /// forge-config: default.fuzz.runs = 100
-    function testFlowERC20SupportsTransferPreflightHook(
-        address alice,
-        uint128 amount,
-        address expressionA,
-        address expressionB
-    ) external {
+    function testFlowERC20SupportsTransferPreflightHook(address alice, uint128 amount) external {
         vm.assume(alice != address(0));
-        vm.assume(sentinel != amount);
-        vm.assume(expressionA != expressionB);
 
-        address[] memory expressions = new address[](1);
-        expressions[0] = expressionA;
-
-        (IFlowERC20V5 flow, EvaluableV2[] memory evaluables) =
-            deployFlowERC20(expressions, expressionB, new uint256[][](1), "Flow ERC20", "F20");
+        (IFlowERC20V5 flow, EvaluableV2 memory evaluable) = deployFlowERC20("Flow ERC20", "F20");
         assumeEtchable(alice, address(flow));
 
         {
-            ERC20SupplyChange[] memory mints = new ERC20SupplyChange[](1);
-            mints[0] = ERC20SupplyChange({account: alice, amount: amount});
-
-            ERC20SupplyChange[] memory burns = new ERC20SupplyChange[](1);
-            burns[0] = ERC20SupplyChange({account: alice, amount: 0 ether});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC20IOV1(
-                    mints,
-                    burns,
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
+            (uint256[] memory stack,) = mintFlowStack(alice, amount, 0, transferEmpty());
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 
@@ -85,12 +62,14 @@ contract Erc20FlowTest is FlowERC20Test {
             interpreterEval2ExpectCall(
                 address(flow),
                 LibEncodedDispatch.encode2(
-                    expressionB, FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
+                    address(uint160(uint256(keccak256("configExpression")))),
+                    FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT,
+                    FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
                 ),
                 context
             );
 
-            flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
 
             vm.startPrank(alice);
             IERC20(address(flow)).transfer(address(flow), amount);
@@ -101,12 +80,14 @@ contract Erc20FlowTest is FlowERC20Test {
             interpreterEval2RevertCall(
                 address(flow),
                 LibEncodedDispatch.encode2(
-                    expressionB, FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
+                    address(uint160(uint256(keccak256("configExpression")))),
+                    FLOW_ERC20_HANDLE_TRANSFER_ENTRYPOINT,
+                    FLOW_ERC20_HANDLE_TRANSFER_MAX_OUTPUTS
                 ),
                 context
             );
 
-            flow.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
 
             vm.startPrank(alice);
             vm.expectRevert("REVERT_EVAL2_CALL");

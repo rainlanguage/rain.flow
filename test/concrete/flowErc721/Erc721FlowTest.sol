@@ -46,27 +46,15 @@ contract Erc721FlowTest is FlowERC721Test {
     /// forge-config: default.fuzz.runs = 100
     function testFlowERC721SupportsTransferPreflightHook(address alice, uint256 tokenIdA, uint256 tokenIdB) external {
         vm.assume(alice != address(0));
-        vm.assume(sentinel != tokenIdA);
-        vm.assume(sentinel != tokenIdB);
         vm.assume(tokenIdA != tokenIdB);
-        vm.assume(!alice.isContract());
 
         (IFlowERC721V5 flow, EvaluableV2 memory evaluable) = deployFlowERC721({name: "", symbol: "", baseURI: ""});
         assumeEtchable(alice, address(flow));
 
         {
-            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](2);
-            mints[0] = ERC721SupplyChange({account: alice, id: tokenIdA});
-            mints[1] = ERC721SupplyChange({account: alice, id: tokenIdB});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC721IOV1(
-                    mints,
-                    new ERC721SupplyChange[](0),
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
+            (uint256[] memory stack,) = mintFlowStack(alice, 0, tokenIdA, transferEmpty());
             interpreterEval2MockCall(stack, new uint256[](0));
+            IFlowERC721V5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         }
 
         {
@@ -89,11 +77,15 @@ contract Erc721FlowTest is FlowERC721Test {
                 contextTransferA
             );
 
-            IFlowERC721V5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
-
             vm.startPrank(alice);
             IERC721(address(flow)).transferFrom({from: alice, to: address(flow), tokenId: tokenIdA});
             vm.stopPrank();
+        }
+
+        {
+            (uint256[] memory stack,) = mintFlowStack(alice, 0, tokenIdB, transferEmpty());
+            interpreterEval2MockCall(stack, new uint256[](0));
+            IFlowERC721V5(flow).flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         }
 
         {

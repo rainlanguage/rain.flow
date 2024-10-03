@@ -36,7 +36,82 @@ contract Erc1155FlowTest is FlowERC1155Test {
     using LibEvaluable for EvaluableV2;
     using SignContextLib for Vm;
     using LibUint256Matrix for uint256[];
+    using LibUint256Array for uint256[];
     using Address for address;
+
+    /**
+     * @notice Tests the support for the transferPreflight hook.
+     */
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC1155SupportsTransferPreflightHook(address alice, uint128 amount, uint256 id) external {
+        vm.assume(alice != address(0));
+        vm.assume(amount != 0);
+
+        (IFlowERC1155V5 flow, EvaluableV2 memory evaluable) = deployIFlowERC1155V5("https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        // Mint tokens to Alice
+        {
+            (uint256[] memory stack,) = mintFlowStack(alice, amount, id, transferEmpty());
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = id;
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = amount;
+
+        uint256[][] memory context = LibContextWrapper.buildAndSetContext(
+            LibUint256Matrix.matrixFrom(
+                LibUint256Array.arrayFrom(
+                    uint256(uint160(alice)), uint256(uint160(alice)), uint256(uint160(address(flow)))
+                ),
+                ids,
+                amounts
+            ),
+            new SignedContextV1[](0),
+            address(alice),
+            address(flow)
+        );
+
+        {
+            interpreterEval2ExpectCall(
+                address(flow),
+                LibEncodedDispatch.encode2(
+                    address(uint160(uint256(keccak256("configExpression")))),
+                    FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
+                    FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
+                ),
+                context
+            );
+
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+
+            vm.startPrank(alice);
+            IERC1155(address(flow)).safeTransferFrom(alice, address(flow), id, amount, "");
+            vm.stopPrank();
+        }
+
+        {
+            interpreterEval2RevertCall(
+                address(flow),
+                LibEncodedDispatch.encode2(
+                    address(uint160(uint256(keccak256("configExpression")))),
+                    FLOW_ERC1155_HANDLE_TRANSFER_ENTRYPOINT,
+                    FLOW_ERC1155_HANDLE_TRANSFER_MAX_OUTPUTS
+                ),
+                context
+            );
+
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+
+            vm.expectRevert("REVERT_EVAL2_CALL");
+            vm.startPrank(alice);
+            IERC1155(address(flow)).safeTransferFrom(alice, address(flow), id, amount, "");
+            vm.stopPrank();
+        }
+    }
 
     /// Tests the flow between ERC721 and ERC1155 on the good path.
     /// forge-config: default.fuzz.runs = 100
@@ -171,7 +246,7 @@ contract Erc1155FlowTest is FlowERC1155Test {
         mints[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: amount});
 
         ERC1155SupplyChange[] memory burns = new ERC1155SupplyChange[](1);
-        burns[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: 0 ether});
+        burns[0] = ERC1155SupplyChange({account: alice, id: erc721InTokenId, amount: amount});
 
         uint256[] memory stack = generateFlowStack(
             FlowERC1155IOV1(
