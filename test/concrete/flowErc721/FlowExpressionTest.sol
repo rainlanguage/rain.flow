@@ -67,20 +67,7 @@ contract FlowExpressionTest is FlowERC721Test {
 
         (IFlowERC721V5 flowErc721, EvaluableV2 memory evaluable) = deployFlowERC721(name, symbol, uri);
         {
-            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
-            mints[0] = ERC721SupplyChange({account: alice, id: id});
-
-            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
-            burns[0] = ERC721SupplyChange({account: alice, id: id});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC721IOV1(
-                    mints,
-                    burns,
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
-
+            (uint256[] memory stack,) = mintAndBurnFlowStack(alice, 20 ether, 10 ether, 5, transferEmpty());
             interpreterEval2MockCall(stack, new uint256[](0));
         }
 

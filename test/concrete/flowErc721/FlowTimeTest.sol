@@ -19,36 +19,26 @@ contract FlowTimeTest is FlowERC721Test {
         string memory uri,
         string memory name,
         string memory symbol,
-        uint256 id,
         address alice,
         uint256[] memory writeToStore
     ) public {
         vm.assume(writeToStore.length != 0);
         vm.assume(alice != address(0));
-        vm.assume(sentinel != id);
         vm.assume(!alice.isContract());
 
         (IFlowERC721V5 erc1155Flow, EvaluableV2 memory evaluable) = deployFlowERC721(name, symbol, uri);
-        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
-        mints[0] = ERC721SupplyChange({account: alice, id: id});
+        assumeEtchable(alice, address(erc1155Flow));
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(alice, 20 ether, 10 ether, 5, transferEmpty());
+            interpreterEval2MockCall(stack, writeToStore);
 
-        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
-        burns[0] = ERC721SupplyChange({account: alice, id: id});
-
-        uint256[] memory stack = generateFlowStack(
-            FlowERC721IOV1(
-                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-            )
-        );
-
-        interpreterEval2MockCall(stack, writeToStore);
+            vm.expectCall(
+                address(iStore),
+                abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
+            );
+        }
 
         vm.mockCall(address(iStore), abi.encodeWithSelector(IInterpreterStoreV2.set.selector), abi.encode());
-
-        vm.expectCall(
-            address(iStore),
-            abi.encodeWithSelector(IInterpreterStoreV2.set.selector, DEFAULT_STATE_NAMESPACE, writeToStore)
-        );
 
         erc1155Flow.flow(evaluable, writeToStore, new SignedContextV1[](0));
     }

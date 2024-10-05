@@ -2,23 +2,15 @@
 pragma solidity =0.8.19;
 
 import {Vm} from "forge-std/Test.sol";
-import {REVERTING_MOCK_BYTECODE} from "test/abstract/TestConstants.sol";
-import {FlowUtilsAbstractTest} from "test/abstract/FlowUtilsAbstractTest.sol";
 import {FlowERC721Test} from "test/abstract/FlowERC721Test.sol";
 import {EvaluableV2} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
-import {FlowTransferV1, ERC20Transfer, ERC721Transfer, ERC1155Transfer} from "src/interface/unstable/IFlowV5.sol";
 import {SignedContextV1} from "rain.interpreter.interface/interface/IInterpreterCallerV2.sol";
 import {
     IFlowERC721V5,
-    ERC721SupplyChange,
-    FlowERC721IOV1,
     FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT,
     FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
 } from "../../../src/interface/unstable/IFlowERC721V5.sol";
 import {BurnerNotOwner} from "src/interface/deprecated/v4/IFlowERC721V4.sol";
-
-import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import {LibEvaluable} from "rain.interpreter.interface/lib/caller/LibEvaluable.sol";
 import {SignContextLib} from "test/lib/SignContextLib.sol";
@@ -32,7 +24,6 @@ import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 import {MissingSentinel} from "rain.solmem/lib/LibStackSentinel.sol";
 import {FLOW_ENTRYPOINT, FLOW_MAX_OUTPUTS} from "src/abstract/FlowCommon.sol";
 import {LibEncodedDispatch} from "rain.interpreter.interface/lib/caller/LibEncodedDispatch.sol";
-import {LibContextWrapper} from "test/lib/LibContextWrapper.sol";
 
 contract Erc721FlowTest is FlowERC721Test {
     using LibEvaluable for EvaluableV2;
@@ -199,248 +190,105 @@ contract Erc721FlowTest is FlowERC721Test {
         }
     }
 
-    function testFlowERC721FlowERC20ToERC721(
-        uint256 fuzzedKeyAlice,
-        uint256 erc20InAmount,
-        uint256 erc721OutTokenId,
-        string memory flow,
-        string memory baseURI
-    ) external {
+    function testFlowERC721FlowERC20ToERC721(uint256 fuzzedKeyAlice, uint256 erc20InAmount, uint256 erc721OutTokenId)
+        external
+    {
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         address alice = vm.addr(aliceKey);
-        vm.assume(!alice.isContract());
-
-        vm.assume(sentinel != erc20InAmount);
-        vm.assume(sentinel != erc721OutTokenId);
-
-        (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
-            deployFlowERC721({name: flow, symbol: flow, baseURI: baseURI});
-        assumeEtchable(alice, address(erc721Flow));
-
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](1);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: alice, to: address(erc721Flow), amount: erc20InAmount});
-
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](1);
-        erc721Transfers[0] =
-            ERC721Transfer({token: iTokenB, from: address(erc721Flow), to: alice, id: erc721OutTokenId});
-
-        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-        vm.expectCall(iTokenA, abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc721Flow, erc20InAmount));
-
-        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
-        vm.expectCall(
-            iTokenB,
-            abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), erc721Flow, alice, erc721OutTokenId
-            )
-        );
-        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
-        mints[0] = ERC721SupplyChange({account: alice, id: erc721OutTokenId});
-
-        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
-        burns[0] = ERC721SupplyChange({account: alice, id: erc721OutTokenId});
-
-        uint256[] memory stack = generateFlowStack(
-            FlowERC721IOV1(mints, burns, FlowTransferV1(erc20Transfers, erc721Transfers, new ERC1155Transfer[](0)))
-        );
-        interpreterEval2MockCall(stack, new uint256[](0));
-
-        vm.startPrank(alice);
-        erc721Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
-        vm.stopPrank();
-    }
-
-    /// forge-config: default.fuzz.runs = 100
-    function testFlowERC721lowERC1155ToERC1155(
-        uint256 fuzzedKeyAlice,
-        uint256 erc1155OutTokenId,
-        uint256 erc1155OutAmount,
-        uint256 erc1155InTokenId,
-        uint256 erc1155InAmount,
-        string memory baseURI
-    ) external {
-        // Ensure the fuzzed key is within the valid range for secp256k1
-        uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
-        address alice = vm.addr(aliceKey);
-
-        vm.assume(sentinel != erc1155OutTokenId);
-        vm.assume(sentinel != erc1155OutAmount);
-        vm.assume(sentinel != erc1155InTokenId);
-        vm.assume(sentinel != erc1155InAmount);
         vm.assume(alice != address(0));
 
-        (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
-            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
-        assumeEtchable(alice, address(erc721Flow));
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721("FlowERC721", "F721", "https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
 
-        ERC1155Transfer[] memory erc1155Transfers = new ERC1155Transfer[](2);
-        erc1155Transfers[0] = ERC1155Transfer({
-            token: address(iTokenA),
-            from: address(erc721Flow),
-            to: alice,
-            id: erc1155OutTokenId,
-            amount: erc1155OutAmount
-        });
-
-        erc1155Transfers[1] = ERC1155Transfer({
-            token: address(iTokenB),
-            from: alice,
-            to: address(erc721Flow),
-            id: erc1155InTokenId,
-            amount: erc1155InAmount
-        });
-
-        vm.mockCall(iTokenA, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
-        vm.expectCall(
-            iTokenA,
-            abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, erc721Flow, alice, erc1155OutTokenId, erc1155OutAmount, ""
-            )
-        );
-
-        vm.mockCall(iTokenB, abi.encodeWithSelector(IERC1155.safeTransferFrom.selector), "");
-        vm.expectCall(
-            iTokenB,
-            abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector, alice, erc721Flow, erc1155InTokenId, erc1155InAmount, ""
-            )
-        );
-        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
-        mints[0] = ERC721SupplyChange({account: alice, id: erc1155OutTokenId});
-
-        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
-        burns[0] = ERC721SupplyChange({account: alice, id: erc1155OutTokenId});
-
-        uint256[] memory stack = generateFlowStack(
-            FlowERC721IOV1(
-                mints, burns, FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), erc1155Transfers)
-            )
-        );
-        interpreterEval2MockCall(stack, new uint256[](0));
-
-        vm.startPrank(alice);
-        erc721Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
-        vm.stopPrank();
-    }
-
-    /// forge-config: default.fuzz.runs = 100
-    function testFlowERC721lowERC20ToERC20(
-        uint256 erc20OutAmount,
-        uint256 erc20InAmount,
-        uint256 fuzzedKeyAlice,
-        string memory baseURI,
-        uint256 id
-    ) external {
-        vm.assume(sentinel != erc20OutAmount);
-        vm.assume(sentinel != erc20InAmount);
-        vm.assume(sentinel != id);
-
-        // Ensure the fuzzed key is within the valid range for secp256k1
-        uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
-        address alice = vm.addr(aliceKey);
-        vm.assume(!alice.isContract());
-
-        (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
-            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
-        assumeEtchable(alice, address(erc721Flow));
-
-        ERC20Transfer[] memory erc20Transfers = new ERC20Transfer[](2);
-        erc20Transfers[0] =
-            ERC20Transfer({token: address(iTokenA), from: address(erc721Flow), to: alice, amount: erc20OutAmount});
-        erc20Transfers[1] =
-            ERC20Transfer({token: address(iTokenB), from: alice, to: address(erc721Flow), amount: erc20InAmount});
-
-        vm.startPrank(alice);
-
-        vm.mockCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
-        vm.expectCall(address(iTokenA), abi.encodeWithSelector(IERC20.transfer.selector, alice, erc20OutAmount));
-
-        vm.mockCall(address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
-        vm.expectCall(
-            address(iTokenB), abi.encodeWithSelector(IERC20.transferFrom.selector, alice, erc721Flow, erc20InAmount)
-        );
         {
-            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
-            mints[0] = ERC721SupplyChange({account: alice, id: id});
-
-            ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
-            burns[0] = ERC721SupplyChange({account: alice, id: id});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC721IOV1(
-                    mints, burns, FlowTransferV1(erc20Transfers, new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC20ToERC721(alice, address(flow), erc20InAmount, erc721OutTokenId)
             );
-
             interpreterEval2MockCall(stack, new uint256[](0));
         }
-        SignedContextV1[] memory signedContexts1 = new SignedContextV1[](2);
-        signedContexts1[0] = vm.signContext(aliceKey, aliceKey, new uint256[](0));
-        signedContexts1[1] = vm.signContext(aliceKey, aliceKey, new uint256[](0));
 
-        erc721Flow.flow(evaluable, new uint256[](0), signedContexts1);
+        vm.startPrank(alice);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
     /// forge-config: default.fuzz.runs = 100
-    function testFlowERC721FlowERC721ToERC721(
-        uint256 fuzzedKeyAlice,
-        uint256 erc721OutTokenId,
-        uint256 erc721InTokenId,
-        string memory baseURI,
-        uint256 id
-    ) external {
+    function testFlowERC721lowERC1155ToERC1155(address alice, uint256 erc1155Amount, uint256 erc1155TokenId) external {
+        vm.assume(alice != address(0));
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721("FlowERC721", "F721", "https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC1155ToERC1155(
+                    alice, address(flow), erc1155TokenId, erc1155Amount, erc1155TokenId, erc1155Amount
+                )
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alice);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721lowERC20ToERC20(uint256 erc20OutAmount, uint256 erc20InAmount, address alice) external {
+        vm.assume(alice != address(0));
+
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721("FlowERC721", "F721", "https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
+
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice, 20 ether, 10 ether, 5, transfersERC20toERC20(alice, address(flow), erc20InAmount, erc20OutAmount)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
+
+        vm.startPrank(alice);
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        vm.stopPrank();
+    }
+
+    /// forge-config: default.fuzz.runs = 100
+    function testFlowERC721FlowERC721ToERC721(uint256 fuzzedKeyAlice, uint256 erc721OutTokenId, uint256 erc721InTokenId)
+        external
+    {
         // Ensure the fuzzed key is within the valid range for secp256k1
         uint256 aliceKey = (fuzzedKeyAlice % (SECP256K1_ORDER - 1)) + 1;
         address alice = vm.addr(aliceKey);
 
-        vm.assume(sentinel != erc721OutTokenId);
-        vm.assume(sentinel != erc721InTokenId);
-        vm.assume(sentinel != id);
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721("FlowERC721", "F721", "https://www.rainprotocol.xyz/nft/");
+        assumeEtchable(alice, address(flow));
 
-        (IFlowERC721V5 erc721Flow, EvaluableV2 memory evaluable) =
-            deployFlowERC721({name: "FlowErc721", symbol: "FErc721", baseURI: baseURI});
-        assumeEtchable(alice, address(erc721Flow));
-
-        ERC721Transfer[] memory erc721Transfers = new ERC721Transfer[](2);
-        erc721Transfers[0] =
-            ERC721Transfer({token: address(iTokenA), from: address(erc721Flow), to: alice, id: erc721OutTokenId});
-        erc721Transfers[1] =
-            ERC721Transfer({token: address(iTokenB), from: alice, to: address(erc721Flow), id: erc721InTokenId});
-
-        vm.mockCall(iTokenA, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
-        vm.expectCall(
-            iTokenA,
-            abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), erc721Flow, alice, erc721OutTokenId
-            )
-        );
-
-        vm.mockCall(iTokenB, abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)"))), "");
-        vm.expectCall(
-            iTokenB,
-            abi.encodeWithSelector(
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")), alice, erc721Flow, erc721InTokenId
-            )
-        );
-        ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
-        mints[0] = ERC721SupplyChange({account: alice, id: id});
-
-        ERC721SupplyChange[] memory burns = new ERC721SupplyChange[](1);
-        burns[0] = ERC721SupplyChange({account: alice, id: id});
-
-        uint256[] memory stack = generateFlowStack(
-            FlowERC721IOV1(
-                mints, burns, FlowTransferV1(new ERC20Transfer[](0), erc721Transfers, new ERC1155Transfer[](0))
-            )
-        );
-
-        interpreterEval2MockCall(stack, new uint256[](0));
+        {
+            (uint256[] memory stack,) = mintAndBurnFlowStack(
+                alice,
+                20 ether,
+                10 ether,
+                5,
+                transferERC721ToERC721(alice, address(flow), erc721InTokenId, erc721OutTokenId)
+            );
+            interpreterEval2MockCall(stack, new uint256[](0));
+        }
 
         vm.startPrank(alice);
-        erc721Flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
@@ -482,37 +330,20 @@ contract Erc721FlowTest is FlowERC721Test {
     /// forge-config: default.fuzz.runs = 100
     function testFlowERC721UtilizeContextInHandleTransferEntrypoint(
         address alice,
-        address expressionA,
-        address expressionB,
         uint256[] memory writeToStore,
-        string memory baseURI,
         uint256 tokenId
     ) external {
         vm.assume(alice != address(0));
-        vm.assume(expressionA != expressionB);
         vm.assume(writeToStore.length != 0);
-        vm.assume(sentinel != tokenId);
 
-        address[] memory expressions = new address[](1);
-        expressions[0] = expressionA;
-
-        (IFlowERC721V5 flowErc721, EvaluableV2[] memory evaluables) =
-            deployFlowERC721(expressions, expressionB, new uint256[][](1), "FlowErc721", "FErc721", baseURI);
-        assumeEtchable(alice, address(flowErc721));
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721({name: "FlowERC721", symbol: "F721", baseURI: "https://www.rainprotocol.xyz/nft/"});
+        assumeEtchable(alice, address(flow));
 
         {
-            ERC721SupplyChange[] memory mints = new ERC721SupplyChange[](1);
-            mints[0] = ERC721SupplyChange({account: alice, id: tokenId});
-
-            uint256[] memory stack = generateFlowStack(
-                FlowERC721IOV1(
-                    mints,
-                    new ERC721SupplyChange[](0),
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
+            (uint256[] memory stack,) = mintFlowStack(alice, 0, tokenId, transferEmpty());
             interpreterEval2MockCall(stack, new uint256[](0));
-            flowErc721.flow(evaluables[0], new uint256[](0), new SignedContextV1[](0));
+            flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         }
 
         {
@@ -526,60 +357,29 @@ contract Erc721FlowTest is FlowERC721Test {
 
         {
             vm.startPrank(alice);
-            IERC721(address(flowErc721)).transferFrom({from: alice, to: address(flowErc721), tokenId: tokenId});
+            IERC721(address(flow)).transferFrom({from: alice, to: address(flow), tokenId: tokenId});
             vm.stopPrank();
         }
     }
 
     /// Should not flow if number of sentinels is less than MIN_FLOW_SENTINELS
     /// forge-config: default.fuzz.runs = 100
-    function testFlowERC721MinFlowSentinel(address alice, uint128 amount, address expressionA, string memory baseURI)
-        external
-    {
+    function testFlowERC721MinFlowSentinel(address alice) external {
         vm.assume(alice != address(0));
 
-        address[] memory expressions = new address[](1);
-        expressions[0] = expressionA;
-
-        // Invalid number of sentinels (less than MIN_FLOW_SENTINELS)
-        (IFlowERC721V5 flowInvalid, EvaluableV2[] memory evaluablesInvalid) =
-            deployFlowERC721(expressions, expressionA, new uint256[][](1), "FlowErc721", "FErc721", baseURI);
-        assumeEtchable(alice, address(flowInvalid));
+        (IFlowERC721V5 flow, EvaluableV2 memory evaluable) =
+            deployFlowERC721({name: "FlowERC721", symbol: "F721", baseURI: "https://www.rainprotocol.xyz/nft/"});
 
         // Check that flow with invalid number of sentinels fails
         {
-            uint256[] memory stackInvalid = generateFlowStack(
-                FlowERC721IOV1(
-                    new ERC721SupplyChange[](0),
-                    new ERC721SupplyChange[](0),
-                    FlowTransferV1(new ERC20Transfer[](0), new ERC721Transfer[](0), new ERC1155Transfer[](0))
-                )
-            );
-
-            // Change stack sentinel
+            (uint256[] memory stackInvalid,) = mintFlowStack(alice, 10 ether, 5, transferEmpty());
             stackInvalid[0] = 0;
             interpreterEval2MockCall(stackInvalid, new uint256[](0));
         }
 
-        uint256[][] memory contextInvalid = LibContextWrapper.buildAndSetContext(
-            LibUint256Array.arrayFrom(uint256(uint160(address(alice))), uint256(uint160(address(flowInvalid))), amount)
-                .matrixFrom(),
-            new SignedContextV1[](0),
-            address(alice),
-            address(flowInvalid)
-        );
-
-        interpreterEval2RevertCall(
-            address(flowInvalid),
-            LibEncodedDispatch.encode2(
-                expressionA, FLOW_ERC721_HANDLE_TRANSFER_ENTRYPOINT, FLOW_ERC721_HANDLE_TRANSFER_MAX_OUTPUTS
-            ),
-            contextInvalid
-        );
-
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(MissingSentinel.selector, sentinel));
-        flowInvalid.flow(evaluablesInvalid[0], new uint256[](0), new SignedContextV1[](0));
+        flow.flow(evaluable, new uint256[](0), new SignedContextV1[](0));
         vm.stopPrank();
     }
 
